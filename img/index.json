@@ -302,6 +302,27 @@
   "ev:smithWar": "ev/smithWar.webp",
   "ev:smithTang": "ev/smithTang.webp",
   "ev:talk": "ev/talk.webp",
-  "ev:talk2": "ev/talk2.webp"
+  "ev:talk2": "ev/talk2.webp",
+  "st:baekms": "st/baekms.webp",
+  "st:cheolms": "st/cheolms.webp",
+  "st:cheongjin": "st/cheongjin.webp",
+  "st:eumsg": "st/eumsg.webp",
+  "st:eunsn": "st/eunsn.webp",
+  "st:galch": "st/galch.webp",
+  "st:gusc": "st/gusc.webp",
+  "st:gwangma": "st/gwangma.webp",
+  "st:hyeono": "st/hyeono.webp",
+  "st:jeonghye": "st/jeonghye.webp",
+  "st:nangis": "st/nangis.webp",
+  "st:pyeon": "st/pyeon.webp",
+  "st:paengmj": "st/paengmj.webp",
+  "st:sagong": "st/sagong.webp",
+  "st:tangcw": "st/tangcw.webp",
+  "st:songhak": "st/songhak.webp",
+  "st:unhak": "st/unhak.webp",
+  "st:unjung": "st/unjung.webp",
+  "st:wipc": "st/wipc.webp",
+  "st:yohr": "st/yohr.webp",
+  "st:yongm": "st/yongm.webp"
  }
 }
