@@ -190,7 +190,11 @@ button.chip.on{background:var(--jade);color:var(--card);border-color:var(--jade)
 @keyframes stin{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translateX(-50%)}}
 .scene .snm{position:absolute;left:8px;bottom:8px;background:rgba(20,24,22,.74);color:#f3efe6;font-family:var(--f-ui);font-size:.8rem;padding:2px 10px;border-radius:4px}
 .chk,.gth.chk{background:repeating-conic-gradient(#cfcfcf 0 25%,#fafafa 0 50%) 0 0/16px 16px}
-.cutpv{width:100%;max-height:52vh;object-fit:contain;border-radius:8px;display:block}
+.edwrap{flex:none;max-height:56vh;overflow:auto;border-radius:8px;border:1px solid var(--line);overscroll-behavior:contain}
+.edwrap canvas{display:block;max-width:none;touch-action:none;cursor:crosshair}
+.edwrap[data-pan] canvas{cursor:grab}
+.edwrap.bg-chk{background:repeating-conic-gradient(#cfcfcf 0 25%,#fafafa 0 50%) 0 0/16px 16px}
+.edwrap.bg-dark{background:#1b1d1c}.edwrap.bg-green{background:#2f8f4e}
 .yrrow{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .modal{position:fixed;inset:0;background:rgba(10,14,12,.55);display:grid;place-items:center;z-index:30;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
 .sheet{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;width:100%;max-width:480px;max-height:100%;overflow:auto;display:flex;flex-direction:column;gap:10px}
@@ -1898,33 +1902,100 @@ async function naiDraw(input,portrait){const c=ncfg();if(!c.key.trim())throw new
   const u8=await unzipFirst(new Uint8Array(await r.arrayBuffer()));return new Blob([u8],{type:imgType(u8)||'image/png'});}
 /* 배경 지우기: 테두리에서 이어진 배경색 영역을 지운다. 단색 배경(white background)으로 그린 그림에서 잘 된다.
    가장자리는 배경색과의 거리로 반투명하게 하고 배경색을 빼서 번짐을 줄인다. 결과는 인물 둘레로 잘라 PNG로 돌려준다. */
-async function cutBg(blob,o){const bm=await createImageBitmap(blob),W=bm.width,H=bm.height,N=W*H;
-  const cv=document.createElement('canvas');cv.width=W;cv.height=H;const cx=cv.getContext('2d',{willReadFrequently:true});cx.drawImage(bm,0,0);
-  const im=cx.getImageData(0,0,W,H),d=im.data,bx=[],by=[],bz=[];const pb=i=>{bx.push(d[i*4]);by.push(d[i*4+1]);bz.push(d[i*4+2]);};
+// R(1=지울 곳)을 지우고, 그 둘레 픽셀은 배경색 BC와 섞인 것으로 보아 가까운 안쪽 픽셀과 견주어 투명도를 정한 뒤 배경색을 빼낸다. src는 원본 색, out은 결과.
+function edgeSoft(out,src,W,H,R,BC,tol){const N=W*H,edge=new Uint8Array(N),dd=new Float32Array(N);
+  const dist=i=>{const r=src[i*4]-BC[0],g=src[i*4+1]-BC[1],b=src[i*4+2]-BC[2];return Math.sqrt(r*r+g*g+b*b);};
+  for(let i=0;i<N;i++){if(R[i]){out[i*4+3]=0;continue;}if(!out[i*4+3])continue;dd[i]=dist(i);const x=i%W;edge[i]=(x>0&&R[i-1])||(x<W-1&&R[i+1])||(i>=W&&R[i-W])||(i<N-W&&R[i+W])?1:0;}
+  for(let i=0;i<N;i++){if(!edge[i])continue;const x=i%W,y=(i-x)/W;let m=0;
+    for(let v=-2;v<=2;v++)for(let u=-2;u<=2;u++){const xx=x+u,yy=y+v;if(xx<0||yy<0||xx>=W||yy>=H)continue;const j=yy*W+xx;if(!R[j]&&!edge[j]&&out[j*4+3]&&dd[j]>m)m=dd[j];}
+    const a=Math.min(1,Math.max(.05,m>0?dd[i]/m:dd[i]/(tol*2.2)));
+    out[i*4+3]=Math.min(out[i*4+3],Math.round(a*src[i*4+3]));for(let c=0;c<3;c++)out[i*4+c]=Math.max(0,Math.min(255,Math.round((src[i*4+c]-(1-a)*BC[c])/a)));}}
+// 테두리에서 이어진 배경색 영역을 지운다. 배경색은 테두리 픽셀의 중앙값.
+function autoMask(d,W,H,tol,holes){const N=W*H,bx=[],by=[],bz=[];const pb=i=>{bx.push(d[i*4]);by.push(d[i*4+1]);bz.push(d[i*4+2]);};
   for(let x=0;x<W;x+=2){pb(x);pb((H-1)*W+x);}for(let y=0;y<H;y+=2){pb(y*W);pb(y*W+W-1);}
-  const med=a=>a.sort((p,q)=>p-q)[a.length>>1],R=med(bx),G=med(by),B=med(bz),BC=[R,G,B],tol=o.tol||40;
-  const dist=i=>{const r=d[i*4]-R,g=d[i*4+1]-G,b=d[i*4+2]-B;return Math.sqrt(r*r+g*g+b*b);};
-  const bg=new Uint8Array(N),st=new Int32Array(N);let sp=0,nb=0;const seed=i=>{if(!bg[i]&&dist(i)<tol){bg[i]=1;nb++;st[sp++]=i;}};
+  const med=a=>a.sort((p,q)=>p-q)[a.length>>1],BC=[med(bx),med(by),med(bz)];
+  const dist=i=>{const r=d[i*4]-BC[0],g=d[i*4+1]-BC[1],b=d[i*4+2]-BC[2];return Math.sqrt(r*r+g*g+b*b);};
+  const R=new Uint8Array(N),st=new Int32Array(N);let sp=0,nb=0;const seed=i=>{if(!R[i]&&dist(i)<tol){R[i]=1;nb++;st[sp++]=i;}};
   for(let x=0;x<W;x++){seed(x);seed((H-1)*W+x);}for(let y=0;y<H;y++){seed(y*W);seed(y*W+W-1);}
   while(sp){const i=st[--sp],x=i%W;if(x>0)seed(i-1);if(x<W-1)seed(i+1);if(i>=W)seed(i-W);if(i<N-W)seed(i+W);}
-  if(o.holes)for(let i=0;i<N;i++)if(!bg[i]&&dist(i)<tol*.6){bg[i]=1;nb++;}
-  // 가장자리 픽셀은 배경색과 안쪽 인물색이 섞인 것으로 보고, 가까운 안쪽 픽셀과 견주어 투명도를 정한 뒤 배경색을 빼낸다
-  const edge=new Uint8Array(N),dd=new Float32Array(N);for(let i=0;i<N;i++)if(!bg[i]){dd[i]=dist(i);const x=i%W;edge[i]=(x>0&&bg[i-1])||(x<W-1&&bg[i+1])||(i>=W&&bg[i-W])||(i<N-W&&bg[i+W])?1:0;}
-  const al=new Float32Array(N);for(let i=0;i<N;i++){if(!edge[i])continue;const x=i%W,y=(i-x)/W;let m=0;
-    for(let v=-2;v<=2;v++)for(let u=-2;u<=2;u++){const xx=x+u,yy=y+v;if(xx<0||yy<0||xx>=W||yy>=H)continue;const j=yy*W+xx;if(!bg[j]&&!edge[j]&&dd[j]>m)m=dd[j];}
-    al[i]=Math.min(1,Math.max(.05,m>0?dd[i]/m:dd[i]/(tol*2.2)));}
-  let x0=W,y0=H,x1=-1,y1=-1;
-  for(let i=0;i<N;i++){if(bg[i]){d[i*4+3]=0;continue;}const x=i%W,y=(i-x)/W;
-    if(edge[i]){const a=al[i];d[i*4+3]=Math.round(a*d[i*4+3]);for(let c=0;c<3;c++)d[i*4+c]=Math.max(0,Math.min(255,Math.round((d[i*4+c]-(1-a)*BC[c])/a)));}
-    if(d[i*4+3]>16){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;}}
-  if(x1<0)throw new Error('인물까지 모두 지워졌어요. 민감도를 낮춰 주세요.');
-  cx.putImageData(im,0,0);x0=Math.max(0,x0-4);y0=Math.max(0,y0-4);x1=Math.min(W-1,x1+4);y1=Math.min(H-1,y1+4);
-  const out=document.createElement('canvas');out.width=x1-x0+1;out.height=y1-y0+1;out.getContext('2d').drawImage(cv,x0,y0,out.width,out.height,0,0,out.width,out.height);
-  const r=await new Promise(res=>out.toBlob(res,'image/png'));r.pct=nb/N;return r;}
+  if(holes)for(let i=0;i<N;i++)if(!R[i]&&dist(i)<tol*.6){R[i]=1;nb++;}
+  edgeSoft(d,d,W,H,R,BC,tol);return nb/N;}
+// 인물 둘레로 잘라 PNG로
+async function cropPng(im){const W=im.width,H=im.height,d=im.data;let x0=W,y0=H,x1=-1,y1=-1;
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(d[(y*W+x)*4+3]>16){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;}
+  if(x1<0)throw new Error('인물까지 모두 지워졌어요.');
+  x0=Math.max(0,x0-4);y0=Math.max(0,y0-4);x1=Math.min(W-1,x1+4);y1=Math.min(H-1,y1+4);
+  const cv=document.createElement('canvas');cv.width=x1-x0+1;cv.height=y1-y0+1;cv.getContext('2d').putImageData(im,-x0,-y0);
+  return await new Promise(res=>cv.toBlob(res,'image/png'));}
+async function cutBg(blob,o){const bm=await createImageBitmap(blob),W=bm.width,H=bm.height;
+  const cv=document.createElement('canvas');cv.width=W;cv.height=H;const cx=cv.getContext('2d',{willReadFrequently:true});cx.drawImage(bm,0,0);
+  const im=cx.getImageData(0,0,W,H),pct=autoMask(im.data,W,H,o.tol||40,o.holes);const r=await cropPng(im);r.pct=pct;return r;}
+
+/* 배경 지우기 편집기: 마술봉(누른 곳과 비슷한 색을 지운다), 지우개, 복원 붓, 확대, 되돌리기.
+   원본은 raw:, 손본 전체 크기 결과는 wk:로 남겨 다음에 이어서 고친다. 캔버스는 다시 그릴 때도 같은 요소를 옮겨 붙인다. */
+let ED=null;
+function edPt(E,e){const r=E.cv.getBoundingClientRect();return {x:(e.clientX-r.left)*E.W/r.width,y:(e.clientY-r.top)*E.H/r.height};}
+function edPush(E){E.undo.push(new Uint8ClampedArray(E.work.data));if(E.undo.length>8)E.undo.shift();}
+function edWand(E,x,y){const W=E.W,H=E.H,N=W*H,o=E.orig.data;if(x<0||y<0||x>=W||y>=H)return;const s0=(y*W+x)*4,BC=[o[s0],o[s0+1],o[s0+2]],tol=E.tol;
+  const near=i=>{const r=o[i*4]-BC[0],g=o[i*4+1]-BC[1],b=o[i*4+2]-BC[2];return r*r+g*g+b*b<tol*tol;};const R=new Uint8Array(N);
+  if(E.contig){const st=new Int32Array(N);let sp=0;const seed=i=>{if(!R[i]&&near(i)){R[i]=1;st[sp++]=i;}};seed(y*W+x);
+    while(sp){const i=st[--sp],xx=i%W;if(xx>0)seed(i-1);if(xx<W-1)seed(i+1);if(i>=W)seed(i-W);if(i<N-W)seed(i+W);}}
+  else for(let i=0;i<N;i++)if(near(i))R[i]=1;
+  edgeSoft(E.work.data,o,W,H,R,BC,tol);}
+function edBrush(E,x,y){const r=Math.max(1,E.size/2),W=E.W,H=E.H,o=E.orig.data,d=E.work.data;
+  const x0=Math.max(0,Math.floor(x-r)),x1=Math.min(W-1,Math.ceil(x+r)),y0=Math.max(0,Math.floor(y-r)),y1=Math.min(H-1,Math.ceil(y+r));if(x1<x0||y1<y0)return;
+  for(let yy=y0;yy<=y1;yy++)for(let xx=x0;xx<=x1;xx++){const dd=Math.hypot(xx+.5-x,yy+.5-y);if(dd>r)continue;const f=Math.min(1,r-dd),i=(yy*W+xx)*4;
+    if(E.tool==='erase')d[i+3]=Math.round(d[i+3]*(1-f));else{const t=Math.round(o[i+3]*f);if(t>d[i+3]){d[i]=o[i];d[i+1]=o[i+1];d[i+2]=o[i+2];d[i+3]=t;}}}
+  E.cx.putImageData(E.work,0,0,x0,y0,x1-x0+1,y1-y0+1);}
+function edAttach(cv){
+  cv.addEventListener('pointerdown',e=>{const E=ED;if(!E||E.cv!==cv)return;e.preventDefault();const p=edPt(E,e);
+    if(E.tool==='pan')E.pan={x:e.clientX,y:e.clientY,sl:cv.parentNode.scrollLeft,st:cv.parentNode.scrollTop};
+    else if(E.tool==='wand'){edPush(E);edWand(E,Math.floor(p.x),Math.floor(p.y));E.cx.putImageData(E.work,0,0);soon();return;}
+    else{edPush(E);E.last=p;edBrush(E,p.x,p.y);}
+    try{cv.setPointerCapture(e.pointerId);}catch(_){}});
+  cv.addEventListener('pointermove',e=>{const E=ED;if(!E||E.cv!==cv)return;
+    if(E.pan){const h=cv.parentNode;h.scrollLeft=E.pan.sl-(e.clientX-E.pan.x);h.scrollTop=E.pan.st-(e.clientY-E.pan.y);return;}
+    if(!E.last)return;const p=edPt(E,e),dx=p.x-E.last.x,dy=p.y-E.last.y,n=Math.max(1,Math.ceil(Math.hypot(dx,dy)/Math.max(1,E.size/6)));
+    for(let k=1;k<=n;k++)edBrush(E,E.last.x+dx*k/n,E.last.y+dy*k/n);E.last=p;});
+  const end=()=>{const E=ED;if(!E)return;const was=!!E.last;E.last=null;E.pan=null;if(was)soon();};
+  cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',end);}
+async function openEditor(k){const m={t:'edit',k,back:modal,err:''};modal=m;ED=null;render();
+  try{const raw=await imgGet('raw:'+k),wk=await imgGet('wk:'+k),src=await slotBlob(k);if(!src)throw new Error('그림이 없어요.');
+    const ob=await createImageBitmap(src),W=ob.width,H=ob.height,cv=document.createElement('canvas');cv.width=W;cv.height=H;
+    const cx=cv.getContext('2d',{willReadFrequently:true});cx.drawImage(ob,0,0);const orig=cx.getImageData(0,0,W,H);let work=null;
+    if(wk){const wb=await createImageBitmap(wk);if(wb.width===W&&wb.height===H){cx.clearRect(0,0,W,H);cx.drawImage(wb,0,0);work=cx.getImageData(0,0,W,H);}}
+    if(!work){work=new ImageData(new Uint8ClampedArray(orig.data),W,H);if(raw)autoMask(work.data,W,H,40,false);}
+    cx.putImageData(work,0,0);if(modal!==m)return;
+    ED={k,W,H,orig,work,cv,cx,src,raw:!!raw,undo:[],tool:'wand',size:Math.max(4,Math.round(W/20)),tol:40,contig:true,zoom:1,bg:'chk'};
+    cv.style.width='100%';edAttach(cv);render();}
+  catch(e){if(modal===m){m.err=e.message;render();}}}
+async function edSave(){const E=ED,m=modal;if(!E||m.busy)return;m.busy=1;m.err='';render();
+  try{const out=await cropPng(E.work),full=await new Promise(r=>E.cv.toBlob(r,'image/png'));
+    if(!E.raw)await imgPut('raw:'+E.k,E.src);await imgPut('wk:'+E.k,full);await imgPut(E.k,out);setImg(E.k,out);
+    if(modal===m)modal=m.back;ED=null;render();toast('배경을 지웠어요.');}
+  catch(e){m.busy=0;m.err=e.message;render();}}
+function editHTML(){const m=modal,E=ED&&ED.k===m.k?ED:null;
+  const head=`<div class="row" style="justify-content:space-between"><h3 id="mt" style="margin:0">배경 지우기 · ${esc(slotName(m.k))}</h3><button class="ghost" data-a="mclose">← 돌아가기</button></div>`;
+  if(!E)return `<div class="modal" data-a="mbg"><div class="sheet wide" role="dialog" aria-modal="true" aria-labelledby="mt">${head}${m.err?`<p class="status">${esc(m.err)}</p>`:'<p class="muted small">그림을 여는 중…</p>'}</div></div>`;
+  const chip=(a,v,l,on)=>`<button class="chip ${on?'on':''}" data-a="${a}" data-v="${v}">${l}</button>`;
+  return `<div class="modal" data-a="mbg"><div class="sheet wide" role="dialog" aria-modal="true" aria-labelledby="mt">${head}
+   <div class="chips">${[['wand','마술봉'],['erase','지우개'],['restore','복원 붓'],['pan','이동']].map(([v,l])=>chip('etool',v,l,E.tool===v)).join('')}</div>
+   <div id="edhost" class="edwrap bg-${E.bg}" ${E.tool==='pan'?'data-pan="1"':''}></div>
+   <div class="row wrap"><span class="small muted">보기</span>${[['chk','바둑판'],['dark','검정'],['green','초록']].map(([v,l])=>chip('ebg',v,l,E.bg===v)).join('')}<span class="small muted">확대</span>${[1,2,4].map(z=>chip('ezoom',z,z+'×',E.zoom===z)).join('')}</div>
+   ${E.tool==='wand'?`<label for="e_tol">마술봉 범위 <b id="e_tolv">${E.tol}</b> <span class="muted small">— 넓히면 비슷한 색을 더 많이 지운다</span></label><input type="range" id="e_tol" min="4" max="140" step="2" value="${E.tol}">
+     <label class="row small"><input type="checkbox" id="e_contig" ${E.contig?'checked':''}> 이어진 곳만 지운다 (끄면 그림 전체에서 비슷한 색을 지운다)</label>`
+    :E.tool==='pan'?'<p class="muted small" style="margin:0">확대한 그림을 끌어서 옮긴다.</p>'
+    :`<label for="e_size">붓 크기 <b id="e_sizev">${E.size}</b></label><input type="range" id="e_size" min="2" max="160" step="1" value="${E.size}">`}
+   <div class="row wrap"><button class="ghost" data-a="eundo" ${E.undo.length?'':'disabled'}>되돌리기 (${E.undo.length})</button><button class="ghost" data-a="eauto">자동으로 지우기</button><button class="ghost" data-a="eorig">원본으로</button></div>
+   ${m.err?`<p class="status">${esc(m.err)}</p>`:''}
+   <div class="row wrap" style="justify-content:flex-end"><button class="go" data-a="esave" ${m.busy?'disabled':''}>${m.busy?'저장하는 중…':'이대로 쓰기'}</button></div>
+   <p class="muted small" style="margin:0">마술봉으로 남은 흰 부분을 누르면 비슷한 색이 한 번에 지워진다. 팔과 몸 사이·머리카락 틈처럼 갇힌 곳도 하나씩 누른다. 너무 지워졌으면 되돌리기, 또는 복원 붓으로 칠해 되살린다. 검정·초록 배경으로 보면 남은 흰 테두리가 잘 보인다. 고친 결과는 남겨 두어 다음에 이어서 고칠 수 있다.</p></div></div>`;}
 async function hasAlpha(blob){try{const bm=await createImageBitmap(blob),cv=document.createElement('canvas');cv.width=bm.width;cv.height=bm.height;const cx=cv.getContext('2d');cx.drawImage(bm,0,0);
   const W=bm.width-1,H=bm.height-1;return [[0,0],[W,0],[0,H],[W,H]].some(([x,y])=>cx.getImageData(x,y,1,1).data[3]<250);}catch(e){return false;}}
-async function storeSlot(k,b){ // 스탠딩은 원본을 raw:로 남기고 배경을 지워 넣는다
+async function storeSlot(k,b){ // 스탠딩은 원본을 raw:로 남기고 배경을 지워 넣는다. 새 그림이 들어오면 지난 편집(wk:)은 버린다
+  await imgDel('wk:'+k);
   if(k.startsWith('st:')&&ncfg().autoCut!==false&&!(await hasAlpha(b))){try{await imgPut('raw:'+k,b);b=await cutBg(b,{tol:40});}catch(e){toast('배경을 자동으로 지우지 못해 원본을 넣었어요: '+e.message);}}
+  else await imgDel('raw:'+k);
   await imgPut(k,b);setImg(k,b);}
 async function drawSlot(k,prompt,portrait,quiet){if(BUSY.has(k))return '이미 그리는 중';BUSY.add(k);if(modal&&modal.k===k){modal.err='';}render();
   try{let b;try{b=await naiDraw(fullPrompt(k,prompt),portrait);}catch(e){if(!/잦아요/.test(e.message))throw e;await new Promise(r=>setTimeout(r,8000));b=await naiDraw(fullPrompt(k,prompt),portrait);}
@@ -1940,9 +2011,6 @@ async function runBatch(keys){if(BATCH)return;const B=BATCH={keys,i:0,ok:0,fail:
     if(!B.stop)await new Promise(r=>setTimeout(r,1200));}
   BATCH=null;toast(`한꺼번에 그리기 ${B.stop?'멈춤':'끝'}: ${B.ok}장 그림${B.fail?` · ${B.fail}장 실패${B.err?' — '+B.err:''}`:''}`);soon();}
 async function slotBlob(k){return (await imgGet('raw:'+k))||(await imgGet(k))||await (async()=>{const u=repoURL(k);if(!u)return null;const r=await fetch(u);return r.ok?await r.blob():null;})();}
-async function cutPreview(m){m.busy=1;soon();try{if(!m.src)m.src=await slotBlob(m.k);if(!m.src)throw new Error('그림이 없어요.');const b=await cutBg(m.src,{tol:m.tol,holes:m.holes});if(modal!==m)return;
-    if(m.url)URL.revokeObjectURL(m.url);m.url=URL.createObjectURL(b);m.out=b;m.err=b.pct<.05?'배경을 거의 찾지 못했어요. 단색 배경(white background)으로 그린 그림에서 잘 된다.':'';}
-  catch(e){if(modal!==m)return;m.err=e.message;m.out=null;}m.busy=0;soon();}
 function autoDraw(k,prompt,portrait){const c=ncfg();if(!c.key.trim())return;imgGet(k).then(async b=>{if(!b&&!(await repoHas(k)))drawSlot(k,slotPrompt(k),portrait,true);});} // 저장소에 그림이 있으면 새로 뽑지 않는다
 let toastT=0;function toast(m){let t=document.getElementById('toast');if(!t){t=document.createElement('div');t.id='toast';t.className='toast';document.body.appendChild(t);}t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{t.hidden=true;},4000);}
 
@@ -1985,7 +2053,7 @@ function makeZip(files){const enc=new TextEncoder(),parts=[],cen=[];let off=0; /
   return new Blob([...parts,...cen,e.buffer],{type:'application/zip'});}
 async function exportPack(g){g.busy=1;g.msg='묶음을 만드는 중…';render();
   try{const db=await idb();const keys=await new Promise((res,rej)=>{const q=db.transaction('img').objectStore('img').getAllKeys();q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);});
-    const ks=keys.filter(k=>typeof k==='string'&&!k.startsWith('pc:')&&!k.startsWith('raw:'));if(!ks.length)throw new Error('내보낼 내 그림이 없어요. 먼저 그림을 그리거나 넣어 주세요.');
+    const ks=keys.filter(k=>typeof k==='string'&&!k.startsWith('pc:')&&!k.startsWith('raw:')&&!k.startsWith('wk:'));if(!ks.length)throw new Error('내보낼 내 그림이 없어요. 먼저 그림을 그리거나 넣어 주세요.');
     await MANP;const man=Object.assign({},MAN||{}),files=[];
     for(const k of ks){let b=await imgGet(k);if(!b)continue;if(g.webp!==false)b=await toWebp(b);const u8=new Uint8Array(await b.arrayBuffer()),ty=imgType(u8);const p=repoPath(k,ty==='image/webp'?'webp':ty==='image/jpeg'?'jpg':'png');man[k]=p;files.push(['img/'+p,u8]);}
     files.push(['img/index.json',new TextEncoder().encode(JSON.stringify({v:1,files:man},null,1))]);download(makeZip(files),'murim-img.zip');
@@ -2075,13 +2143,7 @@ function modalHTML(){if(!modal)return '';
    <label class="row"><input type="checkbox" id="n_autoPc" ${c.autoPc?'checked':''}> 태어날 때 주인공 초상을 자동으로 그린다</label>
    <div class="row" style="justify-content:space-between"><button class="ghost" data-a="mclose">닫기</button><button class="go" data-a="nsave">저장</button></div></div></div>`;}
   if(modal.t==='gal')return galHTML();
-  if(modal.t==='cut'){const m=modal;return `<div class="modal" data-a="mbg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mt"><h3 id="mt">배경 지우기 · ${esc(slotName(m.k))}</h3>
-   ${m.url?`<img class="cutpv chk" src="${m.url}" alt="배경을 지운 미리보기">`:'<p class="muted small">미리보기를 만드는 중…</p>'}
-   <label for="c_tol">민감도 <b id="c_tolv">${m.tol}</b> <span class="muted small">— 배경이 남으면 올리고, 인물이 깎이면 내린다</span></label><input type="range" id="c_tol" min="8" max="140" step="2" value="${m.tol}">
-   <label class="row"><input type="checkbox" id="c_holes" ${m.holes?'checked':''}> 팔과 몸 사이처럼 갇힌 배경도 지운다 <span class="muted small">(흰 옷이 깎일 수 있다)</span></label>
-   ${m.err?`<p class="status">${esc(m.err)}</p>`:''}${m.busy?'<p class="status">지우는 중…</p>':''}
-   <div class="row wrap" style="justify-content:space-between"><span class="row wrap"><button class="ghost" data-a="mclose">← 돌아가기</button>${m.hasRaw?'<button class="ghost" data-a="cundo">원본으로 되돌리기</button>':''}</span><button class="go" data-a="capply" ${m.out&&!m.busy?'':'disabled'}>이대로 쓰기</button></div>
-   <p class="muted small">단색 배경으로 그린 그림에서 가장 잘 된다. 스탠딩 프롬프트에는 'simple background, white background'가 들어 있다. 다른 도구로 배경을 지운 투명 PNG를 넣어도 된다. 원본은 이 브라우저에 남겨 두어 언제든 다시 지울 수 있다.</p></div></div>`;}
+  if(modal.t==='edit')return editHTML();
   const k=modal.k,src=imgSrc(k),u=src&&src.u,busy=BUSY.has(k),port=isPort(k),local=src&&src.s==='local',custom=!!ncfg().pr[k];
   return `<div class="modal" data-a="mbg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mt"><h3 id="mt">${esc(modal.title)}</h3>
    ${u?`<img class="big ${k.startsWith('st:')?'chk':''}" src="${u}" alt="${esc(modal.title)}">`:'<p class="muted small">아직 그림이 없다.</p>'}
@@ -2273,9 +2335,11 @@ function viewHTML(){return view==='me'?meHTML():view==='map'?mapHTML():view==='w
 function render(){
   const ae=document.activeElement,fid=ae&&ae.id&&app.contains(ae)?ae.id:null,sel=fid&&'selectionStart' in ae?[ae.selectionStart,ae.selectionEnd]:null;
   const m0=document.getElementById('main'),st=m0?m0.scrollTop:0,sh0=document.querySelector('.sheet'),sst=sh0?sh0.scrollTop:0,mk=modal?modal.t+'|'+(modal.k||'')+'|'+(modal.tab||''):'',sameM=mk&&mk===lastMK;lastMK=mk;
+  const eh0=document.getElementById('edhost');if(eh0&&ED){ED.sl=eh0.scrollLeft;ED.st=eh0.scrollTop;}
   app.innerHTML=(S.phase==='birth'?`<main class="main" id="main">${birthHTML()}</main>`:S.phase==='end'?`<main class="main" id="main">${endHTML()}</main>`:topHTML()+`<main class="main" id="main">${viewHTML()}</main>`+navHTML())+modalHTML();
   const m1=document.getElementById('main');if(m1)m1.scrollTop=resetScroll?0:st;resetScroll=false;
   const sh1=document.querySelector('.sheet');if(sh1){if(sameM)sh1.scrollTop=sst;else if(modal&&modal.sst!=null){sh1.scrollTop=modal.sst;modal.sst=null;}} // 하위 창에서 돌아오면 목록 스크롤을 되살린다
+  const eh1=document.getElementById('edhost');if(eh1&&ED&&ED.cv){eh1.appendChild(ED.cv);eh1.scrollLeft=ED.sl||0;eh1.scrollTop=ED.st||0;}
   if(fid){const el=document.getElementById(fid);if(el){el.focus({preventScroll:true});if(sel)try{el.setSelectionRange(sel[0],sel[1]);}catch(e){}}}}
 function closeModal(){modal=modal&&modal.back||null;render();} // 하위 창은 부모 창으로 돌아간다
 function readNaiForm(){const c=modal.c;c.key=document.getElementById('n_key').value;c.model=document.getElementById('n_model').value;c.relay=document.getElementById('n_relay').value.trim();c.autoEv=document.getElementById('n_autoEv').checked;c.autoPc=document.getElementById('n_autoPc').checked;c.useRepo=document.getElementById('n_repo').checked;}
@@ -2320,24 +2384,29 @@ app.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b||b
   else if(a==='gnosure'){modal.sure=0;render();}
   else if(a==='gdev'){modal.dev=!modal.dev;render();}
   else if(a==='gstop'){if(BATCH)BATCH.stop=true;render();}
-  else if(a==='ncut'){const m={t:'cut',k:modal.k,tol:40,holes:false,back:modal};modal=m;render();imgGet('raw:'+m.k).then(r=>{m.hasRaw=!!r;cutPreview(m);});}
-  else if(a==='capply'){const m=modal;(async()=>{if(!(await imgGet('raw:'+m.k)))await imgPut('raw:'+m.k,m.src);await imgPut(m.k,m.out);setImg(m.k,m.out);if(modal===m)modal=m.back;render();toast('배경을 지웠어요.');})().catch(e=>{m.err=e.message;render();});}
-  else if(a==='cundo'){const m=modal;imgGet('raw:'+m.k).then(async r=>{if(!r)return;await imgPut(m.k,r);setImg(m.k,r);if(modal===m)modal=m.back;render();toast('원본으로 되돌렸어요.');});}
+  else if(a==='ncut'){openEditor(modal.k);}
+  else if(a==='etool'&&ED){ED.tool=b.dataset.v;render();}
+  else if(a==='ebg'&&ED){ED.bg=b.dataset.v;render();}
+  else if(a==='ezoom'&&ED){ED.zoom=+b.dataset.v;ED.cv.style.width=ED.zoom*100+'%';render();}
+  else if(a==='eundo'&&ED&&ED.undo.length){ED.work.data.set(ED.undo.pop());ED.cx.putImageData(ED.work,0,0);render();}
+  else if(a==='eauto'&&ED){edPush(ED);ED.work.data.set(ED.orig.data);autoMask(ED.work.data,ED.W,ED.H,ED.tol,false);ED.cx.putImageData(ED.work,0,0);render();}
+  else if(a==='eorig'&&ED){edPush(ED);ED.work.data.set(ED.orig.data);ED.cx.putImageData(ED.work,0,0);render();}
+  else if(a==='esave'){edSave();}
   else if(a==='gslot'){const k=b.dataset.k,sh=document.querySelector('.sheet');modal.sst=sh?sh.scrollTop:0;modal={t:'draw',k,title:slotTitle(k),prompt:slotPrompt(k),err:'',back:modal};render();}
   else if(a==='gpreset'){const c=ncfg();c.style=STYLE_PRESETS[+b.dataset.i][1];nsave(c);render();}
   else if(a==='gcopy'){const w=b.dataset.w;copyText(w==='pv'?fullPrompt('st:seorin'):w==='neg'?((ncfg().neg||'').trim()||NAI_NEG):fullPrompt(modal.k,modal.prompt));}
   else if(a==='gexport'){exportPack(modal);}
   else if(a==='nreset'){const c=ncfg();delete c.pr[modal.k];nsave(c);modal.prompt=basePrompt(modal.k);render();}
   else if(a==='nsavefile'){const k=modal.k;imgGet(k).then(bl=>{if(bl)bl.arrayBuffer().then(ab=>{const t=imgType(new Uint8Array(ab));download(bl,fileName(k).replace(/png$/,t==='image/webp'?'webp':t==='image/jpeg'?'jpg':'png'));});});}
-  else if(a==='ndel'){const k=modal.k;Promise.all([imgDel(k),imgDel('raw:'+k)]).then(()=>{setImg(k,null);render();});}
+  else if(a==='ndel'){const k=modal.k;Promise.all([imgDel(k),imgDel('raw:'+k),imgDel('wk:'+k)]).then(()=>{setImg(k,null);render();});}
   else if(a==='mclose')closeModal();
   else if(a==='mbg'){if(ev.target===b)closeModal();}
   else if(a==='quit'){if(modal&&modal.sure){S=newFate();modal=null;tab='ab';view='ev';resetScroll=true;save();render();}else if(modal){modal.sure=1;render();}}
 });
-app.addEventListener('input',ev=>{if(ev.target.id==='c_tol'){const v=document.getElementById('c_tolv');if(v)v.textContent=ev.target.value;return;}if(ev.target.id==='nm'&&S.phase==='birth'){S.name=S.base.name=ev.target.value;}if(ev.target.id==='cname'&&S.tmp.craft)S.tmp.craft.name=ev.target.value;if(ev.target.id==='fname'&&S.tmp.forge)S.tmp.forge.name=ev.target.value;if(ev.target.id==='n_prompt'&&modal){modal.prompt=ev.target.value;savePr(modal.k,modal.prompt);const f=document.getElementById('n_full');if(f)f.textContent=fullPrompt(modal.k,modal.prompt);}
+app.addEventListener('input',ev=>{if(ED&&modal&&modal.t==='edit'){const id=ev.target.id;if(id==='e_tol'||id==='e_size'){ED[id==='e_tol'?'tol':'size']=+ev.target.value;const v=document.getElementById(id+'v');if(v)v.textContent=ev.target.value;return;}}if(ev.target.id==='nm'&&S.phase==='birth'){S.name=S.base.name=ev.target.value;}if(ev.target.id==='cname'&&S.tmp.craft)S.tmp.craft.name=ev.target.value;if(ev.target.id==='fname'&&S.tmp.forge)S.tmp.forge.name=ev.target.value;if(ev.target.id==='n_prompt'&&modal){modal.prompt=ev.target.value;savePr(modal.k,modal.prompt);const f=document.getElementById('n_full');if(f)f.textContent=fullPrompt(modal.k,modal.prompt);}
   if(modal&&modal.t==='gal'&&/^g_(style|tnpc|tev|tmap|neg|q)$/.test(ev.target.id)){const c=ncfg(),v=id=>document.getElementById(id).value;c.style=v('g_style');c.tnpc=v('g_tnpc');c.tev=v('g_tev');c.tmap=v('g_tmap');c.neg=v('g_neg');c.q=document.getElementById('g_q').checked;nsave(c);const pv=document.getElementById('g_pv');if(pv)pv.textContent=fullPrompt('st:seorin');}if(modal&&modal.t==='nai'&&ev.target.id.startsWith('n_'))readNaiForm();});
 app.addEventListener('change',ev=>{if(modal&&modal.t==='gal'){const id=ev.target.id;if(id==='g_miss'){modal.miss=ev.target.checked;render();return;}if(id==='g_webp'){modal.webp=ev.target.checked;return;}if(id==='g_q'){const c=ncfg();c.q=ev.target.checked;nsave(c);render();return;}if(id==='g_files'&&ev.target.files.length){importFiles(modal,[...ev.target.files]);return;}if(id==='g_autocut'){const c=ncfg();c.autoCut=ev.target.checked;nsave(c);return;}}
-  if(modal&&modal.t==='cut'){const id=ev.target.id;if(id==='c_tol'){modal.tol=+ev.target.value;cutPreview(modal);return;}if(id==='c_holes'){modal.holes=ev.target.checked;cutPreview(modal);return;}}if(modal&&modal.t==='nai'&&ev.target.id.startsWith('n_'))readNaiForm();if(ev.target.id==='n_file'&&modal&&ev.target.files[0]){const k=modal.k,f=ev.target.files[0];const m=modal;storeSlot(k,f).then(()=>render()).catch(e=>{m.err='그림을 저장하지 못했어요: '+e.message;render();});}});
+  if(modal&&modal.t==='edit'&&ED&&ev.target.id==='e_contig'){ED.contig=ev.target.checked;return;}if(modal&&modal.t==='nai'&&ev.target.id.startsWith('n_'))readNaiForm();if(ev.target.id==='n_file'&&modal&&ev.target.files[0]){const k=modal.k,f=ev.target.files[0];const m=modal;storeSlot(k,f).then(()=>render()).catch(e=>{m.err='그림을 저장하지 못했어요: '+e.message;render();});}});
 document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&modal){ev.preventDefault();closeModal();return;}const g=ev.target.closest&&ev.target.closest('.mn');if(g&&(ev.key==='Enter'||ev.key===' ')){ev.preventDefault();mapSel=g.dataset.r;render();}});
 
 function start(data){
