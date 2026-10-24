@@ -2798,25 +2798,56 @@ E({id:'wedLife',tag:'love',t:'함께 사는 날',title:S=>NPCS[S.spouse]?`함께
  x:S=>S.tmp.x,
  ch:S=>WED_L[S.tmp.wi||0].ch.map(([t,f])=>({t,go:S=>f(S)+(chance(.35)?dl(S.spouse):'')}))});
 
-/* ══ AI 이야기꾼: Claude가 지금까지의 삶을 읽고 새 사건을 짓는다 ══
-   키는 이 브라우저(localStorage)에만 있고 Anthropic API로 바로 보낸다. */
+/* ══ AI 이야기꾼: AI가 지금까지의 삶을 읽고 새 사건을 짓는다 ══
+   Claude(Anthropic) · Gemini(Google) · OpenAI 방식 API(OpenRouter·OpenAI·DeepSeek·Ollama 클라우드…)를 고를 수 있다.
+   키는 이 브라우저(localStorage)에만 있고 고른 AI 회사로 바로(또는 내 중계 서버를 거쳐) 보낸다. */
 const AKEY='murim-ai';
+const AI_PROV={anthropic:'Claude (Anthropic)',gemini:'Gemini (Google)',openai:'OpenAI 방식 (OpenRouter 등)'};
 const AI_MODELS=[['claude-opus-5-5','Claude Opus 5.5 · 글이 가장 좋다'],['claude-sonnet-5-5','Claude Sonnet 5.5 · 빠르고 값이 절반'],['claude-haiku-5-5','Claude Haiku 5.5 · 가장 빠르고 싸다']];
-function acfg(){let c={};try{c=JSON.parse(localStorage.getItem(AKEY)||'{}');}catch(e){}return Object.assign({key:'',model:'claude-opus-5-5',freq:0},c);}
-function asave(c){try{localStorage.setItem(AKEY,JSON.stringify({key:c.key||'',model:c.model||'claude-opus-5-5',freq:+c.freq||0}));}catch(e){}}
-const aiChoice=S=>acfg().key&&S.age>=8?[{t:'AI가 짓는 이야기를 펼친다',h:'바라는 이야기를 적을 수도 있다 · API 사용료',ai:1}]:[];
-function aiCfgHTML(a){return `<p class="grp-t" style="margin:0">AI 이야기꾼 (선택)</p>
-   <p class="muted small">Claude가 지금까지의 삶과 인연을 읽고 새 사건을 지어 준다. 키는 이 브라우저에만 저장되고 Anthropic에 바로 보낸다. 깃허브에 올리는 파일에는 들어가지 않는다. 사건 하나에 대략 Opus는 몇십 원, Sonnet은 그 절반, Haiku는 몇 원어치 사용료가 든다.</p>
-   <label for="a_key">Anthropic API 키 (platform.claude.com → API Keys)</label><input type="password" id="a_key" value="${esc(a.key)}" autocomplete="off" placeholder="sk-ant-...">
-   <label for="a_model">모델</label><select id="a_model">${AI_MODELS.map(([v,l])=>`<option value="${v}" ${a.model===v?'selected':''}>${l}</option>`).join('')}</select>
+const GEM_MODELS=['gemini-2.5-flash','gemini-2.5-pro','gemini-2.5-flash-lite'];
+const OAI_PRE=[
+ ['OpenRouter','https://openrouter.ai/api/v1','','openrouter.ai → Keys에서 키를 만든다. 모델 이름은 openrouter.ai/models의 ID(예: deepseek/deepseek-chat-v3.1)를 그대로 쓴다. 여러 회사 모델을 키 하나로 쓸 수 있다.'],
+ ['OpenAI','https://api.openai.com/v1','','platform.openai.com → API keys에서 키를 만든다. 모델 이름은 OpenAI 모델 목록에 있는 이름을 그대로 쓴다.'],
+ ['DeepSeek','https://api.deepseek.com/v1','deepseek-chat','platform.deepseek.com → API keys에서 키를 만든다. 브라우저에서 바로 연결되지 않으면 중계 서버를 켠다.'],
+ ['Ollama 클라우드','https://ollama.com/v1','gpt-oss:120b','ollama.com → Settings → Keys에서 키를 만든다. 모델은 ollama.com의 클라우드 모델 이름(끝의 -cloud는 뺀다). 무료 플랜은 사용량 한도가 있다. 브라우저에서 바로 연결되지 않으면 중계 서버를 켠다.']];
+const AI_DEF={anthropic:{key:'',model:'claude-opus-5-5'},gemini:{key:'',model:'gemini-2.5-flash'},openai:{key:'',model:'',base:'https://openrouter.ai/api/v1'}};
+function acfg(){let c={};try{c=JSON.parse(localStorage.getItem(AKEY)||'{}');}catch(e){}
+ const p=c.p||{anthropic:{key:c.key||'',model:c.model||'claude-opus-5-5'}}; // 예전 설정(Claude 하나)은 그대로 옮긴다
+ return {prov:AI_DEF[c.prov]?c.prov:'anthropic',freq:+c.freq||0,relay:!!c.relay,p:Object.fromEntries(Object.keys(AI_DEF).map(k=>[k,Object.assign({},AI_DEF[k],p[k])]))};}
+function asave(c){try{localStorage.setItem(AKEY,JSON.stringify({prov:c.prov,freq:+c.freq||0,relay:!!c.relay,p:c.p}));}catch(e){}}
+const aiCur=c=>c.p[c.prov];
+const normBase=u=>String(u||'').trim().replace(/\/+$/,'').replace(/\/chat\/completions$/,'');
+const oaiPre=p=>OAI_PRE.find(x=>normBase(x[1])===normBase(p.base));
+const aiReady=c=>{const p=aiCur(c);return c.prov==='openai'?!!(normBase(p.base)&&p.model.trim()&&p.key.trim()):!!(p.key.trim()&&p.model.trim());};
+const aiName=c=>{const p=aiCur(c);return c.prov==='anthropic'?(AI_MODELS.find(x=>x[0]===p.model)||[0,p.model])[1]:`${c.prov==='gemini'?'Gemini':(oaiPre(p)||['OpenAI 방식'])[0]} · ${p.model}`;};
+const aiChoice=S=>aiReady(acfg())&&S.age>=8?[{t:'AI가 짓는 이야기를 펼친다',h:'바라는 이야기를 적을 수도 있다 · API 사용료',ai:1}]:[];
+function aiCfgHTML(a){const k=a.prov,p=aiCur(a),pre=k==='openai'?oaiPre(p):null;
+ return `<p class="grp-t" style="margin:0">AI 이야기꾼 (선택)</p>
+   <p class="muted small">AI가 지금까지의 삶과 인연을 읽고 새 사건을 지어 준다. 키는 이 브라우저에만 저장되고 고른 AI 회사로 바로 보낸다. 깃허브에 올리는 파일에는 들어가지 않는다. 사건 하나마다 그 회사의 사용료가 든다(Gemini는 무료 사용량이 있다).</p>
+   <label for="a_prov">쓸 AI</label><select id="a_prov">${Object.entries(AI_PROV).map(([v,l])=>`<option value="${v}" ${k===v?'selected':''}>${l}</option>`).join('')}</select>
+   ${k==='anthropic'?`<label for="a_key">Anthropic API 키 (platform.claude.com → API Keys)</label><input type="password" id="a_key" value="${esc(p.key)}" autocomplete="off" placeholder="sk-ant-...">
+   <label for="a_model">모델</label><select id="a_model">${AI_MODELS.map(([v,l])=>`<option value="${v}" ${p.model===v?'selected':''}>${l}</option>`).join('')}</select>`
+   :k==='gemini'?`<label for="a_key">Gemini API 키 (aistudio.google.com → Get API key)</label><input type="password" id="a_key" value="${esc(p.key)}" autocomplete="off" placeholder="AIza...">
+   <label for="a_model">모델</label><input type="text" id="a_model" list="a_gm" value="${esc(p.model)}" autocomplete="off" placeholder="gemini-2.5-flash"><datalist id="a_gm">${GEM_MODELS.map(m=>`<option value="${m}">`).join('')}</datalist>
+   <p class="muted small">flash는 빠르고 무료 사용량이 넉넉하다. pro는 글이 더 좋지만 느리다.</p>`
+   :`<div class="row wrap">${OAI_PRE.map((x,i)=>`<button class="ghost" data-a="apre" data-i="${i}" style="padding:6px 10px">${esc(x[0])}</button>`).join('')}</div>
+   <label for="a_base">API 주소 (/chat/completions 앞부분까지)</label><input type="text" id="a_base" value="${esc(p.base)}" autocomplete="off" placeholder="https://openrouter.ai/api/v1">
+   <label for="a_key">API 키</label><input type="password" id="a_key" value="${esc(p.key)}" autocomplete="off">
+   <label for="a_model">모델 이름</label><input type="text" id="a_model" value="${esc(p.model)}" autocomplete="off" placeholder="예: deepseek/deepseek-chat-v3.1">
+   <p class="muted small">${esc(pre?pre[3]:'OpenAI 방식으로 부르는 API면 된다. 위 버튼으로 주소를 채울 수 있다. 모델 이름은 그 서비스에 나온 이름을 그대로 쓴다.')}</p>`}
+   ${k!=='anthropic'?`<label class="row small"><input type="checkbox" id="a_relay" ${a.relay?'checked':''}> 위의 중계 서버를 거쳐 보낸다 (브라우저에서 바로 연결되지 않을 때. 중계 서버를 저장소의 최신 proxy/worker.js로 바꿔 둔다)</label>`:''}
    <label for="a_freq">저절로 끼어드는 AI 사건</label><select id="a_freq">${[[0,'끔 · 올해의 나날에서 고를 때만'],[.15,'가끔 · 한 해에 15%'],[.3,'자주 · 한 해에 30%']].map(([v,l])=>`<option value="${v}" ${+a.freq===v?'selected':''}>${l}</option>`).join('')}</select>`;}
+// 설정 창에 보이는 AI 칸을 읽는다. 칸은 지금 보이는 AI(a.prov)의 것이고, 'AI' 선택이 바뀌었으면 그다음에 바꾼다
+function readAiForm(a){const g=id=>document.getElementById(id),p=a.p[a.prov];if(!g('a_prov'))return a;
+ p.key=g('a_key').value.trim();p.model=g('a_model').value.trim();if(g('a_base'))p.base=g('a_base').value.trim();if(g('a_relay'))a.relay=g('a_relay').checked;
+ a.freq=+g('a_freq').value;a.prov=g('a_prov').value;return a;}
 function aiModalHTML(){const m=modal,c=acfg(),busy=!!m.busy;return `<div class="modal" data-a="mbg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mt"><h3 id="mt">AI 이야기꾼</h3>
-  ${c.key?`<p class="muted small" style="margin:0">지금까지의 삶과 인연을 읽고 이번 해의 이야기를 새로 짓는다. 바라는 이야기가 있으면 적는다. 비워 두면 AI가 고른다.</p>
+  ${aiReady(c)?`<p class="muted small" style="margin:0">지금까지의 삶과 인연을 읽고 이번 해의 이야기를 새로 짓는다. 바라는 이야기가 있으면 적는다. 비워 두면 AI가 고른다.</p>
    <label for="ai_wish">바라는 이야기 (선택)</label><textarea id="ai_wish" maxlength="200" placeholder="예: 연인과 칠석날 밤 / 옛 원수가 객잔에 찾아온다" ${busy?'disabled':''}>${esc(m.wish||'')}</textarea>
    ${m.err?`<p class="status">${esc(m.err)}</p>`:''}${busy?'<p class="status">이야기를 짓는 중… 보통 10~40초 걸린다. 닫으면 짓던 이야기는 버린다.</p>':''}
    <div class="row" style="justify-content:space-between"><button class="ghost" data-a="mclose">닫기</button><button class="go" data-a="aigo" ${busy?'disabled':''}>이야기 짓기</button></div>`
-  :`<p class="small">설정에서 Anthropic API 키를 넣어야 쓸 수 있다.</p><div class="row" style="justify-content:space-between"><button class="ghost" data-a="mclose">닫기</button><button class="go" data-a="nai">설정 열기</button></div>`}
-  <p class="muted small" style="margin:0">${esc((AI_MODELS.find(x=>x[0]===c.model)||[0,c.model])[1])} · 한 번 지을 때마다 API 사용료가 든다.</p></div></div>`;}
+  :`<p class="small">설정에서 쓸 AI의 키와 모델을 넣어야 쓸 수 있다.</p><div class="row" style="justify-content:space-between"><button class="ghost" data-a="mclose">닫기</button><button class="go" data-a="nai">설정 열기</button></div>`}
+  <p class="muted small" style="margin:0">${esc(aiName(c))} · 한 번 지을 때마다 API 사용료가 든다.</p></div></div>`;}
 const AI_FX={fame:[-30,60],moral:[-25,25],gold:[-200,300],hp:[-40,40],mood:[-30,30],contrib:[-30,40],ng:[0,10],tongue:[-5,8],lore:[-5,8],cult:[-5,8],mind:[-5,8],savvy:[-5,8],med:[0,8],forge:[0,8],qing:[0,6],enemies:[-1,2],salgi:[-5,10],exp:[0,10]};
 const AI_SCHEMA={type:'object',additionalProperties:false,required:['title','text','npc','choices'],properties:{
  title:{type:'string'},text:{type:'string'},npc:{type:'string'},
@@ -2874,21 +2905,53 @@ function aiState(S,wish){const o=S.org&&ORGS[S.org],p=pwOf(S),lv=lover(S);
   `[최근 일]\n${S.log.slice(-10).map(l=>`${l.age}세 ${l.t}`).join('\n')||'없음'}`,
   `[최근 AI 이야기 제목] ${(S.aiSeen||[]).slice(-8).join(', ')||'없음'}`,
   `[플레이어의 바람] ${wish||'없음. 지금 처지에 어울리는 이야기를 골라라.'}`].join('\n');}
-const aiErr=(st,t)=>{let m='';try{m=JSON.parse(t).error.message;}catch(e){}return st===401?'API 키가 맞지 않아요. 설정에서 키를 확인해 주세요.':st===403?'이 키로는 쓸 수 없어요. '+m:st===429?'요청이 너무 많아요. 잠시 뒤에 다시 해 보세요.':st>=500?'Anthropic 서버가 바빠요. 잠시 뒤에 다시 해 보세요.':`요청이 거절됐어요 (${st}). ${m}`;};
-async function aiCall(sys,user){const c=acfg();if(!c.key)throw new Error('설정에서 Anthropic API 키를 넣어 주세요.');
- const fb=/opus-5-5|sonnet-5-5/.test(c.model); // 안전 분류기가 거절하면 서버가 다른 모델로 이어 쓴다
- const body={model:c.model,max_tokens:8000,system:[{type:'text',text:sys,cache_control:{type:'ephemeral'}}],messages:[{role:'user',content:user}],output_config:{effort:'low',format:{type:'json_schema',schema:AI_SCHEMA}}};
- const h={'content-type':'application/json','x-api-key':c.key,'anthropic-version':'2026-10-21','anthropic-dangerous-direct-browser-access':'true'};
+const aiErr=(st,t,who)=>{let m='';try{const j=JSON.parse(t);m=(Array.isArray(j)?j[0]:j).error.message;}catch(e){m=String(t||'').slice(0,120);}
+ return st===401||st===403||(st===400&&/api[ _-]?key/i.test(m))?`${who||'AI'} 키가 맞지 않거나 쓸 수 없어요. 설정에서 키를 확인해 주세요.${m?' ('+m+')':''}`:st===404?`모델 이름이나 API 주소를 확인해 주세요.${m?' ('+m+')':''}`:st===429?'요청이 너무 많거나 사용량을 다 썼어요. 잠시 뒤에 다시 해 보세요.':st>=500?`${who||'AI'} 서버가 바빠요. 잠시 뒤에 다시 해 보세요.`:`요청이 거절됐어요 (${st}). ${m}`;};
+const AI_REFUSED='AI가 이 이야기는 짓지 않겠다고 했어요. 다른 바람으로 다시 해 보세요.',AI_LONG='이야기가 너무 길어 끊겼어요. 다시 해 보세요.';
+const aiUrl=(c,u)=>c.relay&&c.prov!=='anthropic'&&ncfg().relay.trim()?naiUrl(ncfg(),u):u;
+async function aiFetch(c,url,opt,who){try{return await fetch(aiUrl(c,url),opt);}
+ catch(e){throw new Error(`${who}에 연결하지 못했어요. 인터넷 연결을 확인해 주세요.${c.prov==='anthropic'?'':c.relay&&ncfg().relay.trim()?' 중계 서버가 이 주소를 허용하는지(최신 proxy/worker.js인지)도 확인해 주세요.':' 브라우저에서 바로 연결되지 않는 서비스라면 설정에서 \'중계 서버를 거쳐 보낸다\'를 켜 보세요.'}`);}}
+// Claude 말고는 JSON 모양을 글로 알려 주고, 답에서 JSON을 골라 읽는다
+const JSON_SHAPE=`\n\n[출력 형식] 아래 모양의 JSON 하나만 출력한다. 설명이나 코드 블록을 붙이지 않는다.
+{"title":"제목","text":"본문","npc":"인물 id 또는 빈 문자열","choices":[{"t":"행동","hint":"","result":"결과","effects":[{"k":"fame","v":5}],"rel":[{"id":"인물 id","n":5}],"battle":{"foe":"","lvl":0,"win":"","lose":""},"deed":""}]}
+effects의 k는 다음 중 하나만 쓴다: ${Object.keys(AI_FX).join(', ')}. 인물의 말은 “ ”로 감싸고, 문자열 안에 큰따옴표(")를 쓰지 않는다.`;
+const JSON_STRICT='\n\n[중요] 앞 응답은 JSON으로 읽을 수 없었다. 응답 전체가 올바른 JSON 하나여야 한다. 문자열 안의 줄바꿈은 \\n으로 쓰고, 마지막 항목 뒤에 쉼표를 두지 않는다.';
+function aiLoose(t){const s=String(t||'').replace(/^﻿/,'').replace(/```(?:json|JSON)?/g,'').trim(),a=s.indexOf('{'),b=s.lastIndexOf('}');if(a<0||b<=a)throw new Error('no json');
+ const x=s.slice(a,b+1);try{return JSON.parse(x);}catch(e){return JSON.parse(x.replace(/,\s*([}\]])/g,'$1'));}}
+async function aiCall(sys,user){const c=acfg();if(!aiReady(c))throw new Error('설정에서 쓸 AI의 키와 모델을 넣어 주세요.');
+ if(c.prov==='anthropic')return claudeCall(c,sys,user);
+ for(let i=0;i<2;i++){const tx=await (c.prov==='gemini'?gemCall:oaiCall)(c,sys,user+JSON_SHAPE+(i?JSON_STRICT:''));try{return aiLoose(tx);}catch(e){}}
+ throw new Error('AI 응답을 읽지 못했어요. 다시 해 보거나 다른 모델을 써 보세요.');}
+async function claudeCall(c,sys,user){const p=aiCur(c);
+ const fb=/opus-5-5|sonnet-5-5/.test(p.model); // 안전 분류기가 거절하면 서버가 다른 모델로 이어 쓴다
+ const body={model:p.model,max_tokens:8000,system:[{type:'text',text:sys,cache_control:{type:'ephemeral'}}],messages:[{role:'user',content:user}],output_config:{effort:'low',format:{type:'json_schema',schema:AI_SCHEMA}}};
+ const h={'content-type':'application/json','x-api-key':p.key.trim(),'anthropic-version':'2026-10-21','anthropic-dangerous-direct-browser-access':'true'};
  if(fb){body.fallbacks='default';h['anthropic-beta']='server-side-fallback-2026-07-01';}
- const go=()=>fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:h,body:JSON.stringify(body)});
- let r;try{r=await go();}catch(e){throw new Error('Anthropic에 연결하지 못했어요. 인터넷 연결을 확인해 주세요.');}
- if(r.status===400&&fb){const t=await r.text();if(!/fallback/i.test(t))throw new Error(aiErr(400,t));delete body.fallbacks;delete h['anthropic-beta'];r=await go();}
- if(!r.ok)throw new Error(aiErr(r.status,await r.text()));
+ const go=()=>aiFetch(c,'https://api.anthropic.com/v1/messages',{method:'POST',headers:h,body:JSON.stringify(body)},'Anthropic');
+ let r=await go();
+ if(r.status===400&&fb){const t=await r.text();if(!/fallback/i.test(t))throw new Error(aiErr(400,t,'Anthropic'));delete body.fallbacks;delete h['anthropic-beta'];r=await go();}
+ if(!r.ok)throw new Error(aiErr(r.status,await r.text(),'Anthropic'));
  const j=await r.json();
- if(j.stop_reason==='refusal')throw new Error('AI가 이 이야기는 짓지 않겠다고 했어요. 다른 바람으로 다시 해 보세요.');
- if(j.stop_reason==='max_tokens')throw new Error('이야기가 너무 길어 끊겼어요. 다시 해 보세요.');
+ if(j.stop_reason==='refusal')throw new Error(AI_REFUSED);
+ if(j.stop_reason==='max_tokens')throw new Error(AI_LONG);
  const tx=(j.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
  try{return JSON.parse(tx);}catch(e){throw new Error('AI 응답을 읽지 못했어요. 다시 해 보세요.');}}
+async function gemCall(c,sys,user){const p=aiCur(c);
+ const body={systemInstruction:{parts:[{text:sys}]},contents:[{role:'user',parts:[{text:user}]}],generationConfig:{maxOutputTokens:16000,responseMimeType:'application/json'},
+  safetySettings:['HARM_CATEGORY_HARASSMENT','HARM_CATEGORY_HATE_SPEECH','HARM_CATEGORY_SEXUALLY_EXPLICIT','HARM_CATEGORY_DANGEROUS_CONTENT'].map(k=>({category:k,threshold:'BLOCK_ONLY_HIGH'}))};
+ const r=await aiFetch(c,`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(p.model.trim())}:generateContent`,{method:'POST',headers:{'content-type':'application/json','x-goog-api-key':p.key.trim()},body:JSON.stringify(body)},'Google');
+ if(!r.ok)throw new Error(aiErr(r.status,await r.text(),'Gemini'));
+ const j=await r.json();if(j.promptFeedback&&j.promptFeedback.blockReason)throw new Error(AI_REFUSED);
+ const cand=(j.candidates||[])[0];if(!cand)throw new Error(AI_REFUSED);
+ if(['SAFETY','PROHIBITED_CONTENT','BLOCKLIST','SPII','RECITATION'].includes(cand.finishReason))throw new Error(AI_REFUSED);
+ if(cand.finishReason==='MAX_TOKENS')throw new Error(AI_LONG);
+ return ((cand.content&&cand.content.parts)||[]).filter(x=>!x.thought).map(x=>x.text||'').join('');}
+async function oaiCall(c,sys,user){const p=aiCur(c),who=(oaiPre(p)||['AI 서버'])[0],h={'content-type':'application/json',authorization:'Bearer '+p.key.trim()};
+ const r=await aiFetch(c,normBase(p.base)+'/chat/completions',{method:'POST',headers:h,body:JSON.stringify({model:p.model.trim(),max_tokens:6000,messages:[{role:'system',content:sys},{role:'user',content:user}]})},who);
+ if(!r.ok)throw new Error(aiErr(r.status,await r.text(),who));
+ const j=await r.json(),ch=(j.choices||[])[0];if(!ch)throw new Error(`${who}가 빈 응답을 보냈어요. ${String(j.error&&j.error.message||'').slice(0,120)}`);
+ if(ch.finish_reason==='content_filter')throw new Error(AI_REFUSED);if(ch.finish_reason==='length')throw new Error(AI_LONG);
+ return (ch.message&&ch.message.content)||'';}
 function aiClean(j){if(!j||typeof j!=='object')throw new Error('AI 응답을 읽지 못했어요.');const s=(v,n)=>String(v==null?'':v).trim().slice(0,n);
  const ch=(Array.isArray(j.choices)?j.choices:[]).slice(0,4).map(c=>({t:s(c.t,40),hint:s(c.hint,60),result:s(c.result,500),deed:s(c.deed,60),
    effects:(Array.isArray(c.effects)?c.effects:[]).filter(e=>e&&AI_FX[e.k]&&Number.isFinite(+e.v)).slice(0,6).map(e=>({k:e.k,v:clamp(Math.round(+e.v),...AI_FX[e.k])})),
@@ -2910,10 +2973,10 @@ function aiGo(){const m=modal;if(!m||m.t!=='ai'||m.busy)return;const el=document
    ev.age=age;S.ai=ev;(S.aiSeen||(S.aiSeen=[])).push(ev.title);modal=null;openEvent(S,'ai');view='ev';resetScroll=true;save();render();})
   .catch(e=>{if(rid!==AI_RID||modal!==m)return;m.busy=0;m.err=e.message||String(e);render();});}
 // 저절로 끼어드는 AI 사건: 한 해를 넘길 때 다음 해 것을 미리 지어 둔다
-function aiTake(S,id){const c=acfg(),n=S.aiNext;if(!n||!c.key||!(c.freq>0))return false;if(S.age-n.age>2){S.aiNext=null;return false;}
+function aiTake(S,id){const c=acfg(),n=S.aiNext;if(!n||!aiReady(c)||!(c.freq>0))return false;if(S.age-n.age>2){S.aiNext=null;return false;}
  if(id!=='focus'&&!(EVM[id]&&EVM[id].w&&!EVM[id].force))return false; // 경지의 벽이나 꼭 일어나야 하는 사건은 건드리지 않는다
  if(!chance(c.freq))return false;S.ai=n;S.aiNext=null;(S.aiSeen||(S.aiSeen=[])).push(n.title);return true;}
-function aiPrefetch(){const c=acfg();if(!c.key||!(c.freq>0)||AI_PF||!S||S.aiNext||S.dead||S.phase==='birth'||S.phase==='end'||S.age<10)return;
+function aiPrefetch(){const c=acfg();if(!aiReady(c)||!(c.freq>0)||AI_PF||!S||S.aiNext||S.dead||S.phase==='birth'||S.phase==='end'||S.age<10)return;
  AI_PF=1;const life=S.lifeId,age=S.age;
  aiGen(S,'').then(ev=>{if(S&&S.lifeId===life&&!S.aiNext){ev.age=age;S.aiNext=ev;save();}}).catch(e=>{if(!AI_WARN){AI_WARN=1;toast('AI 사건을 미리 짓지 못했어요: '+(e.message||e));}}).finally(()=>{AI_PF=0;});}
 
@@ -3736,7 +3799,7 @@ function render(){
   if(fid){const el=document.getElementById(fid);if(el){el.focus({preventScroll:true});if(sel)try{el.setSelectionRange(sel[0],sel[1]);}catch(e){}}}}
 function closeModal(){modal=modal&&modal.back||null;render();} // 하위 창은 부모 창으로 돌아간다
 function readNaiForm(){const c=modal.c;c.key=document.getElementById('n_key').value;c.model=document.getElementById('n_model').value;c.relay=document.getElementById('n_relay').value.trim();c.autoEv=document.getElementById('n_autoEv').checked;c.autoPc=document.getElementById('n_autoPc').checked;c.useRepo=document.getElementById('n_repo').checked;
-  const ak=document.getElementById('a_key');if(ak)c.ai={key:ak.value.trim(),model:document.getElementById('a_model').value,freq:+document.getElementById('a_freq').value};}
+  c.ai=readAiForm(c.ai||acfg());}
 function slotTitle(k){const [t,id]=k.split(/:(.+)/);if(t==='st')return `스탠딩 · ${safe(()=>npcNick(id,S))} ${NPCS[id].n}`;return t==='map'?'중원 지도':t==='reg'?`지역 · ${REG_KO[id]||id}`:t==='pc'?`${S.name}의 초상`:t==='npc'?`${safe(()=>npcNick(id,S))} ${NPCS[id].n}`:`장면 · ${safe(()=>evTitle(S,EVM[id]))||id}`;}
 app.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b||b.disabled)return;const a=b.dataset.a;
   if(a==='reroll'){S=newFate(document.getElementById('nm').value.trim(),S.sex,{...S.yc,remove:[]});render();}
@@ -3798,6 +3861,7 @@ app.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b||b
   else if(a==='nsavefile'){const k=modal.k;imgGet(k).then(bl=>{if(bl)bl.arrayBuffer().then(ab=>{const t=imgType(new Uint8Array(ab));download(bl,fileName(k).replace(/png$/,t==='image/webp'?'webp':t==='image/jpeg'?'jpg':'png'));});});}
   else if(a==='ndel'){const k=modal.k;Promise.all([imgDel(k),imgDel('raw:'+k),imgDel('wk:'+k)]).then(()=>{setImg(k,null);render();});}
   else if(a==='aigo')aiGo();
+  else if(a==='apre'&&modal&&modal.t==='nai'){readNaiForm();const x=OAI_PRE[+b.dataset.i],o=modal.c.ai.p.openai;o.base=x[1];o.model=x[2];render();}
   else if(a==='mclose')closeModal();
   else if(a==='mbg'){if(ev.target===b)closeModal();}
   else if(a==='quit'){if(modal&&modal.sure){S=newFate();modal=null;tab='ab';view='ev';resetScroll=true;save();render();}else if(modal){modal.sure=1;render();}}
@@ -3805,7 +3869,7 @@ app.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b||b
 app.addEventListener('input',ev=>{if(ev.target.id==='evinp'){S.tmp.inp=ev.target.value;return;}if(ED&&modal&&modal.t==='edit'){const id=ev.target.id;if(id==='e_tol'||id==='e_size'){ED[id==='e_tol'?'tol':'size']=+ev.target.value;const v=document.getElementById(id+'v');if(v)v.textContent=ev.target.value;return;}}if(ev.target.id==='nm'&&S.phase==='birth'){S.name=S.base.name=ev.target.value;}if(ev.target.id==='cname'&&S.tmp.craft)S.tmp.craft.name=ev.target.value;if(ev.target.id==='fname'&&S.tmp.forge)S.tmp.forge.name=ev.target.value;if(ev.target.id==='n_prompt'&&modal){modal.prompt=ev.target.value;savePr(modal.k,modal.prompt);const f=document.getElementById('n_full');if(f)f.textContent=fullPrompt(modal.k,modal.prompt);}
   if(modal&&modal.t==='gal'&&/^g_gh/.test(ev.target.id)){const c=ncfg(),v=id=>{const e=document.getElementById(id);return e?e.value.trim():'';};c.ghRepo=v('g_ghRepo');c.ghBranch=v('g_ghBranch')||'main';c.ghToken=v('g_ghToken');nsave(c);return;}
   if(modal&&modal.t==='gal'&&/^g_(style|tnpc|tev|tmap|neg|q)$/.test(ev.target.id)){const c=ncfg(),v=id=>document.getElementById(id).value;c.style=v('g_style');c.tnpc=v('g_tnpc');c.tev=v('g_tev');c.tmap=v('g_tmap');c.neg=v('g_neg');c.q=document.getElementById('g_q').checked;nsave(c);const pv=document.getElementById('g_pv');if(pv)pv.textContent=fullPrompt('st:seorin');}if(modal&&modal.t==='nai'&&ev.target.id.startsWith('n_'))readNaiForm();});
-app.addEventListener('change',ev=>{if(modal&&modal.t==='gal'){const id=ev.target.id;if(id==='g_miss'){modal.miss=ev.target.checked;render();return;}if(id==='g_webp'){modal.webp=ev.target.checked;return;}if(id==='g_q'){const c=ncfg();c.q=ev.target.checked;nsave(c);render();return;}if(id==='g_files'&&ev.target.files.length){importFiles(modal,[...ev.target.files]);return;}if(id==='g_autocut'){const c=ncfg();c.autoCut=ev.target.checked;nsave(c);return;}if(id==='g_v5tp'){const c=ncfg();c.v5tp=ev.target.checked;nsave(c);NAI_TP_OFF=false;return;}}
+app.addEventListener('change',ev=>{if(modal&&modal.t==='nai'&&ev.target.id==='a_prov'){readNaiForm();render();return;}if(modal&&modal.t==='gal'){const id=ev.target.id;if(id==='g_miss'){modal.miss=ev.target.checked;render();return;}if(id==='g_webp'){modal.webp=ev.target.checked;return;}if(id==='g_q'){const c=ncfg();c.q=ev.target.checked;nsave(c);render();return;}if(id==='g_files'&&ev.target.files.length){importFiles(modal,[...ev.target.files]);return;}if(id==='g_autocut'){const c=ncfg();c.autoCut=ev.target.checked;nsave(c);return;}if(id==='g_v5tp'){const c=ncfg();c.v5tp=ev.target.checked;nsave(c);NAI_TP_OFF=false;return;}}
   if(modal&&modal.t==='edit'&&ED&&ev.target.id==='e_contig'){ED.contig=ev.target.checked;return;}if(modal&&modal.t==='nai'&&ev.target.id.startsWith('n_'))readNaiForm();if(ev.target.id==='n_file'&&modal&&ev.target.files[0]){const k=modal.k,f=ev.target.files[0];const m=modal;storeSlot(k,f).then(()=>render()).catch(e=>{m.err='그림을 저장하지 못했어요: '+e.message;render();});}});
 document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&modal){ev.preventDefault();closeModal();return;}const g=ev.target.closest&&ev.target.closest('.mn');if(g&&(ev.key==='Enter'||ev.key===' ')){ev.preventDefault();mapSel=g.dataset.r;render();}});
 
