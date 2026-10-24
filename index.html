@@ -551,10 +551,11 @@ const ycCost=yc=>Object.values(yc.t).reduce((a,b)=>a+b,0)*3+(yc.origin?4:0)+(yc.
 const YKEY='murim-yeokcheon';
 function ycPts(){try{const v=JSON.parse(localStorage.getItem(YKEY)||'null');if(v&&typeof v.pts==='number')return v;}catch(e){}return {pts:6,total:0};}
 function ycSave(v){try{localStorage.setItem(YKEY,JSON.stringify(v));}catch(e){}}
+const rollT=()=>{const r=Math.random();return Math.min(10,R(1,8)+(r<.16?2:r<.36?1:0));}; // 타고난 재능: 대개 1~8, 드물게 9·10
 function newFate(name,sex,yc){ // 하늘이 정한 몫(base)을 굴리고, 역천(yc)을 얹어 짓는다
   const tot=ORIGINS.reduce((s,o)=>s+o.w,0);let rr=Math.random()*tot,o=ORIGINS[0];for(const x of ORIGINS){if((rr-=x.w)<0){o=x;break;}}
   sex=sex||pick(['m','f']);
-  const b={origin:o.id,sex,name:name||randName(sex),region:pick(REGIONS),t:{bone:R(1,8),wit:R(1,8),luck:R(1,8),looks:R(1,8)},
+  const b={origin:o.id,sex,name:name||randName(sex),region:pick(REGIONS),t:{bone:rollT(),wit:rollT(),luck:rollT(),looks:rollT()},
     traits:Object.keys(TRAITS).filter(k=>chance(TRAITS[k].p)),clanOf:pick(['namgung','paeng']),lifeId:Date.now()+R(0,999),
     lore:R(0,8),tongue:R(2,10),rp:R(0,8),rm:R(0,8),temper:R(-20,20),savvy:R(0,10),mind:R(0,10)};
   return buildFate(b,yc||ycNew());}
@@ -1638,11 +1639,11 @@ E({id:'vowEnd',tag:'side',t:'그날의 빚',a:[25,85],w:3,if:S=>S.flags.vow&&S.r
   {t:'술값을 대신 치르고 나간다',go:S=>{S.flags.vow=0;A(S,{cult:10,moral:5,mood:10});deed(S,'어린 날의 원수를 놓아주었다');return '용서한 것인지, 그저 놓아준 것인지 스스로도 알 수 없었다. 다만 객잔 문을 나서자, 눈을 감으면 보이던 그 얼굴이 더는 보이지 않았다.';}}]});
 
 /* ── 별호 ── */
-E({id:'nick',t:'별호',a:[10,130],cd:1,force:S=>S.fame>=30&&S.age>=S.nickHold&&bestNickRank(S)>(S.nick?S.nick.r:-1),
- prep:S=>{const c=nickCands(S);const top=c.reduce((m,o)=>Math.max(m,o.r),-1);S.tmp.c=shuffle(c.filter(o=>o.r===top)).slice(0,3);S.tmp.c.push(...shuffle(c.filter(o=>o.r===top-1)).slice(0,1));},
+E({id:'nick',t:'별호',a:[10,130],cd:1,force:S=>S.fame>=30&&S.age>=S.nickHold&&bestNickRank(S)>Math.max(S.nick?S.nick.r:-1,S.nickTop??-1),
+ prep:S=>{const c=nickCands(S);const top=c.reduce((m,o)=>Math.max(m,o.r),-1);S.tmp.top=top;S.tmp.c=shuffle(c.filter(o=>o.r===top)).slice(0,3);S.tmp.c.push(...shuffle(c.filter(o=>o.r===top-1)).slice(0,1));},
  x:S=>S.nick?`강호가 당신을 부르는 이름이 바뀌고 있다. '${S.nick.n}'은 이제 당신을 다 담지 못한다. 주루마다 새 별호가 오르내린다.`:'강호에 이름이 퍼지자 사람들이 당신을 부르는 이름을 짓기 시작했다. 주루마다 서로 다른 별호가 오르내린다.',
- ch:S=>[...S.tmp.c.map(o=>({t:`'${o.n}'`,h:`${NICK_RANK[o.r]}급 별호`,go:S=>{const old=S.nick;S.nick={n:o.n,r:o.r};A(S,{fame:5,mood:8});deed(S,old?`별호가 '${old.n}'에서 '${o.n}'${bat(o.n)?'으로':'로'} 바뀌었다`:`${qra(o.n)}는 별호를 얻었다`);return `그날부터 강호는 당신을 ${qra(o.n)} 불렀다.`;}})),
-  {t:'별호를 사양한다',go:S=>{S.nickHold=S.age+5;A(S,{cult:3});return '이름은 남들이 붙이는 것. 당신은 웃어넘겼다.';}}]});
+ ch:S=>[...S.tmp.c.map(o=>({t:`'${o.n}'`,h:`${NICK_RANK[o.r]}급 별호`,go:S=>{const old=S.nick;S.nick={n:o.n,r:o.r};S.nickTop=Math.max(S.nickTop??-1,S.tmp.top);A(S,{fame:5,mood:8});deed(S,old?`별호가 '${old.n}'에서 '${o.n}'${bat(o.n)?'으로':'로'} 바뀌었다`:`${qra(o.n)}는 별호를 얻었다`);return `그날부터 강호는 당신을 ${qra(o.n)} 불렀다.`;}})),
+  {t:'별호를 사양한다',go:S=>{S.nickHold=S.age+5;S.nickTop=Math.max(S.nickTop??-1,S.tmp.top);A(S,{cult:3});return '이름은 남들이 붙이는 것. 당신은 웃어넘겼다.';}}]});
 
 /* ── 노년 ── */
 E({id:'legacy',t:'남길 것',a:[60,99],w:2,if:S=>S.realm>=3,
