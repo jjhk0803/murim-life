@@ -1838,7 +1838,7 @@ E({id:'sadoMeet',t:'사도련 회합',a:[18,75],w:1.5,cd:8,if:S=>S.org&&ORGS[S.o
  ch:[{t:'련주의 칼이 되어 싸운다',h:'공헌·명성',go:S=>{A(S,{contrib:20,fame:8,salgi:3});return '정파 표국 셋을 한 달 만에 무너뜨렸다. 련주가 당신 잔에 직접 술을 따랐다.';}},
   {t:'다른 세력 대표들과 술을 나눈다',h:'처세·은자',go:S=>{A(S,{savvy:4,gold:40});return '녹림 채주는 의리를, 하오문 향주는 소문을, 수로채 두령은 뱃길을 팔았다. 술값은 하오문이 냈다. 그것도 계산이었다.';}},
   {t:'이권 다툼에서 우리 몫을 챙긴다',h:'구력',go:S=>{if(S.tongue+R(0,40)>=50){A(S,{contrib:25,tongue:2});return '장강 뱃길 세금의 삼 할을 사문 몫으로 받아 냈다.';}A(S,{enemies:1});return '말이 지나쳤다. 살막 사자가 당신 얼굴을 오래 보았다.';}}]});
-E({id:'factionTop',tag:'key',t:'제일인의 자리',title:S=>`${FACTION(S)}제일인`,a:[28,110],w:3,cd:5,if:S=>FACTION(S)&&S.realm>=5&&S.fame>=150&&!S.titles.includes(FACTION(S)+'제일인'),
+E({id:'factionTop',tag:'key',t:'제일인의 자리',title:S=>FACTION(S)?`${FACTION(S)}제일인`:'제일인의 자리',a:[28,110],w:3,cd:5,if:S=>FACTION(S)&&S.realm>=5&&S.fame>=150&&!S.titles.includes(FACTION(S)+'제일인'),
  prep:S=>{const f=FACTION(S),id=TOPFOE[f].find(id=>NPCS[id]&&!S.dead_npc[id]&&S.spouse!==id&&S.master!==id);S.tmp.npc=id||null;S.tmp.foe=id?npcFoe(S,id):mkFoe({n:'이름 없는 노고수',realm:6,q:1.1});},
  x:S=>{const f=FACTION(S),nm=S.tmp.npc?`${NPCS[S.tmp.npc].nick} ${NPCS[S.tmp.npc].n}`:'이름 없는 노고수';
   return f==='정파'?`무림맹 연무장. 구파일방과 세가의 장로들이 둘러앉았다. 정파제일인을 가리는 자리다. 정파는 말로 시작해 검으로 끝낸다. 마지막 상대는 ${nm}.`
@@ -2659,7 +2659,7 @@ const PW_WAR={
    win:'표국의 깃발이 내려가고 련의 깃발이 올라갔다. 그날 밤 장강에 배 백 척이 불을 밝혔다. 흑도의 잔치는 사흘 밤낮 이어졌다.',plot:'하오문의 귀를 빌렸다. 정파 장원의 장부가 하룻밤 사이에 련의 손에 들어왔다. 장원 주인은 아침에 일어나 제 땅이 남의 것이 된 걸 알았다.',talk:'표국 총표두와 마주 앉아 술을 마셨다. “통행세는 반으로. 대신 아무도 안 다친다.” 그가 잔을 비웠다. 흑도의 방식이었다.'},
  마교:{foe:()=>'정파',x:()=>'총단에서 동진(東進)의 명이 떨어졌다. 중원의 문파 하나를 무릎 꿇린다. 군사 사공 염이 지도 위에 붉은 점 하나를 찍고 웃었다. “칼은 마지막에 씁니다. 먼저 저들끼리 싸우게 해야지요.”',
    win:'산문의 현판이 떨어졌다. 그 자리에 검은 깃발이 꽂혔다. 무릎 꿇은 제자들 사이로 걸어가며 당신은 그들의 얼굴을 보지 않았다. 보면 기억하게 되니까.',plot:'정파 두 문파 사이에 거짓 서찰 한 통을 흘렸다. 보름 뒤 그들은 서로를 베고 있었다. 교는 칼 한 자루 뽑지 않았다.',talk:'투항하는 자는 교도로 받아 준다고 했다. 생각보다 많은 이가 왔다. 정파의 밥이 생각보다 짰던 모양이다.'}};
-E({id:'pwWar',tag:'power',t:'세력 다툼',title:S=>`세력 다툼 · ${mySide(S)} 대 ${PW_WAR[mySide(S)].foe(S)}`,a:[18,95],w:S=>mySide(S)&&S.realm>=3?2.2:0,cd:4,
+E({id:'pwWar',tag:'power',t:'세력 다툼',title:S=>PW_WAR[mySide(S)]?`세력 다툼 · ${mySide(S)} 대 ${PW_WAR[mySide(S)].foe(S)}`:'세력 다툼',a:[18,95],w:S=>mySide(S)&&S.realm>=3?2.2:0,cd:4,
  x:S=>{const f=mySide(S),p=pwOf(S);return PW_WAR[f].x(S)+`\n\n지금 천하는 정파 ${Math.round(p.정파)}%, 사파 ${Math.round(p.사파)}%, 마교 ${Math.round(p.마교)}%.`;},
  ch:S=>{const f=mySide(S),W=PW_WAR[f];return [
   {t:'선봉에 선다',h:'싸움. 이기면 세력이 크게 넓어진다',go:S=>{const b=battle(S,mkFoe({n:`${W.foe(S)}의 고수`,realm:clamp(S.realm,3,7),q:1.05}));if(b.win){pwAdd(S,f,5);A(S,{fame:20,contrib:30,moral:f==='정파'?2:-4});deed(S,`${f}의 선봉으로 ${W.foe(S)}의 거점을 꺾었다`);}else pwAdd(S,f,-1);return fightText(b,W.win,'적의 매복에 걸렸다. 부하들을 이끌고 겨우 빠져나왔다. 그해 깃발은 한 뼘도 나아가지 못했다.');}},
@@ -2711,7 +2711,7 @@ const ERA_L={
  마교:{own:['총단에서 내려온 명이 아침마다 성문에 붙는다. 교도들은 당신을 보면 길을 비킨다.','마도천하의 저잣거리. 사람들이 당신에게 웃는다. 웃음 뒤의 눈은 웃지 않는다.'],other:['마교 순찰대가 지나간다. 당신은 옷깃의 표식을 안쪽으로 접었다.','“마도천하! 만마앙복!” 아이들이 놀이 삼아 외친다. 그 아이들의 아버지는 백도의 무인이었다.']},
  정파:{own:['백도의 깃발 아래 관도가 고요하다. 협객들이 길을 지키고, 사람들은 문을 열고 잔다.','무림맹에서 축하연이 열렸다. 술은 좋았고, 말은 길었다. 그 말들 사이로 패자의 이름은 한 번도 나오지 않았다.'],other:['백도의 토벌대가 마을을 훑고 지나갔다. 이름을 물었고, 사문을 물었다. 당신은 거짓으로 답했다.','정도천하의 고을. 협의를 말하는 방이 붙었다. 그 방 아래서 흑도의 아이 하나가 굶고 있다.']},
  사파:{own:['장강의 배들이 련의 깃발을 달고 오간다. 통행세가 들어오는 소리가 노 젓는 소리보다 크다.','련의 대청에서 또 잔치다. 오늘은 누가 누구를 위해 의리를 지켰는지를 축하한다고 한다.'],other:['관도 길목마다 흑도인들이 앉아 있다. “통행세요.” 그들은 정중하게 손을 내민다.','하오문의 귀가 어디에나 있다. 오늘 한 말이 내일 련의 대청에 닿는다.']}};
-E({id:'eraLife',tag:'power',t:'천하의 나날',title:S=>`${PW_SIDE[S.w.era]}천하의 나날`,a:[14,130],w:S=>S.w.era?1.4:0,cd:5,
+E({id:'eraLife',tag:'power',t:'천하의 나날',title:S=>S.w.era&&PW_SIDE[S.w.era]?`${PW_SIDE[S.w.era]}천하의 나날`:'천하의 나날',a:[14,130],w:S=>S.w.era?1.4:0,cd:5,
  x:S=>pick(ERA_L[S.w.era][mySide(S)===S.w.era?'own':'other']),
  ch:S=>mySide(S)===S.w.era?[{t:'깃발의 무게를 즐긴다',go:S=>{A(S,{fame:5,mood:10,moral:-2});return '이긴 쪽의 술은 달다. 너무 달아서 가끔 목이 탄다.';}},{t:'진 쪽의 사람들을 살핀다',h:'도덕·수양',go:S=>{A(S,{moral:5,cult:3});return '진 쪽의 마을에 쌀 몇 섬을 보냈다. 보낸 이의 이름은 적지 않았다.';}}]
   :[{t:'참는다',go:S=>{A(S,{cult:3,mood:-5});return '참았다. 참는 것도 칼을 가는 일이다.';}},{t:'내 깃발을 위해 움직인다',h:'세력이 조금 살아난다',if:S=>!!mySide(S),go:S=>{pwAdd(S,mySide(S),1);A(S,{contrib:10,mind:2});return '밤마다 사람을 만났다. 하나, 또 하나. 깃발은 그렇게 다시 선다.';}},{t:'제 살길을 찾는다',go:S=>{A(S,{savvy:4,gold:20});return '깃발이 무엇이든 장사는 된다. 당신은 그 사실이 조금 서글펐다.';}}]});
