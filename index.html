@@ -186,7 +186,7 @@ button.chip.on{background:var(--jade);color:var(--card);border-color:var(--jade)
 .evimg{width:100%;aspect-ratio:3/2;object-fit:cover;border-radius:6px;display:block}
 .scene{position:relative;width:100%;aspect-ratio:3/2;border-radius:6px;overflow:hidden;background:linear-gradient(180deg,var(--paper),var(--line))}
 .scene .sbg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:brightness(.9)}
-.scene .sst{position:absolute;left:50%;top:5%;height:165%;max-width:none;transform:translateX(-50%);filter:drop-shadow(0 4px 10px rgba(0,0,0,.35));animation:stin .6s ease-out both}
+.scene .sst{position:absolute;left:50%;top:6%;height:135%;max-width:none;transform:translateX(-50%);filter:drop-shadow(0 4px 10px rgba(0,0,0,.35));animation:stin .6s ease-out both}
 @keyframes stin{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translateX(-50%)}}
 .scene .snm{position:absolute;left:8px;bottom:8px;background:rgba(20,24,22,.74);color:#f3efe6;font-family:var(--f-ui);font-size:.8rem;padding:2px 10px;border-radius:4px}
 .chk,.gth.chk{background:repeating-conic-gradient(#cfcfcf 0 25%,#fafafa 0 50%) 0 0/16px 16px}
@@ -1855,7 +1855,7 @@ const NAI_Q={'nai-diffusion-5-full':'very aesthetic, masterpiece, best quality',
 const NAI_NEG='nsfw, nude, lowres, bad anatomy, bad hands, missing fingers, extra digits, text, watermark, signature, logo, worst quality, low quality, blurry, modern clothes, jpeg artifacts';
 const NKEY='murim-nai';
 function ncfg(){let c={};try{c=JSON.parse(localStorage.getItem(NKEY)||'{}');}catch(e){}return Object.assign({key:'',relay:'',model:'nai-diffusion-4-5-full',style:'wuxia, ancient china, hanfu, detailed illustration, cinematic lighting',autoEv:false,autoPc:false,neg:NAI_NEG,tnpc:'',tev:'',tmap:'',q:true},c,{pr:Object.assign({},c.pr)});}
-function nsave(c){try{localStorage.setItem(NKEY,JSON.stringify(c));}catch(e){}}
+function nsave(c){try{localStorage.setItem(NKEY,JSON.stringify(c));}catch(e){}REPO_ON=c.useRepo!==false;soon();}
 let _db=null;
 function idb(){if(!_db)_db=new Promise((res,rej)=>{try{const r=indexedDB.open('murim-img',1);r.onupgradeneeded=()=>r.result.createObjectStore('img');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);}catch(e){rej(e);}});return _db;}
 async function imgGet(k){try{const db=await idb();return await new Promise(res=>{const q=db.transaction('img').objectStore('img').get(k);q.onsuccess=()=>res(q.result||null);q.onerror=()=>res(null);});}catch(e){return null;}}
@@ -1864,13 +1864,13 @@ async function imgDel(k){try{const db=await idb();await new Promise(res=>{const 
 /* 그림 출처는 두 곳이다. 이 브라우저에서 그리거나 넣은 '내 그림'(IndexedDB)이 먼저이고, 없으면 저장소의 img 폴더를 본다.
    img/index.json이 있으면 그 목록을 따르고, 목록에 없는 칸은 이름 규칙(img/npc/seorin.png 등)대로 찾아본다. 주인공 초상(pc:)은 저장소에서 찾지 않는다. */
 const IMG_BASE='img/';
-const URLS={},LCHK={},RURL={},PROBE={};const BUSY=new Set();let MAN,MANP;
+const URLS={},LCHK={},RURL={},PROBE={};const BUSY=new Set();let MAN,MANP,REPO_ON=ncfg().useRepo!==false; // 끄면 내 그림만 쓴다
 let _rq=0;function soon(){if(_rq)return;_rq=requestAnimationFrame(()=>{_rq=0;render();});}
 function localURL(k){if(URLS[k])return URLS[k];if(!(k in LCHK)){LCHK[k]=0;imgGet(k).then(b=>{LCHK[k]=1;if(b&&!URLS[k])URLS[k]=URL.createObjectURL(b);soon();});}return null;}
 function repoPath(k,ext){ext=ext||'png';if(k==='map')return 'map.'+ext;const [t,id]=k.split(/:(.+)/);return `${t}/${id}.${ext}`;}
 function probe(k){if(!PROBE[k])PROBE[k]=new Promise(res=>{const u=IMG_BASE+repoPath(k),im=new Image();im.onload=()=>res(u);im.onerror=()=>res(null);im.src=u;}).then(u=>{RURL[k]=u;soon();return u;});return PROBE[k];}
-function repoURL(k){if(/^pc:/.test(k)||MAN===undefined)return null;if(MAN&&typeof MAN[k]==='string')return IMG_BASE+MAN[k];if(k in RURL)return RURL[k];probe(k);return null;}
-async function repoHas(k){if(/^pc:/.test(k))return false;await MANP;if(MAN&&typeof MAN[k]==='string')return true;return !!(await probe(k));}
+function repoURL(k){if(!REPO_ON||/^pc:/.test(k)||MAN===undefined)return null;if(MAN&&typeof MAN[k]==='string')return IMG_BASE+MAN[k];if(k in RURL)return RURL[k];probe(k);return null;}
+async function repoHas(k){if(!REPO_ON||/^pc:/.test(k))return false;await MANP;if(MAN&&typeof MAN[k]==='string')return true;return !!(await probe(k));}
 function imgSrc(k){const l=localURL(k);if(l)return {u:l,s:'local'};if(!LCHK[k])return null;const r=repoURL(k);return r?{u:r,s:'repo'}:null;}
 function imgURL(k){const x=imgSrc(k);return x?x.u:null;}
 function setImg(k,b){if(URLS[k])URL.revokeObjectURL(URLS[k]);URLS[k]=b?URL.createObjectURL(b):null;LCHK[k]=1;}
@@ -1965,8 +1965,8 @@ const MAP_TAG='ancient map of china, ink wash painting, mountains, rivers, parch
 const safe=f=>{try{return f()||'';}catch(e){return '';}};
 function fileName(k){return (k==='map'?'map':k.replace(':','_'))+'.png';}
 function keyFromName(n){n=n.replace(/\.[^.]+$/,'').trim();const lo=n.toLowerCase();if(lo==='map'||n==='지도')return 'map';
-  const m=/^(npc|st|ev|reg)[_\-:](.+)$/i.exec(n);if(m){const t=m[1].toLowerCase(),id=m[2];if((t==='npc'||t==='st')&&NPCS[id])return t+':'+id;if(t==='ev'&&EVM[id])return 'ev:'+id;if(t==='reg'&&(REG_KO[id.toLowerCase()]||REG_EN[id]))return 'reg:'+(REG_EN[id]||id.toLowerCase());return null;}
-  if(NPCS[n])return 'npc:'+n;if(EVM[n])return 'ev:'+n;if(REG_EN[n])return 'reg:'+REG_EN[n];if(REG_KO[lo])return 'reg:'+lo;return null;}
+  const m=/^(npc|st|ev|reg)[_\-:](.+)$/i.exec(n);if(m){const t=m[1].toLowerCase(),id=m[2];if((t==='npc'||t==='st')&&NPCS[id])return 'st:'+id;if(t==='ev'&&EVM[id])return 'ev:'+id;if(t==='reg'&&(REG_KO[id.toLowerCase()]||REG_EN[id]))return 'reg:'+(REG_EN[id]||id.toLowerCase());return null;}
+  if(NPCS[n])return 'st:'+n;if(EVM[n])return 'ev:'+n;if(REG_EN[n])return 'reg:'+REG_EN[n];if(REG_KO[lo])return 'reg:'+lo;return null;}
 function galKeys(t){if(t==='map')return ['map',...Object.keys(REG).map(r=>'reg:'+REG_EN[r])];if(t==='npc'||t==='st')return Object.keys(NPC_TAGS).filter(id=>NPCS[id]).map(id=>t+':'+id);return EV.filter(e=>e.id!=='focus'&&e.id!=='bt').map(e=>'ev:'+e.id);}
 function slotName(k){const [t,id]=k.split(/:(.+)/);if(t==='st')return NPCS[id].n;return t==='map'?'중원 지도':t==='reg'?REG_KO[id]||id:t==='npc'?NPCS[id].n:(safe(()=>evTitle(S,EVM[id]))||id);}
 function savePr(k,p){const c=ncfg();if(!p.trim()||p.trim()===basePrompt(k).trim())delete c.pr[k];else c.pr[k]=p;nsave(c);}
@@ -2057,17 +2057,20 @@ function talentsHTML(s){return `<div class="tal"><span>근골</span>${dots(s.t.b
 function traitsHTML(s,full){const t=s.traits.map(k=>`<span class="chip t" title="${esc(TRAITS[k].d+' 제약: '+(TCON[k]||'없음'))}">${TRAITS[k].n}${k==='yin'&&s.flags.yinCured?' (치유)':''}</span>`);
   ['극양지체','극음지체'].forEach(k=>{if(s.flags[k])t.push(`<span class="chip t">${k}</span>`);});if(s.flags.hwangol)t.push('<span class="chip t">환골탈태</span>');
   return t.length?`<div class="chips">${t.join('')}</div>${full?`<div class="muted small">${s.traits.map(k=>`<b>${TRAITS[k].n}</b> ${esc(TRAITS[k].d)} <span style="color:var(--seal)">제약: ${esc(TCON[k]||'없음')}</span>`).join('<br>')}</div>`:''}`:'';}
-function portrait(k,label,cls){const u=imgURL(k);return `<button class="portrait ${u?'has':''} ${cls||''}" data-a="draw" data-k="${esc(k)}" aria-label="${esc(label)} 그림">${u?`<img src="${u}" alt="">`:BUSY.has(k)?'그리는 중':'그림'}</button>`;}
-function basePrompt(k){const [t,id]=k.split(/:(.+)/);if(t==='st'){const g=NPC_TAGS[id];return (typeof g==='function'?g(S):g)+', full body, standing, simple background, white background';}return t==='pc'?pcPrompt(S):t==='npc'?npcPrompt(id,S):t==='map'?MAP_TAG:t==='reg'?(REG_TAGS[id]||'ancient chinese landscape')+', scenery, wide shot, cinematic composition, no humans':evPrompt(id);}
+function portrait(k,label,cls){const u=imgURL(k)||(k.startsWith('st:')?imgURL('npc:'+k.slice(3)):null);return `<button class="portrait ${u?'has':''} ${cls||''}" data-a="draw" data-k="${esc(k)}" aria-label="${esc(label)} 그림">${u?`<img src="${u}" alt="">`:BUSY.has(k)?'그리는 중':'그림'}</button>`;}
+function basePrompt(k){const [t,id]=k.split(/:(.+)/);if(t==='st'){const g=NPC_TAGS[id];return (typeof g==='function'?g(S):g)+', cowboy shot, standing, white background';}return t==='pc'?pcPrompt(S):t==='npc'?npcPrompt(id,S):t==='map'?MAP_TAG:t==='reg'?(REG_TAGS[id]||'ancient chinese landscape')+', scenery, wide shot, cinematic composition, no humans':evPrompt(id);}
 function slotPrompt(k){const p=ncfg().pr[k];return p&&p.trim()?p:basePrompt(k);}
 function modalHTML(){if(!modal)return '';
-  if(modal.t==='nai'){const c=modal.c;return `<div class="modal" data-a="mbg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mt"><h3 id="mt">설정</h3>${S.phase!=='birth'&&S.phase!=='end'?`<div class="row" style="justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:10px"><span class="small muted">이번 생을 접고 처음으로 돌아간다.</span><button class="ghost" data-a="quit">${modal.sure?'정말 포기한다':'처음으로'}</button></div>`:''}<p class="grp-t" style="margin:0">그림 · NovelAI</p>
-   <p class="muted small">인물 초상과 사건 장면을 NovelAI로 그린다. 토큰은 이 브라우저에만 저장되고, 깃허브에 올리는 파일에는 들어가지 않는다. 그림 한 장마다 구독 등급에 따라 Anlas가 들 수 있다.</p>
+  if(modal.t==='nai'){const c=modal.c;return `<div class="modal" data-a="mbg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mt"><h3 id="mt">설정</h3>${S.phase!=='birth'&&S.phase!=='end'?`<div class="row" style="justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:10px"><span class="small muted">이번 생을 접고 처음으로 돌아간다.</span><button class="ghost" data-a="quit">${modal.sure?'정말 포기한다':'처음으로'}</button></div>`:''}<p class="grp-t" style="margin:0">그림</p>
+   <label class="row"><input type="checkbox" id="n_repo" ${c.useRepo!==false?'checked':''}> 게임에 들어 있는 기본 그림을 쓴다</label>
+   <p class="muted small" style="margin:0">끄면 내가 그린 그림만 쓴다. 내 그림체로 전부 새로 그리고 싶을 때 끈다. 켜 두어도 내가 그리거나 넣은 그림이 있는 칸은 내 그림이 먼저 나온다.</p>
+   <button class="ghost" data-a="gal" style="padding:8px 10px">그림체 고르기 · 그림 관리 (지도·인물·사건) →</button>
+   <p class="grp-t" style="margin:0">NovelAI로 직접 그리기 (선택)</p>
+   <p class="muted small">인물 스탠딩과 사건 장면을 NovelAI로 그린다. 토큰은 이 브라우저에만 저장되고, 깃허브에 올리는 파일에는 들어가지 않는다. 그림 한 장마다 구독 등급에 따라 Anlas가 들 수 있다.</p>
    <label for="n_key">NovelAI 토큰 (novelai.net → 설정 → Account → Get Persistent API Token)</label><input type="password" id="n_key" value="${esc(c.key)}" autocomplete="off" placeholder="pst-...">
    <label for="n_model">모델</label><select id="n_model">${NAI_MODELS.map(([v,l])=>`<option value="${v}" ${c.model===v?'selected':''}>${l}</option>`).join('')}</select>
    <label for="n_relay">중계 서버 주소 (선택)</label><input type="text" id="n_relay" value="${esc(c.relay)}" placeholder="https://내-워커.workers.dev" autocomplete="off">
    <p class="muted small">브라우저가 NovelAI에 바로 연결하지 못하면 중계 서버가 필요하다. 저장소의 proxy/worker.js를 Cloudflare Workers에 올리고 그 주소를 넣는다(README 참고).</p>
-   <button class="ghost" data-a="gal" style="padding:8px 10px">그림체 · 그림 관리 (지도·인물·사건) →</button>
    <label class="row"><input type="checkbox" id="n_autoEv" ${c.autoEv?'checked':''}> 새 사건 장면을 자동으로 그린다 (사건마다 한 번)</label>
    <label class="row"><input type="checkbox" id="n_autoPc" ${c.autoPc?'checked':''}> 태어날 때 주인공 초상을 자동으로 그린다</label>
    <div class="row" style="justify-content:space-between"><button class="ghost" data-a="mclose">닫기</button><button class="go" data-a="nsave">저장</button></div></div></div>`;}
@@ -2091,24 +2094,26 @@ function modalHTML(){if(!modal)return '';
    <div class="row wrap" style="justify-content:space-between"><span class="row wrap"><button class="ghost" data-a="mclose">${modal.back?'← 목록으로':'닫기'}</button><label class="ghost btnl" for="n_file">파일에서 넣기</label><input type="file" id="n_file" accept="image/*" hidden>${local?'<button class="ghost" data-a="nsavefile">파일로 저장</button><button class="ghost" data-a="ndel">내 그림 지우기</button>':''}</span>
    <button class="go" data-a="ngen" ${busy?'disabled':''}>${u?'NovelAI로 다시 그리기':'NovelAI로 그리기'}</button></div>
    <p class="muted small">${port?'세로 832×1216':'가로 1216×832'} · 다른 곳에서 그렸다면 프롬프트를 복사해 쓰고, 받은 그림을 '파일에서 넣기'로 넣는다.${k.startsWith('pc:')?'':` 여러 장 넣기용 파일 이름: <b>${fileName(k)}</b>`}${local?' · 내 그림을 지우면 저장소 그림이 있을 때 그것으로 돌아간다.':''}</p></div></div>`;}
-function galHTML(){const g=modal,c=ncfg(),T=[['style','그림체'],['map','지도'],['npc','인물'],['st','스탠딩'],['ev','사건']];
+function galHTML(){const g=modal,c=ncfg(),T=[['style','그림체'],['map','지도'],['st','인물'],['ev','사건']];
   const head=`<div class="row" style="justify-content:space-between"><h3 id="mt" style="margin:0">그림 관리</h3><button class="ghost" data-a="mclose">닫기</button></div>
    <div class="chips" role="tablist">${T.map(([v,l])=>`<button class="chip ${g.tab===v?'on':''}" data-a="gtab" data-v="${v}" role="tab" aria-selected="${g.tab===v}">${l}</button>`).join('')}</div>`;
   let body;
-  if(g.tab==='style')body=`<p class="muted small" style="margin:0">모든 그림에 붙는 그림체다. 고치면 바로 저장된다. 이미 있는 그림은 그대로 두고, 새로 그리거나 프롬프트를 복사할 때부터 쓰인다.</p>
+  if(g.tab==='style')body=`<p class="muted small" style="margin:0">고른 그림체로 내 그림을 그린다. 기본 그림을 덮어쓰고 싶으면 설정에서 '기본 그림'을 끄고 인물·사건 탭의 '빈 칸 모두 그리기'를 쓴다. 모든 그림에 붙는 그림체다. 고치면 바로 저장된다. 이미 있는 그림은 그대로 두고, 새로 그리거나 프롬프트를 복사할 때부터 쓰인다.</p>
    <p class="grp-t" style="margin:0">미리 만든 그림체</p><div class="chips">${STYLE_PRESETS.map((p,i)=>`<button class="chip ${c.style===p[1]?'on':''}" data-a="gpreset" data-i="${i}">${p[0]}</button>`).join('')}</div>
    <label for="g_style">그림체 태그</label><textarea id="g_style">${esc(c.style)}</textarea>
-   <label for="g_tnpc">인물 그림에만 더할 태그</label><input type="text" id="g_tnpc" value="${esc(c.tnpc)}" placeholder="예: portrait, detailed eyes">
+   <label for="g_tnpc">인물에만 더할 태그</label><input type="text" id="g_tnpc" value="${esc(c.tnpc)}" placeholder="예: portrait, detailed eyes">
    <label for="g_tev">사건·지역 장면에만 더할 태그</label><input type="text" id="g_tev" value="${esc(c.tev)}" placeholder="예: wide shot, atmospheric">
    <label for="g_tmap">지도에만 더할 태그</label><input type="text" id="g_tmap" value="${esc(c.tmap)}" placeholder="예: aged paper, compass rose">
    <label for="g_neg">빼고 싶은 것 (네거티브)</label><textarea id="g_neg">${esc(c.neg)}</textarea>
    <label class="row"><input type="checkbox" id="g_q" ${c.q?'checked':''}> 모델 품질 태그를 붙인다 <span class="muted small">(${esc(NAI_Q[c.model]||'')})</span></label>
-   <p class="grp-t" style="margin:0">미리보기 · 남궁 서린</p><p class="pv" id="g_pv">${esc(fullPrompt('npc:seorin'))}</p><div><button class="ghost" data-a="gcopy" data-w="pv">복사</button></div>`;
+   <p class="grp-t" style="margin:0">미리보기 · 남궁 서린</p><p class="pv" id="g_pv">${esc(fullPrompt('st:seorin'))}</p><div><button class="ghost" data-a="gcopy" data-w="pv">복사</button></div>`;
   else{const ks=galKeys(g.tab),src=ks.map(k=>imgSrc(k)),nl=src.filter(x=>x&&x.s==='local').length,nr=src.filter(x=>x&&x.s==='repo').length;
    const cards=ks.map((k,i)=>{const x=src[i];if(g.miss&&x)return '';return `<button class="gcard" data-a="gslot" data-k="${esc(k)}"><span class="gth ${isPort(k)?'p':'l'} ${g.tab==='st'?'chk':''}">${x?`<img src="${x.u}" alt="" loading="lazy">`:'빈 칸'}</span><span class="gn">${esc(slotName(k))}</span><span class="gs ${x?x.s:''}">${x?x.s==='local'?'내 그림':'저장소':'—'}</span></button>`;}).join('');
-   body=`<p class="muted small" style="margin:0">① 칸을 눌러 프롬프트를 복사한다 ② NovelAI 등에서 그려 내려받는다 ③ 그 칸의 '파일에서 넣기', 또는 '여러 장 넣기'(파일 이름을 npc_seorin.png처럼 맞추면 제자리를 찾아간다) ④ '저장소용 묶음 받기'로 받은 img 폴더를 깃허브 저장소에 올리면 모든 플레이어에게 보이고, 같은 그림을 다시 뽑지 않는다.</p>
-   <div class="row wrap"><label class="ghost btnl" for="g_files">여러 장 넣기</label><input type="file" id="g_files" accept="image/*" multiple hidden><button class="ghost" data-a="gexport" ${g.busy?'disabled':''}>저장소용 묶음 받기</button><label class="row small"><input type="checkbox" id="g_webp" ${g.webp!==false?'checked':''}> WebP로 줄여 담기</label></div>
-   ${g.tab==='st'?`<p class="muted small" style="margin:0">배경을 지운 전신 그림. 사건에 그 인물이 나오면 사건 장면(없으면 지금 있는 지역 그림) 위에 서서 나온다.</p><label class="row small"><input type="checkbox" id="g_autocut" ${c.autoCut!==false?'checked':''}> 그리거나 넣으면 배경을 자동으로 지운다</label>`:''}
+   body=`<p class="muted small" style="margin:0">칸을 눌러 NovelAI로 그리거나, 프롬프트를 복사해 다른 곳에서 그린 뒤 넣는다. 내 그림은 이 브라우저에만 저장되고 기본 그림보다 먼저 나온다.${REPO_ON?'':' <b>지금은 기본 그림을 끄고 내 그림만 쓰는 중이다.</b>'}</p>
+   <div class="row wrap"><label class="ghost btnl" for="g_files">여러 장 넣기</label><input type="file" id="g_files" accept="image/*" multiple hidden><button class="ghost" data-a="gdev">${g.dev?'개발자 도구 닫기':'개발자 도구'}</button></div>
+   ${g.dev?`<div class="plate" style="display:flex;flex-direction:column;gap:8px"><p class="muted small" style="margin:0">게임에 기본 그림을 넣는 곳. '저장소용 묶음 받기'로 받은 zip을 풀어 나온 img 폴더를 깃허브 저장소 맨 위(index.html 옆)에 올리면 모든 플레이어의 기본 그림이 된다. 여러 장 넣기의 파일 이름: st_seorin.png · ev_sage.png · reg_henan.png · map.png</p>
+     <div class="row wrap"><button class="ghost" data-a="gexport" ${g.busy?'disabled':''}>저장소용 묶음 받기</button><label class="row small"><input type="checkbox" id="g_webp" ${g.webp!==false?'checked':''}> WebP로 줄여 담기</label></div></div>`:''}
+   ${g.tab==='st'?`<p class="muted small" style="margin:0">배경을 지운 스탠딩(카우보이 샷). 인물록의 얼굴 칸에 쓰이고, 사건에 그 인물이 나오면 사건 장면(없으면 지금 있는 지역 그림) 위에 서서 나온다.</p><label class="row small"><input type="checkbox" id="g_autocut" ${c.autoCut!==false?'checked':''}> 그리거나 넣으면 배경을 자동으로 지운다</label>`:''}
    <div class="row wrap">${BATCH?`<span class="status">한꺼번에 그리는 중 ${BATCH.i}/${BATCH.keys.length}${BATCH.cur?' · '+esc(slotName(BATCH.cur)):''}</span><button class="ghost" data-a="gstop">멈추기</button>`
      :`<button class="ghost" data-a="gbatch" ${ks.length-nl-nr?'':'disabled'}>${g.sure?`정말 ${ks.length-nl-nr}장 그리기 · Anlas가 든다`:`빈 칸 모두 그리기 · ${ks.length-nl-nr}장`}</button>${g.sure?'<button class="ghost" data-a="gnosure">그만두기</button>':''}`}</div>
    ${g.msg?`<p class="status">${esc(g.msg)}</p>`:''}
@@ -2140,7 +2145,7 @@ function tabHTML(t){const s=S;
    if(s.flags.sib&&s.flags.sib!=='-')rows.push(`<div class="pp"><span class="pn">${esc(s.flags.sib)}</span><span class="pr">사형제</span></div>`);
    if(s.flags.sworn)rows.push(`<div class="pp"><span class="pn">의형제</span><span class="pr"></span></div>`);
    const npcRows=Object.keys(s.met).filter(id=>NPCS[id]).map(id=>{const p=NPCS[id];const pe=perceive(s,npcFoe(s,id));const love=loveList(s).includes(id);
-     return `<div class="pp"><span class="pn">${portrait('npc:'+id,p.n,'thumb')}<b>${esc(npcNick(id,s))}</b> ${esc(p.n)}${p.title&&love?` <span class="chip g">${esc(p.title)}</span>`:''}</span><span class="pr">${s.dead_npc[id]?'고인':`${REALMS[pe.realm].n}${pe.real?'':'?'} · ${num(pe.v)}${pe.real?'':'?'}`}${love?`<br>호감 ${s.rel[id]||0}${LOVE[id]&&LOVE[id].st.length?` · 이야기 ${LOVE[id].st.filter((_,i)=>s.seen[`lv_${id}_${i}`]).length}/${LOVE[id].st.length}`:''}`:''}</span><span class="pd">${p.org?ORGS[p.org].n+' · ':''}${esc(p.d)}</span></div>`;});
+     return `<div class="pp"><span class="pn">${portrait('st:'+id,p.n,'thumb')}<b>${esc(npcNick(id,s))}</b> ${esc(p.n)}${p.title&&love?` <span class="chip g">${esc(p.title)}</span>`:''}</span><span class="pr">${s.dead_npc[id]?'고인':`${REALMS[pe.realm].n}${pe.real?'':'?'} · ${num(pe.v)}${pe.real?'':'?'}`}${love?`<br>호감 ${s.rel[id]||0}${LOVE[id]&&LOVE[id].st.length?` · 이야기 ${LOVE[id].st.filter((_,i)=>s.seen[`lv_${id}_${i}`]).length}/${LOVE[id].st.length}`:''}`:''}</span><span class="pd">${p.org?ORGS[p.org].n+' · ':''}${esc(p.d)}</span></div>`;});
    return `<div><p class="grp-t">인연</p><div class="ppl">${rows.join('')||'<p class="muted">아직 없음</p>'}</div></div><div><p class="grp-t">강호 인물록</p><div class="ppl">${npcRows.join('')||'<p class="muted">만난 이름난 인물이 없다.</p>'}</div><p class="muted small">숫자 뒤의 ?는 기세를 다 읽지 못했다는 뜻이다. 심계가 높거나 경지가 두 단계 이상 높으면 숨긴 실력이 보인다.</p></div>`;}
   return '';}
 function foeBox(){const f=S.tmp.foe;if(!f)return '';const p=perceive(S,f);const me=pow(S);
@@ -2175,7 +2180,7 @@ function hallHTML(){const h=loadHall();if(!h.length)return '';
 function birthHTML(){const s=S,o=ORIGINS.find(x=>x.id===s.origin),yc=s.yc,P=ycPts().pts,C=ycCost(yc),left=P-C;
   const tRow=(k,l)=>`<span>${l}</span>${dots(s.t[k])}<span class="yb"><button class="chip" data-a="yt" data-k="${k}" data-d="-1" ${yc.t[k]<=0?'disabled':''} aria-label="${l} 내리기">−</button><button class="chip" data-a="yt" data-k="${k}" data-d="1" ${left<3||s.t[k]>=10?'disabled':''} aria-label="${l} 올리기">+${yc.t[k]?yc.t[k]:''}</button></span>`;
   const trCost=k=>TCOST[k]-(yc.trait?TCOST[yc.trait]:0);
-  return `<header class="hero"><h1><span class="seal" aria-hidden="true">生</span>무림인생</h1><p>강호에 한 번 태어나 한 해씩 살아 보는 일생. 무엇을 고르든 되돌릴 수 없다.</p></header>
+  return `<header class="hero"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><h1><span class="seal" aria-hidden="true">生</span>무림인생</h1><button class="ghost" data-a="nai" style="flex:none;white-space:nowrap;margin-top:6px">설정</button></div><p>강호에 한 번 태어나 한 해씩 살아 보는 일생. 무엇을 고르든 되돌릴 수 없다.</p></header>
   <section class="plate fate"><label class="lab" for="nm">이름</label><div class="field"><input id="nm" maxlength="8" value="${esc(s.name)}" autocomplete="off"><button class="ghost" data-a="rname">다른 이름</button></div>
    <div class="rowbtn"><span class="lab">성별</span><span class="chips"><button class="chip ${s.sex==='m'?'on':''}" data-a="sex" data-v="m">남 · 룡</button><button class="chip ${s.sex==='f'?'on':''}" data-a="sex" data-v="f">여 · 봉</button></span></div>
    <div><div class="lab">출신</div><div class="og">${esc(o.n)}</div><div class="muted">${esc(o.d)} <span class="small">(${esc(s.region)})</span></div></div>
@@ -2273,7 +2278,7 @@ function render(){
   const sh1=document.querySelector('.sheet');if(sh1){if(sameM)sh1.scrollTop=sst;else if(modal&&modal.sst!=null){sh1.scrollTop=modal.sst;modal.sst=null;}} // 하위 창에서 돌아오면 목록 스크롤을 되살린다
   if(fid){const el=document.getElementById(fid);if(el){el.focus({preventScroll:true});if(sel)try{el.setSelectionRange(sel[0],sel[1]);}catch(e){}}}}
 function closeModal(){modal=modal&&modal.back||null;render();} // 하위 창은 부모 창으로 돌아간다
-function readNaiForm(){const c=modal.c;c.key=document.getElementById('n_key').value;c.model=document.getElementById('n_model').value;c.relay=document.getElementById('n_relay').value.trim();c.autoEv=document.getElementById('n_autoEv').checked;c.autoPc=document.getElementById('n_autoPc').checked;}
+function readNaiForm(){const c=modal.c;c.key=document.getElementById('n_key').value;c.model=document.getElementById('n_model').value;c.relay=document.getElementById('n_relay').value.trim();c.autoEv=document.getElementById('n_autoEv').checked;c.autoPc=document.getElementById('n_autoPc').checked;c.useRepo=document.getElementById('n_repo').checked;}
 function slotTitle(k){const [t,id]=k.split(/:(.+)/);if(t==='st')return `스탠딩 · ${safe(()=>npcNick(id,S))} ${NPCS[id].n}`;return t==='map'?'중원 지도':t==='reg'?`지역 · ${REG_KO[id]||id}`:t==='pc'?`${S.name}의 초상`:t==='npc'?`${safe(()=>npcNick(id,S))} ${NPCS[id].n}`:`장면 · ${safe(()=>evTitle(S,EVM[id]))||id}`;}
 app.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b||b.disabled)return;const a=b.dataset.a;
   if(a==='reroll'){S=newFate(document.getElementById('nm').value.trim(),S.sex,{...S.yc,remove:[]});render();}
@@ -2305,7 +2310,7 @@ app.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b||b
   else if(a==='wname'){commitWpn(S,document.getElementById('wname').value);S.res.chips.push({t:'병기 얻음',up:true});save();render();}
   else if(a==='equip'){S.wpn={...S.wpns[+b.dataset.i]};save();render();}
   else if(a==='nai'){modal={t:'nai',c:ncfg()};render();}
-  else if(a==='nsave'){readNaiForm();const c=ncfg();['key','model','relay','autoEv','autoPc'].forEach(x=>c[x]=modal.c[x]);nsave(c);modal=modal.back||null;render();toast('설정을 저장했어요.');}
+  else if(a==='nsave'){readNaiForm();const c=ncfg();['key','model','relay','autoEv','autoPc','useRepo'].forEach(x=>c[x]=modal.c[x]);nsave(c);modal=modal.back||null;render();toast('설정을 저장했어요.');}
   else if(a==='draw'){const k=b.dataset.k;modal={t:'draw',k,title:slotTitle(k),prompt:slotPrompt(k),err:''};render();}
   else if(a==='ngen'){modal.prompt=document.getElementById('n_prompt').value;savePr(modal.k,modal.prompt);drawSlot(modal.k,modal.prompt,isPort(modal.k));}
   else if(a==='gal'){modal={t:'gal',tab:'style',back:modal};render();}
@@ -2313,13 +2318,14 @@ app.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b||b
   else if(a==='gbatch'){if(!ncfg().key.trim()){modal.msg='한꺼번에 그리려면 설정에 NovelAI 토큰이 필요해요. 토큰 없이 다른 곳에서 그렸다면 \'여러 장 넣기\'를 쓰세요.';render();}
     else if(!modal.sure){modal.sure=1;render();}else{modal.sure=0;runBatch(galKeys(modal.tab).filter(k=>!imgSrc(k)));}}
   else if(a==='gnosure'){modal.sure=0;render();}
+  else if(a==='gdev'){modal.dev=!modal.dev;render();}
   else if(a==='gstop'){if(BATCH)BATCH.stop=true;render();}
   else if(a==='ncut'){const m={t:'cut',k:modal.k,tol:40,holes:false,back:modal};modal=m;render();imgGet('raw:'+m.k).then(r=>{m.hasRaw=!!r;cutPreview(m);});}
   else if(a==='capply'){const m=modal;(async()=>{if(!(await imgGet('raw:'+m.k)))await imgPut('raw:'+m.k,m.src);await imgPut(m.k,m.out);setImg(m.k,m.out);if(modal===m)modal=m.back;render();toast('배경을 지웠어요.');})().catch(e=>{m.err=e.message;render();});}
   else if(a==='cundo'){const m=modal;imgGet('raw:'+m.k).then(async r=>{if(!r)return;await imgPut(m.k,r);setImg(m.k,r);if(modal===m)modal=m.back;render();toast('원본으로 되돌렸어요.');});}
   else if(a==='gslot'){const k=b.dataset.k,sh=document.querySelector('.sheet');modal.sst=sh?sh.scrollTop:0;modal={t:'draw',k,title:slotTitle(k),prompt:slotPrompt(k),err:'',back:modal};render();}
   else if(a==='gpreset'){const c=ncfg();c.style=STYLE_PRESETS[+b.dataset.i][1];nsave(c);render();}
-  else if(a==='gcopy'){const w=b.dataset.w;copyText(w==='pv'?fullPrompt('npc:seorin'):w==='neg'?((ncfg().neg||'').trim()||NAI_NEG):fullPrompt(modal.k,modal.prompt));}
+  else if(a==='gcopy'){const w=b.dataset.w;copyText(w==='pv'?fullPrompt('st:seorin'):w==='neg'?((ncfg().neg||'').trim()||NAI_NEG):fullPrompt(modal.k,modal.prompt));}
   else if(a==='gexport'){exportPack(modal);}
   else if(a==='nreset'){const c=ncfg();delete c.pr[modal.k];nsave(c);modal.prompt=basePrompt(modal.k);render();}
   else if(a==='nsavefile'){const k=modal.k;imgGet(k).then(bl=>{if(bl)bl.arrayBuffer().then(ab=>{const t=imgType(new Uint8Array(ab));download(bl,fileName(k).replace(/png$/,t==='image/webp'?'webp':t==='image/jpeg'?'jpg':'png'));});});}
@@ -2329,7 +2335,7 @@ app.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b||b
   else if(a==='quit'){if(modal&&modal.sure){S=newFate();modal=null;tab='ab';view='ev';resetScroll=true;save();render();}else if(modal){modal.sure=1;render();}}
 });
 app.addEventListener('input',ev=>{if(ev.target.id==='c_tol'){const v=document.getElementById('c_tolv');if(v)v.textContent=ev.target.value;return;}if(ev.target.id==='nm'&&S.phase==='birth'){S.name=S.base.name=ev.target.value;}if(ev.target.id==='cname'&&S.tmp.craft)S.tmp.craft.name=ev.target.value;if(ev.target.id==='fname'&&S.tmp.forge)S.tmp.forge.name=ev.target.value;if(ev.target.id==='n_prompt'&&modal){modal.prompt=ev.target.value;savePr(modal.k,modal.prompt);const f=document.getElementById('n_full');if(f)f.textContent=fullPrompt(modal.k,modal.prompt);}
-  if(modal&&modal.t==='gal'&&/^g_(style|tnpc|tev|tmap|neg|q)$/.test(ev.target.id)){const c=ncfg(),v=id=>document.getElementById(id).value;c.style=v('g_style');c.tnpc=v('g_tnpc');c.tev=v('g_tev');c.tmap=v('g_tmap');c.neg=v('g_neg');c.q=document.getElementById('g_q').checked;nsave(c);const pv=document.getElementById('g_pv');if(pv)pv.textContent=fullPrompt('npc:seorin');}if(modal&&modal.t==='nai'&&ev.target.id.startsWith('n_'))readNaiForm();});
+  if(modal&&modal.t==='gal'&&/^g_(style|tnpc|tev|tmap|neg|q)$/.test(ev.target.id)){const c=ncfg(),v=id=>document.getElementById(id).value;c.style=v('g_style');c.tnpc=v('g_tnpc');c.tev=v('g_tev');c.tmap=v('g_tmap');c.neg=v('g_neg');c.q=document.getElementById('g_q').checked;nsave(c);const pv=document.getElementById('g_pv');if(pv)pv.textContent=fullPrompt('st:seorin');}if(modal&&modal.t==='nai'&&ev.target.id.startsWith('n_'))readNaiForm();});
 app.addEventListener('change',ev=>{if(modal&&modal.t==='gal'){const id=ev.target.id;if(id==='g_miss'){modal.miss=ev.target.checked;render();return;}if(id==='g_webp'){modal.webp=ev.target.checked;return;}if(id==='g_q'){const c=ncfg();c.q=ev.target.checked;nsave(c);render();return;}if(id==='g_files'&&ev.target.files.length){importFiles(modal,[...ev.target.files]);return;}if(id==='g_autocut'){const c=ncfg();c.autoCut=ev.target.checked;nsave(c);return;}}
   if(modal&&modal.t==='cut'){const id=ev.target.id;if(id==='c_tol'){modal.tol=+ev.target.value;cutPreview(modal);return;}if(id==='c_holes'){modal.holes=ev.target.checked;cutPreview(modal);return;}}if(modal&&modal.t==='nai'&&ev.target.id.startsWith('n_'))readNaiForm();if(ev.target.id==='n_file'&&modal&&ev.target.files[0]){const k=modal.k,f=ev.target.files[0];const m=modal;storeSlot(k,f).then(()=>render()).catch(e=>{m.err='그림을 저장하지 못했어요: '+e.message;render();});}});
 document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&modal){ev.preventDefault();closeModal();return;}const g=ev.target.closest&&ev.target.closest('.mn');if(g&&(ev.key==='Enter'||ev.key===' ')){ev.preventDefault();mapSel=g.dataset.r;render();}});
