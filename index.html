@@ -214,7 +214,7 @@ button.chip.on{background:var(--jade);color:var(--card);border-color:var(--jade)
 .gth img{width:100%;height:100%;object-fit:cover;object-position:top}
 .gn{font-size:.8rem;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .gs{font-size:.68rem;color:var(--ink2)}.gs.local{color:var(--jade);font-weight:700}.gs.repo{color:var(--gold);font-weight:700}
-.pv{margin:0;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);font-family:ui-monospace,Menlo,monospace;font-size:.75rem;line-height:1.45;word-break:break-word;color:var(--ink)}
+.ppv{margin:0;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);font-family:ui-monospace,Menlo,monospace;font-size:.75rem;line-height:1.45;word-break:break-word;color:var(--ink)}
 .row.wrap{flex-wrap:wrap;gap:6px}
 .sheet .big{max-height:48vh;object-fit:contain;background:var(--paper)}
 .btnl{cursor:pointer;display:inline-flex;align-items:center}
@@ -301,6 +301,8 @@ const ORGS={
    heart:['빙백신공',['음'],1.25,-2.5],arts:[['한빙검법','검',1,['음','쾌']],['빙백장','권',2,['음','강']],['설화검','검',3,['음','변','환']],['빙백신검','검',4,['음','강기'],[-100,-20]]],ranks:['빙궁 시위','빙궁 무사','빙궁 수호','장로','궁주']},
  salmak:{n:'살막',cat:'살수 집단',side:'흑도',st:'사',reg:'호남',w:'암기',mult:1.15,stat:'luck',fl:'절혼',d:'아이를 납치해 살수로 기른다. 들어오는 문은 있어도 나가는 문은 없다.',
    heart:['절혼심법',['음','암'],1.15,-1.5],arts:[['살막비도','암기',1,['암','쾌']],['잠영보','신',2,['경','암']],['절혼수','권',3,['암','독','쾌']],['무형살','암기',4,['암','환','강기']]],ranks:['살수','흑살','혈살','살막 장로','막주']},
+ jangsu:{n:'장강수로채',cat:'수채',side:'흑도',st:'사',reg:'호북',w:'창',mult:1.0,stat:'bone',fl:'수룡',d:'장강 물길을 쥔 수적들. 배 위에서는 천하에 적수가 없다.',
+   heart:['장강수룡공',['유','중'],.95,0],arts:[['분수창','창',1,['유']],['수룡보','신',2,['경','유']],['장강도해창','창',3,['중','변']],['수룡파천창','창',4,['강기','유','중']]],ranks:['수졸','두령','채주','총채주','대채주']},
  demon:{n:'천마신교',cat:'마교',side:'마교',st:'마',reg:'신강',w:'권',mult:1.3,stat:'bone',fl:'마령',d:'강호가 두려워하는 마교. 빨리 강해지지만 피를 부른다.',
    heart:['천마신공',['마','양'],1.4,1],arts:[['마령장','권',1,['마']],['혈영신법','신',2,['경','마']],['천마군림보','권',3,['마','강기']],['천마검','검',4,['마','강기','쾌']]],ranks:['교도','대주','호법','장로','교주']},
  blood:{n:'혈교',cat:'마교',side:'마교',st:'마',reg:'청해',w:'도',mult:1.3,stat:'bone',fl:'혈',d:'마교에서도 내놓은 피의 종파.',
@@ -443,7 +445,9 @@ function tb(S){ // 한 해 수련으로 쌓이는 깨달음
   if(has(S,'heaven'))v*=1.6; if(has(S,'slaughter'))v*=S.flags.salSealed?1.1:1.35; if(S.flags.lone)v*=1.1; if(!S.org&&!S.arts.length)v*=.5;
   const h=heartArt(S);if(h&&h.kw.some(k=>k==='마'||k==='혈'))v*=1.15; return v;}
 function ngRate(S){const h=heartArt(S);let r=h?h.rate*(usable(S,h)?1:.5):0;if(S.flags.yinCured)r*=2;if(has(S,'gongryeong'))r*=.5;if(has(S,'eumyang'))r*=.85;return r;}
-const lifespan=S=>54+(has(S,'seongol')?30:0)-(has(S,'heaven')?5:0)+S.t.bone+REALMS[S.realm].life+Math.floor(S.ng/45)+Math.floor(S.cult/25);
+const lifespan=S=>{const b=54+(has(S,'seongol')?30:0)-(has(S,'heaven')?5:0)+S.t.bone+REALMS[S.realm].life+Math.floor(S.ng/45)+Math.floor(S.cult/25)
+  +(S.flags.hwangol?10:0)+(S.flags.sinuiLife||0)+(S.job==='doctor'?Math.floor(S.med/20):0);
+  return S.flags.hwangolAt?Math.max(b,S.flags.hwangolAt+20):b;}; // 환골탈태하면 몸이 새로 짜이므로 적어도 스무 해는 더 산다
 function hurt(S,n,cause){S.hp-=n;if(S.hp<=0&&!S.dead){S.hp=0;S.dead=cause;}}
 const RANGE={moral:[-100,100],temper:[-100,100],mood:[-100,100],yy:[-100,100]};
 const UNB=new Set(['fame','gold','ng','exp','contrib']);
@@ -570,6 +574,7 @@ function worldWatch(S){const w=S.w,h=w.h||(w.h={});const add=(k,t)=>{if(!h[k]){h
   if(S.dead_npc.geomma)add('geomma','검마 사마 율이 쓰러졌다.');
   if(w.cheonma==='dead')add('cmDead','천마가 쓰러졌다.');if(w.cheonma==='sealed')add('cmSeal','천마가 다시 봉인되었다.');
   if(w.demon>=3&&w.cheonma==='alive')add('cmRise','천마가 강호에 나타났다.');
+  S.titles.filter(t=>/^(정파|사파|마교)제일인$/.test(t)).forEach(t=>add(t,`${nm} ${jo(t,'이','가')} 되었다.`));
   if(S.titles.includes('천하제일인'))add('first',`${nm} 천하제일인이 되었다.`);
   if(S.flags.salsin&&!S.flags.hyeolsin)add('salsin','살신이 강호에 나타났다.');
   if(S.flags.cwMa)add('cwMa','화산신룡 매 청운이 마교에 투신해 독비마검이 되었다.');}
@@ -586,12 +591,12 @@ E({id:'sectTest',arc:1,t:'문파의 사자들',a:[10,10],force:S=>!S.org,
  prep:S=>{let base=shuffle(['shaolin','wudang','huashan','kunlun','beggar']).slice(0,2);
    if(S.sex==='f')base.push('emei'); if(S.flags.clanOf)base.push(S.flags.clanOf); if(S.origin==='medic'||has(S,'dokche'))base.push('tang');
    if(S.origin==='smith')base.push('paeng'); if(S.origin==='orphan')base.push('haomun'); if(S.flags.demonBlood)base.push('demon');
-   if(S.flags.taijiLater)base.push('wudang'); if(has(S,'taeeum')||has(S,'yin'))base.push('binggung');
+   if(S.flags.taijiLater)base.push('wudang'); if(has(S,'taeeum')||has(S,'yin'))base.push('binggung'); if(['호북','강남'].includes(S.region))base.push('jangsu');
    if(base.length<3)base.push(pick(['emei','huashan','wudang'].filter(x=>!base.includes(x))));S.tmp.offer=[...new Set(base)];},
  x:S=>'열 살 되던 봄, 고을 광장에 문파의 사자들이 제자를 뽑으러 왔다. 아이들이 길게 줄을 섰다. 시험은 셋이라고 한다.'+(S.flags.demonBlood?'\n광장 구석에서 검은 옷의 사내가 당신에게만 조용히 손짓한다.':''),
  ch:S=>[...S.tmp.offer.map(id=>{const o=ORGS[id];return {t:`${o.n}의 줄에 선다`,h:orgHint(id),go:S=>{
    let p=.25+S.t[o.stat]*.07+S.t.luck*.015;
-   if(id==='beggar'||id==='haomun')p=1; if(id==='namgung'||id==='paeng')p=S.flags.clanOf===id?.85:.1;
+   if(id==='beggar'||id==='haomun')p=1; if(id==='jangsu')p=.5+S.t.bone*.04; if(id==='namgung'||id==='paeng')p=S.flags.clanOf===id?.85:.1;
    if(id==='tang')p=has(S,'dokche')?.97:S.origin==='medic'?.5+S.t.wit*.05:.1; if(id==='demon')p=.95; if(id==='emei'&&S.sex==='m')p*=.5;
    if(id==='paeng'&&S.origin==='smith')p=.5+S.t.bone*.05; if(id==='wudang'&&has(S,'eumyang'))p=.97; if(id==='binggung'&&(has(S,'taeeum')||has(S,'yin')))p=.9;
    S.flags.testOrg=id;S.flags.testP=p;S.chain='sectTest2';return `${o.n}의 줄에 섰다. 시험관이 말했다. "몸을 보고, 마음을 본다."`;}};}),
@@ -659,9 +664,9 @@ E({id:'innRaid',t:'객잔 습격',a:[14,30],w:1.5,cd:6,if:S=>S.flags.waiter,
   {t:'손님들을 뒷문으로 빼낸다',go:S=>{A(S,{moral:5,savvy:3,fame:2});return '손님 열둘을 모두 뒷문으로 빼냈다. 객잔은 털렸지만 아무도 죽지 않았다.';}}]});
 E({id:'innRise',t:'점소이의 갈림길',a:[18,30],w:3,if:S=>S.flags.waiter&&!S.flags.waiterDone,
  x:"늙은 객잔 주인이 당신을 불렀다. '이 객잔을 네게 물려주고 싶다.' 같은 날 하오문 사람도 찾아왔다. '자네 같은 눈과 귀가 필요하네.'",
- ch:[{t:'객잔 주인이 된다',go:S=>{S.flags.waiterDone=1;S.flags.innOwner=1;A(S,{gold:200,savvy:8,mood:10});deed(S,'객잔 주인이 되었다');return '객잔 간판을 새로 달았다. 강호 사람들이 쉬어 가는 집이 되었다.';}},
-  {t:'하오문에 들어간다',if:S=>!S.org,go:S=>{S.flags.waiterDone=1;join(S,'haomun',1);deed(S,'하오문 향주가 되었다');return '하오문의 향주가 되었다. 점소이 시절 들은 소문이 모두 재산이 되었다.';}},
-  {t:'행주를 내려놓고 강호로 나간다',go:S=>{S.flags.waiterDone=1;S.flags.jianghu=1;A(S,{gold:30,mood:10});return '주인은 서운해하며 은자 서른 냥을 쥐여 주었다.';}}]});
+ ch:[{t:'객잔 주인이 된다',go:S=>{S.flags.waiterDone=1;S.flags.innOwner=1;setJob(S,'inn',{owner:true});A(S,{gold:200,savvy:8,mood:10});deed(S,'객잔 주인이 되었다');return '객잔 간판을 새로 달았다. 강호 사람들이 쉬어 가는 집이 되었다.';}},
+  {t:'하오문에 들어간다',if:S=>!S.org,go:S=>{S.flags.waiterDone=1;leaveJob(S);join(S,'haomun',1);deed(S,'하오문 향주가 되었다');return '하오문의 향주가 되었다. 점소이 시절 들은 소문이 모두 재산이 되었다.';}},
+  {t:'행주를 내려놓고 강호로 나간다',go:S=>{S.flags.waiterDone=1;S.flags.jianghu=1;leaveJob(S);A(S,{gold:30,mood:10});return '주인은 서운해하며 은자 서른 냥을 쥐여 주었다.';}}]});
 
 /* ── 대장장이 길 ── */
 E({id:'guya',t:'늙은 대장장이',a:[13,35],w:2,if:S=>(S.forge>=15||S.flags.smithLike)&&!S.flags.smith,
@@ -716,13 +721,17 @@ E({id:'descend',t:'하산',a:[17,21],w:3,if:S=>!!S.org&&!S.flags.jianghu,force:S
  x:"사부가 당신을 불렀다. '이제 산을 내려가 강호를 보고 오너라. 보고 듣는 것도 수련이다.'",
  ch:[{t:'절을 올리고 산을 내려간다',go:S=>{S.flags.jianghu=1;S.chain='chuldo';A(S,{gold:20,fame:1,mood:10});return '은자 스무 냥을 받았다. 산문을 나서자 바람 냄새가 달랐다.';}},
   {t:'한 해만 더 배우겠다고 청한다',go:S=>{S.flags.jianghu=1;A(S,{exp:tb(S)*.8,mu:3});return '사부는 웃으며 한 해를 더 내주었다.';}}]});
-E({id:'lateJoin',t:'두 번째 문',a:[13,26],w:2,if:S=>!S.org&&!S.flags.lone,
- x:'떠돌던 길에 몸을 의탁할 곳이 다시 눈에 들어왔다.',
- ch:S=>[{t:'개방의 문을 두드린다',h:orgHint('beggar'),go:S=>{join(S,'beggar');deed(S,'개방에 입문했다');return '늙은 거지가 당신 어깨에 매듭 하나를 달아 주었다.';}},
-  {t:'녹림맹 산채로 간다',h:orgHint('bandit'),go:S=>{join(S,'bandit');A(S,{moral:-8});deed(S,'녹림맹에 몸을 담았다');return "두목은 당신 어깨를 툭 쳤다. '배짱이 마음에 든다.'";}},
-  {t:'귀영루의 시험을 치른다',h:orgHint('gwiyeong'),if:S=>S.mind>=15||S.moral<=0,go:S=>{if(chance(.4+S.mind/150)){join(S,'gwiyeong');A(S,{moral:-12,mind:5});deed(S,'귀영루의 살수가 되었다');return '시험은 사람 하나를 죽이는 것이었다. 당신은 통과했다.';}hurt(S,20,'귀영루의 시험');return '시험에서 떨어졌다. 목숨이 붙어 있는 게 다행이다.';}},
-  {t:'만화궁의 문을 두드린다',h:orgHint('manhwa'),if:S=>S.sex==='f',go:S=>{if(chance(.3+S.t.looks*.06)){join(S,'manhwa');deed(S,'만화궁에 들었다');return '궁주가 당신 얼굴을 한참 보더니 고개를 끄덕였다.';}return '시녀가 문을 닫았다. 꽃이 되기엔 모자라다고.';}},
-  {t:'소림에 속가 제자로 청한다',h:'선하게 살았다면 받아 준다.',if:S=>S.moral>=8,go:S=>{if(chance(.5+S.moral/100)){join(S,'shaolin');deed(S,'소림의 속가 제자가 되었다');return '지객승이 합장하며 산문을 열었다.';}return '지객승은 합장만 하고 문을 닫았다.';}},
+E({id:'lateJoin',t:'두 번째 문',a:[13,26],w:2,if:S=>!S.org&&!S.flags.lone&&!S.job,
+ x:'떠돌던 길에 몸을 의탁할 곳이 다시 눈에 들어왔다. 문마다 들어가는 법이 다르다.',
+ ch:S=>[{t:'개방의 문을 두드린다',h:orgHint('beggar'),go:S=>{S.chain='jn_beggar';return '분타 앞에 거지들이 볕을 쬐고 있었다.';}},
+  {t:'녹림맹 산채로 간다',h:orgHint('bandit'),go:S=>{S.chain='jn_bandit';return '산길 끝에 목책이 보였다. 망루 위에서 누군가 활을 겨눴다.';}},
+  {t:'장강수로채의 배를 탄다',h:orgHint('jangsu'),go:S=>{S.chain='jn_jangsu';return '나루에서 수적 배 한 척이 다가왔다.';}},
+  {t:'하오문을 찾는다',h:orgHint('haomun'),go:S=>{S.chain='jn_haomun';return '객잔 뒷문에서 점소이가 손짓했다.';}},
+  {t:'귀영루의 시험을 치른다',h:orgHint('gwiyeong'),if:S=>S.mind>=15||S.moral<=0,go:S=>{S.chain='jn_gwiyeong';return '이름 없는 편지가 왔다. 안에는 지도 한 장뿐이었다.';}},
+  {t:'만화궁의 문을 두드린다',h:orgHint('manhwa'),if:S=>S.sex==='f',go:S=>{S.chain='jn_manhwa';return '꽃향기가 짙은 궁의 문이 반쯤 열렸다.';}},
+  {t:'소림에 속가 제자로 청한다',h:'선하게 살았다면 받아 준다.',if:S=>S.moral>=8,go:S=>{S.chain='jn_shaolin';return '숭산 산문 앞에서 지객승이 합장했다.';}},
+  {t:'십만대산으로 간다',h:orgHint('demon'),if:S=>S.flags.demonBlood||S.moral<=-30,go:S=>{S.chain='jn_demon';return '서쪽으로, 서쪽으로. 모래바람 너머에 검은 산이 보였다.';}},
+  {t:'혈교의 붉은 호수로 간다',h:orgHint('blood'),if:S=>S.moral<=-40,go:S=>{S.chain='jn_blood';return '청해의 호수는 정말 붉었다.';}},
   {t:'혼자 가는 길이 좋다',h:'무소속 낭인. 혼자 하는 수련이 조금 더 잘 된다.',go:S=>{S.flags.lone=1;A(S,{cult:3});return '바람이 스승이다.';}}]});
 const MASTERS={
  dokgo:{n:'독고 현',nick:'검치',d:'검에 미친 노인. 평생 한 초식만 판다.',if:S=>true,go:S=>{const r=learn(S,'dokgo1');A(S,{mu:6});SK(S,'검',10);return "노인은 나뭇가지 하나로 당신 목을 겨누었다. '빠르게, 더 빠르게.' "+r;}},
@@ -1083,7 +1092,7 @@ E({id:'jeol',t:'무림의 이름',a:[20,99],w:4,cd:1,if:S=>{const g=GROUPS[S.gro
  x:S=>{const g=GROUPS[S.groups];return `강호인들이 술자리마다 꼽는 이름이 있다. 이번에 ${g.n}의 명단이 새로 돌았다. 당신 이름이 거기 있다.\n${g.n}끼리는 서로 친하지도, 잘 알지도 못한다. 그저 수가 적을수록 강할 뿐이다.`;},
  ch:[{t:'담담히 받아들인다',go:S=>{const g=GROUPS[S.groups];S.groups++;A(S,{fame:Math.round(g.fame/10),cult:2});deed(S,`${g.n}의 하나로 꼽혔다`);return `${g.n}. 이름 앞에 무게가 하나 더 실렸다.`;}},
   {t:'명단의 다른 고수를 찾아가 겨뤄 본다',go:S=>{const g=GROUPS[S.groups];const b=battle(S,mkFoe({n:g.n+'의 하나',realm:clamp(S.realm,4,8),q:1.05}),{spar:1});S.groups++;A(S,{fame:Math.round(g.fame/(b.win?6:12))});deed(S,`${g.n}의 하나로 꼽혔다`);return fightText(b,'명단에 이름을 올린 자를 찾아가 꺾었다. 당신 이름이 명단 위로 올라갔다.','졌다. 그래도 이름은 명단에 남았다.');}}]});
-E({id:'first',tag:'key',arc:1,t:'화산논검',a:[45,99],w:4,if:S=>S.realm>=6&&S.fame>=300&&!S.titles.some(t=>t==='천하제일인'||t==='-'),
+E({id:'first',tag:'key',arc:1,t:'화산논검',a:[45,99],w:4,if:S=>S.realm>=6&&S.fame>=300&&!S.titles.some(t=>t==='천하제일인'||t==='-')&&(!FACTION(S)||S.titles.includes(FACTION(S)+'제일인')),
  prep:S=>{S.loc='섬서';const c=['muhwang','gumwang','geomhu','geolwang','binghu'].filter(id=>!S.dead_npc[id]);S.tmp.npc=c.length?pick(c):'muhwang';S.tmp.foe=npcFoe(S,S.tmp.npc);},
  x:S=>`백 년 전 천마와 검성이 사라진 화산 정상에서 백 년 만에 논검이 열렸다. 천하의 고수들이 모였다. 첫 상대는 ${NPCS[S.tmp.npc].nick} ${NPCS[S.tmp.npc].n}.`,
  ch:[{t:'병기를 뽑는다',go:S=>{const b=battle(S,S.tmp.foe,{spar:1});if(b.win){A(S,{fame:60});S.chain='hwasan2';return `${jo(NPCS[S.tmp.npc].nick,'이','가')} 물러섰다. 정상에 마지막 한 사람이 기다린다.`+b.rev;}A(S,{fame:30});hist(S,'백 년 만의 화산논검이 열렸다.');return '한 수가 모자랐다. 그래도 화산논검에 이름을 남겼다.'+b.rev;}},
@@ -1642,6 +1651,396 @@ E({id:'ascend',t:'하늘이 열리다',a:[60,999],force:S=>(S.realm>=8||(S.flags
  ch:[{t:'하늘로 오른다',go:S=>{S.dead='우화등선';S.flags.ascend=1;deed(S,'우화등선했다');return '그날 새벽 산정에서 오색 구름이 피어올랐다고 한다.';}},
   {t:'아직 이 땅에 남을 일이 있다',go:S=>{S.flags.stay=1;A(S,{moral:5});return '발을 다시 땅에 내렸다. 하늘은 조용히 닫혔다.';}}]});
 
+/* ══ 입문 시험: 세력마다 다른 두 관문 ══════════════════
+   [제목, 본문, [선택지, 힌트, S=>[합격 가능성 변화, 결과 문장]]] */
+const JOIN_TESTS={
+ shaolin:[
+  {t:'천 개의 계단',x:'지객승이 아이들 어깨에 물지게를 하나씩 얹었다. “산문까지 천 계단이다. 물을 채워 오너라. 흘린 만큼 마음이 샌 것이다.”',ch:[
+   ['한 방울도 흘리지 않고 오른다','근골',S=>chance(.2+S.t.bone*.07)?[.2,'어깨가 터질 듯했지만 물동이 수면은 거울처럼 고요했다. 지객승이 처음으로 당신 얼굴을 보았다.']:[-.05,'칠백 계단에서 무릎이 꺾였다. 물이 계단을 타고 흘러내렸다.']],
+   ['반만 채워 여러 번 오른다','끈기·수양',S=>{A(S,{cult:2});return [.1,'남들이 한 번 오를 때 세 번 올랐다. 해 질 무렵 물독이 찼다. “꾀인가, 지혜인가.” 지객승이 중얼거렸다.'];}],
+   ['넘어진 아이의 물지게를 대신 진다','도덕',S=>{A(S,{moral:4});return chance(.3+S.t.bone*.05)?[.2,'물지게 둘을 지고 산문에 닿았다. 지객승이 합장했다.']:[.08,'둘 다 반쯤 흘렸다. 그래도 지객승은 당신 이름을 적었다.'];}]]},
+  {t:'방장의 물음',x:'나한당. 향 연기 너머 흰 눈썹의 노승이 물었다. “무공은 사람을 해치는 기술이다. 너는 왜 그것을 배우려 하느냐?”',ch:[
+   ['지키고 싶은 사람이 있습니다','',S=>{A(S,{moral:2});return [.2,'노승이 고개를 끄덕였다. “그 마음을 잃으면 무공이 너를 잡아먹는다. 잊지 마라.”'];}],
+   ['강해지고 싶습니다','',S=>[.12,'노승이 웃었다. “솔직하구나. 거짓보다는 낫다. 강함이 무엇인지는 여기서 평생 배우게 될 것이다.”']],
+   ['그것을 알려고 왔습니다','오성',S=>S.t.wit>=5?[.28,'노승의 눈썹이 움찔했다. “모른다는 것을 아는 아이로구나.” 향 하나가 다 탈 때까지 아무 말이 없었다.']:[.1,'노승은 대답 없이 눈을 감았다.']]]}],
+ wudang:[
+  {t:'구름 속의 길',x:'젊은 도사가 안개 낀 산길을 가리켰다. “길은 셋이다. 하나만 자소궁에 닿는다.” 그러고는 안개 속으로 사라졌다.',ch:[
+   ['물소리를 따라간다','오성',S=>chance(.2+S.t.wit*.07)?[.2,'물은 늘 낮은 곳으로 흐르고, 낮은 곳에 길이 있다. 안개를 빠져나오자 자소궁 지붕이 보였다.']:[-.05,'물소리는 산을 한 바퀴 돌아 제자리로 왔다.']],
+   ['가장 가파른 길로 오른다','근골',S=>chance(.2+S.t.bone*.06)?[.12,'손톱이 깨지도록 바위를 탔다. 꼭대기에서 도사가 웃고 있었다. “빠르긴 한데, 돌아가는 법도 배워야겠구나.”']:[-.05,'바위에서 미끄러졌다. 도사가 당신 뒷덜미를 잡아 올렸다.']],
+   ['앉아서 안개가 걷히길 기다린다','수양',S=>{A(S,{cult:3});return [.22,'한나절을 앉아 있었다. 안개가 걷히자 길은 하나뿐이었다. 뒤에서 도사가 말했다. “무위(無爲)도 하나의 걸음이다.”'];}]]},
+  {t:'흑백의 물음',x:'노도사가 바둑판 위에 흑돌 하나, 백돌 하나를 놓았다. “어느 쪽이 이기겠느냐?”',ch:[
+   ['흑이 이깁니다','',S=>[0,'“어째서?” 대답하지 못했다. 노도사는 흑돌을 집어 백돌 옆에 붙였다.']],
+   ['둘이 함께 있어야 판이 됩니다','오성',S=>S.t.wit>=4?[.3,'노도사가 손을 멈추고 당신을 오래 보았다. “태극은 다투지 않는다. 다투지 않으니 지지도 않는다.” 그가 붓을 들었다.']:[.12,'말은 맞았으나 왜 맞는지는 몰랐다. 노도사는 그것도 괜찮다고 했다.']],
+   ['돌을 쓸어 섞어 버린다','성정',S=>{A(S,{temper:3});return [.08,'노도사가 껄껄 웃었다. “혼돈(混沌)부터 보았구나. 거칠지만 틀리진 않았다.”'];}]]}],
+ huashan:[
+  {t:'지는 매화',x:'시험관이 매화 가지를 휘둘렀다. 꽃잎이 눈처럼 흩날린다. “땅에 닿기 전에 잡은 만큼이 너의 검이다.”',ch:[
+   ['눈으로 쫓아 하나하나 잡는다','기연·경공',S=>chance(.2+S.t.luck*.04+S.qing/100)?[.2,'열한 장. 마지막 꽃잎은 콧등 위에서 잡았다. 구경하던 사형들이 휘파람을 불었다.']:[0,'세 장. 나머지는 손가락 사이로 빠져나갔다.']],
+   ['바람을 읽고 손바닥을 편다','오성',S=>chance(.2+S.t.wit*.07)?[.25,'움직이지 않았다. 바람이 꽃잎을 손바닥 위로 데려왔다. 시험관이 가지를 내렸다. “매화검은 쫓는 검이 아니라 피우는 검이다.”']:[0,'바람은 당신 편이 아니었다.']],
+   ['가지를 빼앗으려 덤빈다','근골·성정',S=>{A(S,{temper:2});return chance(.15+S.t.bone*.06)?[.15,'가지 끝을 붙잡았다. 시험관이 웃었다. “꽃 대신 나무를 노리다니, 배짱은 화산 것이로구나.”']:[-.05,'가지 끝에 이마를 맞았다.'];}]]},
+  {t:'장공잔도',x:'절벽에 박힌 쇠말뚝 위로 판자 한 장 너비의 잔도가 이어진다. 아래는 구름이다. “건너오너라.”',ch:[
+   ['앞만 보고 건넌다','기연',S=>chance(.35+S.t.luck*.05)?[.18,'바람이 옷자락을 잡아당겼지만 발은 판자를 놓치지 않았다. 건너편에서 누군가 박수를 쳤다.']:[-.05,'중간에서 얼어붙었다. 사형이 와서 업어 갔다.']],
+   ['쇠사슬을 붙잡고 한 걸음씩','',S=>[.1,'느렸지만 끝까지 갔다. 화산의 검은 화려하지만, 화산 사람들은 느린 걸음을 비웃지 않았다.']],
+   ['겁먹은 아이 손을 잡고 함께 건넌다','도덕',S=>{A(S,{moral:4});return [.2,'아이 손이 땀으로 미끄러웠다. 둘 다 건넜다. 그 아이는 그날부터 당신을 형이라 불렀다.'];}]]}],
+ kunlun:[
+  {t:'설산의 밤',x:'곤륜의 사형이 아이들을 눈밭에 세웠다. “산문은 내일 아침에 연다. 오늘 밤을 살아남아라.” 눈보라가 시작됐다.',ch:[
+   ['밤새 몸을 움직이며 버틴다','근골',S=>chance(.25+S.t.bone*.06)?[.2,'발가락 감각이 사라졌다가 돌아왔다. 새벽에 사형이 당신 머리의 눈을 털어 주었다.']:[-.1,'자정 무렵 쓰러졌다. 눈을 뜨니 산문 안 화롯가였다.']],
+   ['눈굴을 판다','오성',S=>chance(.25+S.t.wit*.06)?[.22,'눈은 차갑지만 바람을 막는다. 눈굴 안은 생각보다 따뜻했다. 사형이 굴을 들여다보고 피식 웃었다.']:[0,'굴이 무너졌다. 다시 팠다.']],
+   ['다른 아이들과 붙어 체온을 나눈다','도덕',S=>{A(S,{moral:3});return [.15,'일곱 아이가 서로를 끌어안고 밤을 났다. 아무도 죽지 않았다. 사형은 그것을 오래 기록했다.'];}]]},
+  {t:'운룡의 그림자',x:'사형이 소나무 꼭대기에 섰다. 가지가 휘지도 않는다. “나를 한 번이라도 건드리면 받아 주마.”',ch:[
+   ['나무를 타고 쫓는다','근골·경공',S=>chance(.12+S.t.bone*.04+S.qing/80)?[.22,'손끝이 사형의 신발 끝을 스쳤다. 사형이 허공에서 한 바퀴 돌며 웃었다. “됐다.”']:[0,'사형은 구름처럼 옆 나무로 옮겨 갔다.']],
+   ['내려올 때를 기다린다','오성',S=>chance(.2+S.t.wit*.06)?[.2,'해가 지자 사형이 내려왔다. 그 순간 소매를 잡았다. “꾀가 경공보다 빠르구나.”']:[0,'사형은 끝내 내려오지 않았다. 아침에 보니 다른 나무에서 자고 있었다.']],
+   ['나무를 흔든다','기연',S=>chance(.3+S.t.luck*.04)?[.12,'솔방울이 사형 머리에 떨어졌다. 그것도 건드린 것이라고 우겼다. 사형은 졌다고 했다.']:[-.05,'나무는 꿈쩍도 하지 않았다.']]]}],
+ beggar:[
+  {t:'깨진 동냥 그릇',x:'늙은 거지가 이가 빠진 그릇을 내밀었다. “해 질 때까지 이걸 채워 와라. 개방은 얻어먹는 법부터 배운다.”',ch:[
+   ['구슬프게 우는소리를 한다','구력',S=>{A(S,{tongue:2,gold:3});return [.05,'그릇이 찼다. 늙은 거지가 혀를 찼다. “잘 빌었다만, 거지가 거짓말부터 늘면 못쓴다.”'];}],
+   ['장터에서 짐을 날라 품삯을 받는다','근골',S=>{A(S,{gold:5});return [.12,'“빌어먹으라 했더니 벌어먹었구나.” 늙은 거지가 그릇 속 엽전을 보며 웃었다. “거지에게도 손은 있다. 좋다.”'];}],
+   ['얻은 만두를 더 굶은 아이에게 준다','도덕',S=>{A(S,{moral:5});return [.2,'빈 그릇으로 돌아왔다. 늙은 거지가 오래 당신을 보다가 그릇을 엎었다. “개방이 왜 천하 거지들의 방파인지, 너는 벌써 아는구나.”'];}]]},
+  {t:'타구봉 아래',x:'분타 마당에 사나운 개 세 마리가 풀렸다. 장로가 대나무 막대기 하나를 던져 주었다. “개를 다룰 줄 알아야 개방이다.”',ch:[
+   ['막대기로 개를 몰아낸다','근골',S=>chance(.25+S.t.bone*.05)?[.2,'개들이 꼬리를 말고 달아났다. 장로가 막대 끝을 툭 쳤다. “타구봉의 첫 초식을 몸이 먼저 알았구나.”']:[0,'개에게 바짓가랑이를 물렸다. 장로들이 배를 잡고 웃었다.']],
+   ['먹다 남은 뼈를 던져 달랜다','오성',S=>[.15,'개들이 뼈를 물고 엎드렸다. “싸우지 않고 이기는 것도 개방의 법이지.”']],
+   ['같이 엎드려 짖는다','기연',S=>chance(.4)?[.18,'개들이 어리둥절해 물러났다. 장로가 웃다가 술을 뿜었다. “이런 놈은 처음 본다. 받아 주마!”']:[.05,'개가 같이 짖었다. 장로는 웃기만 했다.']]]}],
+ emei:[
+  {t:'금정의 종',x:'새벽 금정에서 종이 백팔 번 울린다. 그동안 무릎 꿇고 반야심경을 처음부터 끝까지 외워야 한다.',ch:[
+   ['한 자도 틀리지 않고 외운다','오성',S=>chance(.2+S.t.wit*.07)?[.22,'마지막 종소리와 마지막 구절이 함께 끝났다. 사태가 처음으로 눈을 떴다.']:[0,'“색즉시공” 다음이 생각나지 않았다.']],
+   ['졸음을 참으려 허벅지를 꼬집는다','수양',S=>{A(S,{cult:2});return [.12,'허벅지에 멍이 들었지만 끝까지 깨어 있었다.'];}],
+   ['옆 아이의 경문을 훔쳐본다','도덕↓',S=>{A(S,{moral:-3});return chance(.5)?[.05,'다 외웠다. 사태가 말했다. “눈은 경문 대신 마음을 보아야 한다.” 들킨 것이다.']:[-.15,'들켰다. 사태가 경문을 덮었다.'];}]]},
+  {t:'원숭이와 복숭아 패',x:'산문 앞, 아미산 원숭이 한 마리가 당신의 시험패를 낚아채 나무 위로 올라갔다.',ch:[
+   ['쫓아 올라가 빼앗는다','근골·경공',S=>chance(.2+S.t.bone*.05+S.qing/100)?[.15,'원숭이와 한참 씨름한 끝에 패를 되찾았다. 얼굴이 할퀴어졌다.']:[0,'원숭이가 패를 들고 계곡 너머로 사라졌다.']],
+   ['복숭아 하나와 바꾼다','오성',S=>[.18,'원숭이가 복숭아를 받고 패를 떨어뜨렸다. 지켜보던 비구니가 미소 지었다. “주고받을 줄 아는구나.”']],
+   ['원숭이가 싫증 낼 때까지 기다린다','수양',S=>{A(S,{cult:2});return [.2,'반 시진 뒤 원숭이가 패를 버리고 갔다. “기다림도 아미의 검이다.” 사태가 말했다.'];}]]}],
+ namgung:[
+  {t:'족보 앞에서',x:'남궁세가 사당. 적자 사촌이 당신을 훑어보며 웃었다. “서자가 감히 창궁의 검을 넘보느냐.”',ch:[
+   ['비무를 청한다','근골',S=>chance(.2+S.t.bone*.06)?[.25,'목검이 부러질 때까지 싸웠다. 사촌이 먼저 무릎을 꿇었다. 가주가 처음으로 당신 이름을 불렀다.']:[0,'사촌의 목검이 당신 어깨를 쳤다. 그래도 끝까지 일어섰다.']],
+   ['고개 숙여 예를 다한다','처세',S=>{A(S,{savvy:3});return [.12,'사촌은 김이 빠진 얼굴로 돌아섰다. 지켜보던 늙은 집사가 고개를 끄덕였다.'];}],
+   ['피는 하나라고 말한다','구력',S=>chance(.2+S.tongue/60)?[.2,'“남궁의 피가 서자와 적자로 나뉘어 흐르던가요?” 사당이 조용해졌다. 가주가 헛기침을 했다.']:[-.05,'말이 엉켰다. 사촌이 더 크게 웃었다.']]]},
+  {t:'창궁의 목검',x:'연무장 기둥에 동전만 한 흠집이 있다. “목검으로 같은 자리를 백 번 찔러라. 한 치라도 어긋나면 처음부터다.”',ch:[
+   ['정확하게 백 번','오성',S=>chance(.2+S.t.wit*.07)?[.22,'백 번째 찌르기에 흠집이 구멍이 되었다.']:[0,'아흔일곱 번째에 손이 떨렸다.']],
+   ['힘껏 백 번','근골',S=>chance(.2+S.t.bone*.07)?[.18,'기둥이 울렸다. 백 번째에 목검이 부러졌다. 검왕의 시종이 그것을 주워 갔다.']:[0,'힘이 앞서 자리가 어긋났다.']],
+   ['해가 질 때까지 천 번','끈기',S=>{A(S,{cult:3,hp:-5});return [.2,'백 번은 시험이었고 천 번은 당신이 정했다. 손바닥이 터졌다. 그날 밤 누군가 당신 방 앞에 금창약을 두고 갔다.'];}]]}],
+ paeng:[
+  {t:'무쇠 도',x:'하북팽가 연무장. 아이 키만 한 무쇠 도가 땅에 꽂혀 있다. “뽑아서 세 번 휘둘러라.”',ch:[
+   ['뽑아 휘두른다','근골',S=>chance(.15+S.t.bone*.08+(S.origin==='smith'?.15:0))?[.25,'세 번째 휘두름에 바람 소리가 났다. 팽가 어른이 무릎을 쳤다. “팽가의 도다!”']:[-.05,'뽑기는 했으나 휘두르다 도에 끌려 넘어졌다.']],
+   ['도를 이리저리 살핀다','단조',S=>S.forge>=10?[.2,'“무게중심이 손잡이 쪽에 있습니다. 이렇게 잡으면…” 도가 가볍게 들렸다. 팽가 어른이 눈을 크게 떴다.']:[.05,'살피는 사이 해가 졌다.']],
+   ['두 손으로 끌어안고 버틴다','끈기',S=>{A(S,{hp:-5});return [.1,'휘두르지는 못했으나 끝까지 놓지 않았다. “고집은 팽가 것이로군.”'];}]]},
+  {t:'불같은 피',x:'팽가 어른 하나가 일부러 당신 아버지를 욕했다. 주위가 당신을 본다.',ch:[
+   ['주먹을 날린다','성정',S=>{A(S,{temper:4});return [.22,'어른이 주먹을 받아 냈다. 그러고는 껄껄 웃었다. “그래, 팽가는 참는 법보다 터지는 법을 먼저 안다. 터뜨릴 곳은 내가 가르쳐 주마.”'];}],
+   ['이를 악물고 참는다','수양',S=>[.06,'“참는 것도 좋다만, 여기는 팽가다.” 어른이 조금 실망한 얼굴을 했다.']],
+   ['같이 욕으로 받아친다','구력',S=>{A(S,{tongue:2});return [.15,'욕 싸움 끝에 어른이 먼저 웃음을 터뜨렸다.'];}]]}],
+ tang:[
+  {t:'세 개의 잔',x:'당가 외당. 탁자 위에 찻잔 셋. 둘에는 독이 있다. “하나를 골라 마셔라. 당가는 독을 아는 자만 받는다.”',ch:[
+   ['냄새와 빛깔로 가린다','의술',S=>chance(.2+S.med/40)?[.25,'둘째 잔에서 아주 희미한 쓴 살구씨 냄새가 났다. 첫째 잔을 비웠다. 시험관이 장갑을 벗었다.']:(hurt(S,15,'당가의 독'),[-.1,'잘못 골랐다. 사흘을 앓았다.'])],
+   ['시험관의 눈빛을 읽는다','심계',S=>chance(.2+S.mind/40)?[.2,'시험관의 눈이 셋째 잔을 피했다. 셋째 잔을 마셨다. “독보다 사람을 먼저 읽는군.”']:(hurt(S,15,'당가의 독'),[-.1,'시험관은 눈빛까지 독했다. 틀렸다.'])],
+   ['셋 다 마신다','항독',S=>has(S,'dokche')||has(S,'manduk')||S.rp>=50?[.4,'셋 다 마시고 웃었다. 시험관의 얼굴이 하얘졌다. 그날 당가 가주가 직접 당신을 보러 왔다.']:(hurt(S,30,'당가의 독'),[-.15,'세 잔째에서 쓰러졌다. 당가 의원이 해독약을 먹였다.'])]]},
+  {t:'독사의 상자',x:'뚜껑 열린 상자 안에 독사가 똬리를 틀었다. 그 아래 구슬 하나. “꺼내라.”',ch:[
+   ['뱀이 잠들 때를 기다린다','기연',S=>chance(.3+S.t.luck*.05)?[.2,'뱀의 숨이 느려졌다. 구슬을 꺼냈다. 뱀은 눈을 뜨지 않았다.']:(hurt(S,15,'독사'),[-.05,'뱀이 눈을 떴다.'])],
+   ['뱀 머리를 먼저 잡는다','근골·경공',S=>chance(.2+S.t.bone*.05+S.qing/100)?[.22,'손이 번개처럼 나갔다. 뱀 머리를 쥔 채 구슬을 꺼냈다. “당가의 손이다.”']:(hurt(S,20,'독사'),[-.1,'뱀이 더 빨랐다.'])],
+   ['약초즙을 바르고 손을 넣는다','의술',S=>S.med>=15?[.25,'뱀이 냄새를 맡고 고개를 돌렸다. 시험관이 상자를 닫았다. “약을 아는 아이로군.”']:[0,'무슨 풀인지 몰라 아무 풀이나 발랐다. 다행히 뱀이 배가 불렀다.']]]}],
+ haomun:[
+  {t:'객잔의 귀',x:'하오문 노파가 객잔 하나를 가리켰다. “오늘 밤 저 안 손님들의 비밀을 셋 알아 오너라. 들키면 끝이다.”',ch:[
+   ['술 시중을 들며 엿듣는다','처세',S=>{A(S,{savvy:2});return chance(.3+S.savvy/60)?[.2,'표국 행렬 날짜, 현령의 첩, 숨겨 둔 은자 자리. 셋 다 알아 왔다.']:[0,'둘밖에 못 들었다.'];}],
+   ['마부들과 어울린다','구력',S=>{A(S,{tongue:2});return [.15,'마부들은 손님보다 많이 안다. 비밀이 다섯 개나 나왔다.'];}],
+   ['주인 장부를 훔쳐본다','심계',S=>chance(.25+S.mind/40)?[.22,'장부 한 장이 객잔 전체의 비밀이었다.']:[-.1,'주인에게 들켰다. 노파가 은자 두 냥으로 무마했다.']]]},
+  {t:'입의 무게',x:'알아 온 비밀을 사겠다는 사내가 은자 열 냥을 내밀었다. 하오문 노파는 등을 돌리고 있다.',ch:[
+   ['노파에게 먼저 알린다','',S=>[.25,'노파가 돌아섰다. “하오문의 귀는 문 안으로 먼저 열린다. 그걸 아는구나.” 사내도 하오문 사람이었다.']],
+   ['판다','은자',S=>{A(S,{gold:10,moral:-2});return [-.1,'은자는 받았다. 노파가 말했다. “말은 한 번 팔면 다시는 못 산다.”'];}],
+   ['입을 다문다','',S=>[.12,'사내는 혀를 찼다. 노파가 웃었다. “말을 삼킬 줄 아는 자가 말을 팔 줄도 안다.”']]]}],
+ demon:[
+  {t:'혈투장',x:'십만대산 깊은 골짜기. 아이 열이 우리 안에 들어갔다. “셋만 나온다.” 문이 닫혔다.',ch:[
+   ['맞서 싸운다','근골',S=>{A(S,{moral:-4,temper:3});return chance(.25+S.t.bone*.06)?[.25,'피투성이로 걸어 나왔다. 사자가 당신 손목에 검은 끈을 묶었다.']:(hurt(S,30,'혈투장'),[0,'쓰러졌다. 깨어 보니 우리 밖이었다.']);}],
+   ['숨어서 끝까지 버틴다','심계·기연',S=>chance(.25+S.mind/40+S.t.luck*.03)?[.18,'마지막 셋이 남을 때까지 그림자처럼 숨었다. 사자가 웃었다. “살아남는 것도 힘이다.”']:[-.05,'들켰다.']],
+   ['약한 아이와 손을 잡는다','도덕',S=>{A(S,{moral:5});return [.05,'둘이 함께 버텨 둘 다 살아 나왔다. 사자는 못마땅한 얼굴이었으나 둘 다 받아들였다. 마교에도 의리는 있다.'];}]]},
+  {t:'강자존',x:'검은 옷의 장로가 물었다. “강자존(強者尊). 무슨 뜻이냐?”',ch:[
+   ['강한 자가 옳다는 뜻입니다','',S=>{A(S,{moral:-3});return [.22,'장로가 웃었다. “그래. 이 산에 다른 법은 없다.”'];}],
+   ['강해야 지킬 것을 지킨다는 뜻입니다','',S=>[.12,'장로가 잠시 말이 없었다. “…교주께서도 젊으실 때 그리 말씀하셨다.”']],
+   ['대답 대신 장로를 노려본다','성정',S=>{A(S,{temper:3});return [.18,'장로가 살기를 흘렸다. 당신은 눈을 피하지 않았다. “말보다 눈이 낫군.”'];}]]}],
+ binggung:[
+  {t:'얼음 호수',x:'북해빙궁의 시녀가 얼음 구멍을 가리켰다. “해가 질 때까지 물속에 있어라. 빙궁의 피는 차가워야 한다.”',ch:[
+   ['이를 악물고 버틴다','근골',S=>chance(.2+S.t.bone*.06+(has(S,'taeeum')||has(S,'yin')?.4:0))?[.22,'입술이 파래졌지만 나오지 않았다. 해가 지자 시녀가 손수 당신을 끌어올렸다.']:[-.1,'정신을 잃었다.']],
+   ['숨을 고르며 냉기를 받아들인다','수양',S=>{A(S,{cult:2,yy:-5});return [.2,'얼음물이 몸 안으로 흘러들어 오히려 고요해졌다. 시녀가 눈을 크게 떴다.'];}],
+   ['헤엄쳐 몸을 데운다','',S=>[.08,'몸은 데워졌으나 시녀는 고개를 저었다. “빙궁은 데우지 않는다. 받아들인다.”']]]},
+  {t:'빙화',x:'궁주의 정원에 얼음으로 핀 꽃이 있다. “부수지 말고 한 송이 꺾어 오너라.”',ch:[
+   ['손끝으로 섬세하게 꺾는다','오성',S=>chance(.2+S.t.wit*.07)?[.2,'꽃잎 하나 다치지 않았다.']:[0,'꽃잎이 부서졌다.']],
+   ['입김으로 줄기를 녹여 꺾는다','기연',S=>chance(.35)?[.15,'줄기만 녹았다. 영리하다고 했다.']:[0,'꽃 전체가 녹았다.']],
+   ['꺾지 않고 빈손으로 돌아간다','수양',S=>{A(S,{cult:3});return [.25,'“왜 꺾지 않았느냐?” “꺾으면 녹을 것이라서요.” 궁주가 처음으로 웃었다.'];}]]}],
+ jangsu:[
+  {t:'장강의 물살',x:'장강수로채의 배 위. 늙은 수적이 붉은 깃발을 급류에 던졌다. “가져와라. 물이 무서우면 배에서 내려라.”',ch:[
+   ['뛰어들어 깃발을 건진다','근골·경공',S=>chance(.2+S.t.bone*.05+S.qing/100)?[.25,'물살이 당신을 세 번 삼켰다 뱉었다. 깃발을 입에 물고 올라왔다. 수적들이 노로 뱃전을 두드렸다.']:(hurt(S,15,'장강의 급류'),[0,'떠내려가다 그물에 건져졌다.'])],
+   ['물길을 읽고 하류에서 기다린다','오성',S=>chance(.25+S.t.wit*.06)?[.22,'깃발은 소용돌이를 돌아 정확히 당신 앞으로 왔다. “물을 아는 놈이다.”']:[0,'깃발은 다른 물길로 갔다.']],
+   ['노를 잡고 배를 몰아 쫓는다','근골',S=>[.15,'키잡이가 놀란 눈으로 노를 넘겨주었다. 수적들은 깃발보다 배 다루는 솜씨를 더 높이 샀다.']]]},
+  {t:'관선',x:'관아의 세곡선이 지나간다. 채주가 턱짓했다. “물 위에서는 우리가 법이다. 오늘 밤 저 배를 턴다.”',ch:[
+   ['앞장서 오른다','',S=>{A(S,{moral:-5,gold:10});return [.22,'갑판에 가장 먼저 올랐다. 채주가 당신 몫을 두 배로 쳐 주었다.'];}],
+   ['사공들은 다치지 않게 하자고 한다','도덕',S=>{A(S,{moral:3});return [.12,'채주가 웃었다. “수적에게도 도가 있지. 장강은 사공을 죽이지 않는다.”'];}],
+   ['못 하겠다고 한다','',S=>{A(S,{moral:3});return [-.2,'채주가 말없이 당신을 뭍에 내려 주었다.'];}]]}]};
+{const e2=EV.find(e=>e.id==='sectTest2'),e3=EV.find(e=>e.id==='sectTest3'),g2=e2.ch,g3=e3.ch,x2=e2.x,x3=e3.x,JT=S=>JOIN_TESTS[S.flags.testOrg];
+ const wrap=(st,last)=>S=>JT(S)[st].ch.map(([t,h,f])=>({t,h:h||undefined,go:S=>{const [dp,tx]=f(S);S.flags.testP+=dp;if(!last){S.chain='sectTest3';return tx;}return testResult(S,tx,false);}}));
+ e2.title=S=>JT(S)?JT(S)[0].t:'첫째 시험';e2.x=S=>JT(S)?JT(S)[0].x:(typeof x2==='function'?x2(S):x2);e2.ch=S=>JT(S)?wrap(0,false)(S):g2;
+ e3.title=S=>JT(S)?JT(S)[1].t:'마지막 시험';e3.x=S=>JT(S)?JT(S)[1].x:(typeof x3==='function'?x3(S):x3);e3.ch=S=>JT(S)?wrap(1,true)(S):g3;}
+
+/* 두 번째 문: 세력마다 다른 입문 */
+const jnOk=(S,id,t,rank)=>{join(S,id,rank);deed(S,`${ORGS[id].n}에 들었다`);return t+`\n오늘부터 당신은 ${ORGS[id].n}의 ${ORGS[id].ranks[S.rank]}다.`;};
+E({id:'jn_beggar',t:'매듭 하나',x:'개방 분타. 거지 왕초가 말했다. “개방엔 시험이 없다. 다만 사흘 동안 거지로 살아 봐라. 사흘 뒤에도 여기 있으면 매듭을 달아 주마.”',
+ ch:[{t:'사흘을 거지로 산다',go:S=>{A(S,{moral:3,cult:2});return jnOk(S,'beggar','사흘째 밤, 비를 피하던 다리 밑에서 늙은 거지가 식은 만두 반쪽을 나눠 주었다. 그것이 입문식이었다. 어깨에 매듭 하나가 달렸다.');}},
+  {t:'그만둔다',go:S=>'“거지도 아무나 하는 게 아니지.” 왕초가 웃었다.'}]});
+E({id:'jn_bandit',t:'투명장',x:'녹림맹 산채. 채주가 칼을 탁자에 꽂았다. “녹림에 들려면 투명장(投名狀)이 있어야 한다. 이름을 바칠 증표를 가져와라. 사흘 준다.”',
+ ch:[{t:'지나는 상단을 턴다',h:'싸움 · 도덕↓',go:S=>{const b=battle(S,mkFoe({n:'상단 표사',realm:clamp(S.realm,1,4),q:1,group:1}));if(b.win){A(S,{moral:-10,gold:40});return jnOk(S,'bandit','표사들이 짐을 버리고 달아났다. 채주가 비단 한 필을 펼쳐 보고 웃었다. “됐다.”'+b.rev);}return fightText(b,'','표사들이 더 셌다. 빈손으로 산을 내려왔다.');}},
+  {t:'탐관오리의 곳간을 턴다',h:'싸움 · 의적',go:S=>{const b=battle(S,mkFoe({n:'관병',realm:clamp(S.realm,1,4),q:1,group:1}));if(b.win){A(S,{moral:5,fame:5});S.flags.wanted=1;return jnOk(S,'bandit','곡식 자루를 굶는 마을에 풀고, 현령의 관인만 들고 왔다. 채주가 한참 보다가 크게 웃었다. “녹림이 원래 이런 거였지.”'+b.rev);}return fightText(b,'','관병에게 쫓겨 산으로 숨었다.');}},
+  {t:'채주에게 술 대결을 청한다',h:'근골·기연',go:S=>chance(.25+S.t.bone*.04+S.t.luck*.03)?jnOk(S,'bandit','술독 셋째에서 채주가 먼저 쓰러졌다. 산채가 떠나가라 웃음이 터졌다. “이놈 투명장은 술독이다!”'):'첫 독에서 정신을 잃었다. 깨어 보니 산 아래 길가였다.'}]});
+E({id:'jn_jangsu',t:'물 위의 법',x:'장강 나루. 수로채의 배 한 척이 다가왔다. 뱃머리의 사내가 노를 내밀었다. “장강수로채는 물 위에서 증명한다. 저 여울을 배로 넘어 봐라.”',
+ ch:[{t:'노를 잡고 여울을 넘는다',h:'근골',go:S=>chance(.3+S.t.bone*.05)?jnOk(S,'jangsu','배가 바위 사이를 스치며 여울을 넘었다. 사내가 당신 등을 쳤다. “물이 너를 받아들였다.”'):(hurt(S,15,'장강의 여울'),'배가 뒤집혔다. 수적들이 건져 주고는 뭍에 내려 주었다.')},
+  {t:'키를 잡고 물길을 읽는다',h:'오성',go:S=>chance(.3+S.t.wit*.05)?jnOk(S,'jangsu','물빛이 검은 곳은 깊고, 흰 곳은 얕다. 배는 한 번도 바위에 닿지 않았다. 늙은 수적이 말했다. “키잡이로 쓰자.”'):'물길을 잘못 읽었다. 배가 모래톱에 얹혔다.'},
+  {t:'헤엄쳐 건넌다',h:'근골·경공',go:S=>chance(.2+S.t.bone*.04+S.qing/100)?jnOk(S,'jangsu','배를 버리고 물로 뛰어들었다. 건너편에 먼저 닿은 것은 당신이었다. 수적들이 휘파람을 불었다.'):(hurt(S,20,'장강의 급류'),'물살에 휩쓸렸다.')}]});
+E({id:'jn_haomun',t:'이름 없는 사람들',x:'객잔 뒷문. 행주를 어깨에 건 점소이가 낮게 말했다. “하오문은 문이 없소. 점소이, 기녀, 마부, 거지가 다 문도요. 들어오려면 소식 하나를 가져오시오. 아무도 모르는 걸로.”',
+ ch:[{t:'현령의 비밀을 캐 온다',h:'심계',go:S=>chance(.35+S.mind/40)?jnOk(S,'haomun','현령의 둘째 첩이 사실은 녹림맹 채주의 누이였다. 점소이가 입을 다물지 못했다.'):'캐다가 들킬 뻔했다. 소식은 반쪽짜리였다.'},
+  {t:'무림 고수의 행방을 알아 온다',h:'처세',go:S=>chance(.35+S.savvy/50)?jnOk(S,'haomun','검왕이 사흘 전 몰래 무당산에 올랐다. 그 소식 하나로 하오문 향주가 직접 나왔다.'):'아무도 모르는 소식은 아무도 몰랐다.'},
+  {t:'아는 게 없다고 솔직히 말한다',go:S=>chance(.4)?jnOk(S,'haomun','점소이가 웃었다. “솔직한 사람은 드물지. 그것도 소식이오.”'):'점소이가 문을 닫았다.'}]});
+E({id:'jn_gwiyeong',t:'목숨 하나',x:'귀영루의 사자가 초상화 한 장을 건넸다. “이 자를 죽여라. 그것이 시험이다.” 초상화 속 사내는 마을 서당의 늙은 훈장이었다.',
+ ch:[{t:'죽인다',h:'도덕↓↓',go:S=>{A(S,{moral:-20,mind:5,mood:-10});return jnOk(S,'gwiyeong','훈장은 저항하지 않았다. 마지막으로 아이들 이름을 불렀다. 사자가 피 묻은 당신 손을 보고 고개를 끄덕였다.');}},
+  {t:'죽인 척 피 묻은 옷을 가져간다',h:'심계',go:S=>{if(chance(.3+S.mind/50)){A(S,{moral:3});return jnOk(S,'gwiyeong','훈장을 먼 고을로 빼돌리고 닭 피를 묻힌 옷을 바쳤다. 사자는 속았다. 아니면, 속아 준 것인지도 모른다.');}hurt(S,25,'귀영루의 칼');A(S,{enemies:1});return '사자는 속지 않았다. 등에 칼을 맞고 달아났다.';}},
+  {t:'거절한다',go:S=>{A(S,{enemies:1,moral:5});return '사자가 초상화를 불태웠다. “귀영루는 거절한 얼굴을 잊지 않는다.”';}}]});
+E({id:'jn_manhwa',t:'미혼곡',x:'만화궁 궁주가 금(琴)을 탔다. 듣는 사내들이 하나둘 넋을 잃고 쓰러진다. “끝까지 눈을 감지 않고 들으면 받아 주마.”',
+ ch:[{t:'정신을 붙든다',h:'수양·항마',go:S=>chance(.3+S.cult/80+S.rm/80)?jnOk(S,'manhwa','곡이 끝났다. 혼자 서 있었다. 궁주가 금을 내려놓았다. “꽃이 되려면 먼저 꽃에 취하지 않아야 한다.”'):'정신을 차리니 궁 밖이었다.'},
+  {t:'곡에 맞춰 춤을 춘다',h:'용모',go:S=>chance(.25+S.t.looks*.06)?jnOk(S,'manhwa','곡에 휘둘리지 않고 곡을 탔다. 궁주가 처음으로 손을 멈추고 당신을 보았다.'):'춤사위가 곡에 먹혔다. 쓰러졌다.'}]});
+E({id:'jn_shaolin',t:'삼 년의 물',x:'소림 지객승이 말했다. “속가 제자라도 처음 삼 년은 물을 긷고 장작을 팬다. 무공은 그다음이다.”',
+ ch:[{t:'물동이를 진다',go:S=>chance(.5+S.moral/100)?(A(S,{cult:5}),jnOk(S,'shaolin','삼 년. 물동이가 가벼워졌을 때, 비로소 첫 초식을 배웠다. 물을 긷던 그 걸음이 나한권의 보법이었다.')):'석 달 만에 지객승이 말했다. “물보다 마음이 먼저 새는구나.” 산문이 닫혔다.'},
+  {t:'삼 년은 너무 길다',go:S=>'지객승이 합장했다. “그 조급함이 오면 다시 오시오.”'}]});
+E({id:'jn_demon',t:'문을 부수는 자',x:'신강으로 가는 길, 검은 말을 탄 마교 사자가 앞을 막았다. “천마신교는 문을 두드리는 자를 받지 않는다. 문을 부수는 자를 받는다.”',
+ ch:[{t:'사자에게 칼을 뽑는다',h:'싸움',go:S=>{const b=battle(S,mkFoe({n:'마교 사자',realm:clamp(S.realm,2,5),q:1}),{spar:1});if(b.win){A(S,{moral:-8});return jnOk(S,'demon','사자가 피 묻은 입으로 웃었다. “문이 부서졌군.”'+b.rev,1);}return fightText(b,'','“아직 문이 단단하구나.” 사자는 말을 돌렸다.');}},
+  {t:'고개를 숙인다',go:S=>'“개는 필요 없다.” 사자가 말에 채찍을 쳤다.'}]});
+E({id:'jn_blood',t:'피의 연못',x:'청해의 붉은 호수. 혈교의 사제가 피로 찬 연못을 가리켰다. “몸을 담가라. 피가 너를 받아들이면 너는 혈교의 사람이다.”',
+ ch:[{t:'몸을 담근다',h:'도덕↓↓ · 체력↓',go:S=>{hurt(S,20,'혈지');A(S,{moral:-15});return chance(.6)?jnOk(S,'blood','피가 살갗으로 스며들었다. 뜨거웠다. 사제가 당신 이마에 붉은 점을 찍었다.'):'피가 당신을 뱉어 냈다. 사제가 침을 뱉었다.';}},
+  {t:'돌아선다',go:S=>{A(S,{moral:3});return '연못에서 비린내가 따라왔다. 오래 씻어도 지워지지 않았다.';}}]});
+
+/* 사도련·제일인 */
+const SIDE_L={백도:'정파',흑도:'사파 · 사도련',마교:'마교',세외:'세외'};
+const FACTION=S=>{const o=S.org&&ORGS[S.org];return !o?null:o.side==='백도'?'정파':o.side==='흑도'?'사파':o.side==='마교'?'마교':null;};
+const TOPFOE={정파:['gumwang','muhwang','geomseon'],사파:['nokrim','amje','sadoyeom'],마교:['geomma','hyeolma','dokma']};
+E({id:'sadoMeet',t:'사도련 회합',a:[18,75],w:1.5,cd:8,if:S=>S.org&&ORGS[S.org].side==='흑도',
+ x:'사도련 총단. 하오문·녹림맹·장강수로채·살막·귀영루·만화궁의 사자들이 한자리에 모였다. 정파가 무림맹으로 뭉치자 사파도 뭉쳤다. 다만 사파의 탁자는 늘 칼자국투성이다.',
+ ch:[{t:'련주의 칼이 되어 싸운다',h:'공헌·명성',go:S=>{A(S,{contrib:20,fame:8,salgi:3});return '정파 표국 셋을 한 달 만에 무너뜨렸다. 련주가 당신 잔에 직접 술을 따랐다.';}},
+  {t:'다른 세력 대표들과 술을 나눈다',h:'처세·은자',go:S=>{A(S,{savvy:4,gold:40});return '녹림 채주는 의리를, 하오문 향주는 소문을, 수로채 두령은 뱃길을 팔았다. 술값은 하오문이 냈다. 그것도 계산이었다.';}},
+  {t:'이권 다툼에서 우리 몫을 챙긴다',h:'구력',go:S=>{if(S.tongue+R(0,40)>=50){A(S,{contrib:25,tongue:2});return '장강 뱃길 세금의 삼 할을 사문 몫으로 받아 냈다.';}A(S,{enemies:1});return '말이 지나쳤다. 살막 사자가 당신 얼굴을 오래 보았다.';}}]});
+E({id:'factionTop',tag:'key',t:'제일인의 자리',title:S=>`${FACTION(S)}제일인`,a:[28,110],w:3,cd:5,if:S=>FACTION(S)&&S.realm>=5&&S.fame>=150&&!S.titles.includes(FACTION(S)+'제일인'),
+ prep:S=>{const f=FACTION(S),id=TOPFOE[f].find(id=>NPCS[id]&&!S.dead_npc[id]&&S.spouse!==id&&S.master!==id);S.tmp.npc=id||null;S.tmp.foe=id?npcFoe(S,id):mkFoe({n:'이름 없는 노고수',realm:6,q:1.1});},
+ x:S=>{const f=FACTION(S),nm=S.tmp.npc?`${NPCS[S.tmp.npc].nick} ${NPCS[S.tmp.npc].n}`:'이름 없는 노고수';
+  return f==='정파'?`무림맹 연무장. 구파일방과 세가의 장로들이 둘러앉았다. 정파제일인을 가리는 자리다. 정파는 말로 시작해 검으로 끝낸다. 마지막 상대는 ${nm}.`
+   :f==='사파'?`사도련 총단. 하오문·녹림·장강수로채·살막의 우두머리들이 술잔을 내려놓았다. 사파는 말이 아니라 주먹으로 서열을 정한다. 마지막 상대는 ${nm}.`
+   :`십만대산 천마신단 아래. 마교에서 강함은 곧 법이다. 강자존(強者尊). 마지막 상대는 ${nm}.`;},
+ ch:[{t:'나선다',go:S=>{const f=FACTION(S),b=battle(S,S.tmp.foe,{spar:1});if(b.win){const t=f+'제일인';S.titles.push(t);A(S,{fame:80,mood:20});if(f==='사파')S.flags.sadoLord=1;deed(S,`${jo(t,'이','가')} 되었다`);
+     return fightText(b,f==='정파'?'장로들이 하나둘 일어나 포권했다. 그날부터 정파는 당신을 정파제일인이라 불렀다.':f==='사파'?'우두머리들이 잔을 들었다. 사파제일인. 사도련의 련주 자리가 당신 앞에 비어 있었다.':'마교도 천 명이 무릎을 꿇었다. 마교제일인. 천마의 다음 자리를 넘보는 이름이다.','');}
+     A(S,{fame:10});return fightText(b,'','한 수가 모자랐다. 그러나 이 자리에 섰던 것만으로 강호가 당신 이름을 외웠다.');}},
+  {t:'아직 때가 아니다',go:S=>{A(S,{cult:3});return '물러섰다. 칼은 더 갈아야 한다.';}}]});
+
+/* ══ 일반인 루트: 객잔·대장간·의원 ═══════════════════
+   생업(S.job)을 가지면 무림인 사건 대신 생업 사건이 일어나고, 강호의 큰일은 소문으로 들려온다. */
+const JOB_N={inn:'객잔',smith:'대장간',doctor:'의원'};
+const INN_LV=['','작은 객잔','이층 객잔','객방 서른 칸','천하객잔'],SMITH_LV=['','흙벽 대장간','큰 화로','수차 풀무','천공로(天工爐)'],DOC_LV=['','약방','의원','약당','천하의방'];
+const JOB_HINT={inn:'평판 60이면 이름난 객잔 주인, 150이면 천하객잔의 주인. 무림인 사건 대신 객잔 사건이 일어난다.',smith:'단조 40 대장장이, 70 명장. 신병이기를 벼리면 신장으로 불린다.',doctor:'의술 25 의원 · 50 명의 · 70 약왕 · 85 의선(도덕 20 이상) · 95 신의(고친 환자 80명 이상).'};
+const JOB_OK=new Set(['meet','suitor','propose','marry','child','kidsGrown','illness','famine','sage','kneel','overhear','guest','innRaid','innRise','guya','order','haoInfo','hermit','retire']);
+function jobTitle(S){const b=S.biz||{};
+  if(S.job==='inn')return !b.owner?'점소이':b.rep>=150?'천하객잔의 주인':b.rep>=60?'이름난 객잔 주인':'객잔 주인';
+  if(S.job==='smith')return b.divine?'신장':S.forge>=70?'명장':S.forge>=40?'대장장이':'대장간 견습';
+  if(S.job==='doctor')return S.med>=95&&b.cures>=80?'신의':S.med>=85&&S.moral>=20?'의선':S.med>=70?'약왕':S.med>=50?'명의':S.med>=25?'의원':'의원 견습';
+  return '';}
+function setJob(S,j,o){S.job=j;S.biz=Object.assign({lv:1,rep:5,owner:false,cook:10,info:0,patrons:0,backer:null,dish:null,made:0,orders:0,series:null,last:null,divine:0,cures:0,herbs:5},S.biz||{},o||{});S.biz.ttl=jobTitle(S);tab='job';}
+function leaveJob(S){S.job=null;if(tab==='job')tab='ab';}
+const NUMK=['','일','이','삼','사','오','육','칠','팔','구','십'];
+function smithName(S,m){const b=S.biz;return b.series?`${b.series} ${NUMK[b.made]||b.made}호`:pick(['청강','추수','낙영','단심','무명','한월'])+pick(['검','도']);}
+function jobChoices(S){const b=S.biz,L=[],mult=1+.25*(b.lv-1);
+  if(S.job==='inn'){
+    L.push({t:b.owner?'객잔을 꾸린다':'객잔 일을 한다',h:'은자·평판',go:S=>{const g=b.owner?20+b.lv*15+Math.floor(b.rep/3):12;A(S,{gold:g,savvy:1});b.rep+=2+Math.floor(b.cook/30);
+      return pick(b.owner?['장부를 맞추고 술독을 채웠다.','손님이 끊이지 않는 한 해였다.','비 오는 날이면 객잔이 강호 사람들로 가득 찼다.']:['국수를 나르고 탁자를 닦았다.','주방과 객방을 오가며 한 해가 갔다.'])+` 은자 ${g}냥.`;}});
+    L.push({t:'새 요리를 궁리한다',h:'요리 솜씨',go:S=>{b.cook=Math.min(100,b.cook+6);return pick(['사천 고추를 볶다가 사흘 동안 눈물을 흘렸다.','국물 맛을 잡느라 닭 서른 마리를 삶았다.','강남 손님이 가르쳐 준 젓갈을 흉내 냈다.']);}});
+    L.push({t:'무림 손님과 술잔을 나눈다',h:'단골·처세·구력',go:S=>{b.patrons++;A(S,{savvy:2,tongue:1});return pick(['칼을 찬 손님이 강호 이야기를 늘어놓았다. 당신은 잔을 채웠다.','외팔이 검객이 말없이 술만 마시다, 떠나며 은자 한 냥을 더 놓고 갔다.','사파 사내와 정파 협객이 한 탁자에서 마셨다. 객잔 안에서만은 칼을 뽑지 않는 것이 법이다.']);}});
+    if(b.info)L.push({t:'소문을 사고판다',h:'정보망·은자. 원한을 살 수 있다.',go:S=>{const g=10+b.info*2;A(S,{gold:g});b.info+=3;if(chance(.12)){A(S,{enemies:1});return `소문 하나가 은자 ${g}냥이 되었다. 그런데 소문의 주인이 누가 흘렸는지 알아냈다.`;}return `소문 하나가 은자 ${g}냥이 되었다.`;}});
+    if(b.owner&&b.lv<4)L.push({t:`객잔을 넓힌다 (${INN_LV[b.lv+1]})`,h:`은자 ${b.lv*150}냥`,if:S=>S.gold>=b.lv*150,go:S=>{A(S,{gold:-b.lv*150});b.lv++;b.rep+=10;return `${INN_LV[b.lv]}. 목수들의 망치 소리가 석 달을 갔다.`;}});}
+  if(S.job==='smith'){
+    L.push({t:'주문을 받아 벼린다',h:'은자·단조·평판',go:S=>{const g=15+b.lv*15+Math.floor(S.forge/2);A(S,{gold:g,forge:3*mult});b.orders++;b.rep+=2;return pick(['호미 마흔 자루와 표국의 도 열 자루.','관아에서 창날 백 개를 주문했다.','떠돌이 검객의 이 빠진 검을 다시 살렸다.'])+` 은자 ${g}냥.`;}});
+    if(S.forge>=15)L.push({t:'이름을 새길 병기를 벼린다',h:'재료와 병기를 골라 이름을 새긴다.',craft:'forge'});
+    L.push({t:'쇠를 접는다',h:'단조',go:S=>{A(S,{forge:6*mult});return '쇠를 접고 또 접었다. 천 번 접은 쇠는 비단처럼 결이 났다.';}});
+    L.push({t:'광석을 찾아 나선다',h:'재료',go:S=>{const m=(REG[S.loc]&&REG[S.loc].mat)||pick(['현철','한철','정철']);if(chance(.2)){hurt(S,12,'광산의 낙석');return '갱도가 무너졌다. 겨우 기어 나왔다.';}if(m!=='정철'){S.mats[m]=(S.mats[m]||0)+1;return `${jo(m,'을','를')} 한 덩이 캐 왔다.`;}return '쓸 만한 광석은 없었다.';}});
+    if(b.lv<4)L.push({t:`대장간을 키운다 (${SMITH_LV[b.lv+1]})`,h:`은자 ${b.lv*120}냥 · 단조가 더 빨리 는다`,if:S=>S.gold>=b.lv*120,go:S=>{A(S,{gold:-b.lv*120});b.lv++;return `${SMITH_LV[b.lv]}. 쇠가 더 뜨겁게, 더 고르게 달아오른다.`;}});}
+  if(S.job==='doctor'){
+    L.push({t:'환자를 본다',h:'의술·치료·은자',go:S=>{const n=3+b.lv*2,g=10+b.lv*10;b.cures+=n;b.rep+=2;A(S,{med:2*mult,gold:g});return pick(['열병 앓는 아이, 다리 부러진 나무꾼, 상사병 걸린 선비.','장터 싸움에 칼 맞은 사내의 배를 꿰맸다.','밤마다 기침하는 노파에게 배즙을 달여 주었다.'])+` 환자 ${n}명.`;}});
+    L.push({t:'약초를 캔다',h:'약재·의술·항독',go:S=>{b.herbs+=3;A(S,{med:2,rp:1});return pick(['벼랑 끝에서 백 년 묵은 하수오를 보았다. 아직 캘 때가 아니라 두고 왔다.','약초 서른 가지를 캐 말렸다.','독초와 약초는 한 뿌리에서 난다는 걸 또 배웠다.']);}});
+    if(S.med>=40&&b.herbs>=5)L.push({t:'영단을 빚는다',h:'약재 5 · 은자·평판',go:S=>{b.herbs-=5;if(chance(.3+S.med/200)){A(S,{gold:80});b.rep+=5;return '소환단 세 알을 빚었다. 한 알은 무림인에게 팔고, 한 알은 가난한 산모에게 주고, 한 알은 남겼다.';}return '불 조절에 실패했다. 약재가 숯이 되었다.';}});
+    if(S.med>=50)L.push({t:'의서를 쓴다',h:'평판·학문·명성',go:S=>{b.rep+=5;A(S,{lore:3,fame:3});return '평생 본 병과 처방을 적었다. 언젠가 이 책이 내가 못 가 본 마을의 아이를 살릴 것이다.';}});
+    if(b.lv<4)L.push({t:`의원을 넓힌다 (${DOC_LV[b.lv+1]})`,h:`은자 ${b.lv*100}냥`,if:S=>S.gold>=b.lv*100,go:S=>{A(S,{gold:-b.lv*100});b.lv++;return `${DOC_LV[b.lv]}. 약 달이는 냄새가 골목 끝까지 퍼진다.`;}});}
+  if(S.arts.length)L.push({t:'틈틈이 무공을 닦는다',h:`${S.mainW} 숙련·깨달음`,go:S=>train(S)});
+  if(S.spouse||S.kids)L.push({t:'가족과 지낸다',h:'체력·심상',go:S=>{A(S,{hp:10,mood:15});return '저녁상에 둘러앉았다. 그것으로 충분한 한 해였다.';}});
+  L.push({t:'쉰다',h:'체력·심상',go:S=>{A(S,{hp:15,mood:12});return pick(['오랜만에 늦잠을 잤다.','처마 밑에서 비 오는 소리를 들었다.','강가에 앉아 하루 종일 물만 보았다.']);}});
+  if(S.job!=='inn'&&S.age>=16)L.push({t:'길을 떠난다',h:`지금 ${S.loc}. 지도에서 이웃한 곳을 고른다.`,craft:'map'});
+  return L;}
+// 생업의 한 해: 수입, 칭호, 강호 소식
+function jobYear(S){const b=S.biz;
+  if(S.job==='inn')A(S,{gold:b.owner?b.lv*10+Math.floor(b.rep/8):5});else if(S.job==='smith')A(S,{gold:b.lv*8+(b.backer?15:0)});else A(S,{gold:b.lv*6});
+  const t=jobTitle(S);if(t!==b.ttl){addLog(S,`사람들이 이제 당신을 ${qra(t)} 부른다.`,1);if(['이름난 객잔 주인','천하객잔의 주인','명장','명의','약왕','의선','신의'].includes(t))deed(S,`${qra(t)} 불렸다`);b.ttl=t;}
+  const w=S.w,news=t=>{hist(S,t);addLog(S,'강호 소식: '+t,1);};
+  if(!w.pact&&S.age>=28&&chance(.3)){w.pact=chance(.65)?'broken':'renewed';news(w.pact==='broken'?'화산 회의가 피로 끝나고 백년맹약이 깨졌다고 한다.':'정·사·마가 백년맹약을 다시 맺었다고 한다.');}
+  if(w.pact==='broken'&&w.demon<2&&S.age>=33&&chance(.25)){w.demon=2;news('정마대전이 터졌다고 한다. 길손들의 얼굴이 어둡다.');}
+  if(w.demon>=2&&w.demon<3&&w.cheonma==='alive'&&S.age>=42&&chance(.12)){w.demon=3;news('천마가 다시 강호에 나타났다고 한다.');}}
+function jobHTML(s){const b=s.biz,r=[];
+  if(s.job==='inn')r.push(kv('객잔',b.owner?INN_LV[b.lv]:'남의 객잔'),kv('평판',num(b.rep),b.rep/1.5),kv('요리 솜씨',Math.round(b.cook),b.cook),kv('간판 요리',b.dish||'없음'),kv('단골 무림인',b.patrons+'명',b.patrons*5),kv('정보망',b.info?Math.round(b.info):'없음',b.info||null),kv('뒷배',b.backer?ORGS[b.backer].n:'없음'),kv('처세',Math.round(s.savvy),s.savvy));
+  if(s.job==='smith')r.push(kv('대장간',SMITH_LV[b.lv]),kv('단조',Math.round(s.forge),s.forge),kv('평판',num(b.rep),b.rep/1.5),kv('이름 새긴 병기',b.made+'자루'),kv('받은 주문',b.orders+'건'),kv('명검 계보',b.series?`「${b.series}」`:'없음'),kv('소속',b.backer?ORGS[b.backer].n+' 전속':'홀로'),kv('재료',Object.entries(s.mats).map(([m,n])=>m+' '+n).join(' · ')||'없음'));
+  if(s.job==='doctor')r.push(kv('의원',DOC_LV[b.lv]),kv('의술',Math.round(s.med),s.med),kv('평판',num(b.rep),b.rep/1.5),kv('고친 환자',num(b.cures)+'명',b.cures/1.5),kv('약재',b.herbs+'첩',b.herbs*5),kv('항독',Math.round(s.rp),s.rp));
+  return `<div><p class="grp-t">${JOB_N[s.job]} · ${esc(jobTitle(s))}</p><div class="grid2">${r.join('')}</div></div><p class="muted small">${JOB_HINT[s.job]}</p>`;}
+
+E({id:'lifePath',tag:'arc',t:'밥벌이',a:[15,17],force:S=>!S.org&&!S.job&&!S.flags.lifePath,
+ x:S=>`열다섯. ${S.flags.failedTest?'문파의 문은 끝내 열리지 않았다. ':''}무문(武門)에 들지 못한 아이들은 이제 밥벌이를 정해야 한다. 강호는 칼 든 사람만의 것이 아니다. 칼을 벼리는 사람, 칼잡이를 먹이는 사람, 칼에 베인 사람을 꿰매는 사람도 강호에 산다.`,
+ ch:S=>[{t:S.flags.waiter?'객잔 일을 계속한다':'객잔 점소이가 된다',h:'생업: 객잔. 무림인 사건 대신 객잔 사건이 일어난다.',go:S=>{S.flags.lifePath='inn';S.flags.waiter=1;setJob(S,'inn');deed(S,'객잔 점소이가 되었다');return '어깨에 행주를 걸쳤다. 오늘부터 객잔이 당신의 강호다. 강호의 모든 길은 결국 어느 객잔 앞을 지난다.';}},
+  {t:'대장간 견습이 된다',h:'생업: 대장간. 쇠를 벼려 이름을 쌓는다.',go:S=>{S.flags.lifePath='smith';setJob(S,'smith');A(S,{forge:10});deed(S,'대장간 견습이 되었다');return '풀무 앞에 섰다. 대장장이가 망치를 쥐여 주었다. “쇠는 거짓말을 안 한다. 두드린 만큼 단단해진다.”';}},
+  {t:'의원 견습이 된다',h:'생업: 의원. 의원·명의·약왕·의선·신의의 길.',go:S=>{S.flags.lifePath='doctor';setJob(S,'doctor');A(S,{med:10});deed(S,'의원 견습이 되었다');return '약방 다락방에 짐을 풀었다. 첫날 배운 것은 약초 이름이 아니라 환자의 손을 잡는 법이었다.';}},
+  {t:'그래도 무림을 꿈꾼다',h:'무림인 루트. 떠돌며 다른 문을 찾는다.',go:S=>{S.flags.lifePath='wuxia';A(S,{mood:5});return '봇짐 하나를 메고 마을을 나섰다. 어머니는 대문 앞에 오래 서 있었다.';}}]});
+
+defA('hwahu','화후심법','심',null,2,['양','유'],null,{rate:1.0,push:1});
+defA('cleaver','반근팔량도','무','도',3,['쾌','변']);
+// 객잔
+E({id:'innBacker',tag:'job',job:'inn',t:'자릿세',a:[15,85],w:2,cd:10,if:S=>!S.biz.backer,
+ x:'왈패 셋이 탁자를 엎었다. 국수 그릇이 바닥에서 깨졌다. “이 거리에서 장사하려면 달마다 자릿세를 내라.”',
+ ch:S=>{const lo=Object.keys(ORGS).find(o=>ORGS[o].reg===S.loc&&ORGS[o].side==='백도')||'beggar';return [
+  {t:`${ORGS[lo].n}에 뒷배를 청한다`,h:'은자 60',if:S=>S.gold>=60,go:S=>{A(S,{gold:-60});S.biz.backer=lo;S.biz.rep+=5;return `${ORGS[lo].n} 무사 둘이 객잔에서 국수를 먹고 갔다. 다음 날부터 왈패들은 길 건너로 돌아다녔다.`;}},
+  {t:'하오문에 줄을 댄다',h:'정보망이 열린다',go:S=>{S.biz.backer='haomun';S.biz.info=Math.max(S.biz.info,10);A(S,{moral:-2});return '하오문 노파가 와서 차 한 잔을 마시고 갔다. 왈패들이 사라졌다. 대신 객잔의 소문이 하오문으로 흘러가기 시작했다.';}},
+  {t:'자릿세를 낸다',go:S=>{A(S,{gold:-Math.min(S.gold,30),mood:-8});return '은자를 건넸다. 깨진 그릇 값은 쳐 주지 않았다.';}},
+  {t:'직접 쫓아낸다',h:'무공이 있어야 한다',if:S=>S.realm>=1,go:S=>{const b=battle(S,mkFoe({n:'왈패',realm:1,q:1,group:1}));if(b.win){S.biz.rep+=8;A(S,{fame:3});}return fightText(b,'왈패 셋이 국수 국물을 뒤집어쓰고 달아났다. 손님들이 박수를 쳤다.','두들겨 맞았다. 손님들이 슬금슬금 나갔다.');}}];}});
+E({id:'innDish',tag:'job',job:'inn',t:'간판 요리',a:[16,85],w:3,if:S=>!S.biz.dish&&S.biz.cook>=25,
+ x:'솜씨가 늘었다. 이제 이 객잔만의 요리 하나가 있어야 한다. 손님들은 그 요리 이름으로 객잔을 부르게 될 것이다.',
+ ch:[{t:'사천 고추 소고기 국수',h:'사천 사람들이 줄을 선다',go:S=>{S.biz.dish='홍유우육면';S.biz.patrons+=3;S.biz.rep+=10;return '혀가 얼얼한 국수에 사천당가 사람들이 줄을 섰다. 당가 사람이 말했다. “독보다 맵군.”';}},
+  {t:'술에 재운 닭찜',h:'술꾼 거지가 찾아올지도',go:S=>{S.biz.dish='취선계';S.biz.patrons+=3;S.biz.rep+=10;S.met.geolwang=1;S.rel.geolwang=(S.rel.geolwang||0)+10;return '사흘째, 냄새를 맡고 늙은 거지 하나가 찾아왔다. 닭 세 마리를 혼자 먹고 녹죽봉을 탁자에 기대 놓고 잤다. 개방의 걸왕이었다. 그 뒤로 걸왕은 해마다 한 번은 꼭 들렀다.';}},
+  {t:'버섯과 두부 소채',h:'스님과 도사들이 찾아온다',go:S=>{S.biz.dish='나한소채';S.biz.patrons+=2;S.biz.rep+=8;A(S,{moral:3});return '소림 탁발승이 국물을 마시고 합장했다. “고기 없이 고기 맛이 나는구려. 이것도 도(道)요.”';}}]});
+E({id:'innInfo',tag:'job',job:'inn',t:'귀가 많은 객잔',a:[17,75],w:2,if:S=>!S.biz.info&&(S.biz.patrons>=3||S.savvy>=20),
+ x:'하오문 노파가 구석 탁자에 앉아 차만 시켰다. “이 객잔엔 귀가 많더군. 들은 걸 우리한테 파시게. 값은 후하게 쳐 주지.”',
+ ch:[{t:'정보상을 겸한다',h:'정보망이 열린다. 원한을 살 수 있다.',go:S=>{S.biz.info=10;A(S,{gold:30,moral:-2});return '탁자 밑으로 은자 서른 냥이 건너왔다. 그날부터 손님들 술잔 너머의 말이 은자로 보였다.';}},
+  {t:'손님의 말은 손님의 것이다',go:S=>{S.biz.rep+=8;A(S,{moral:4});return '노파는 웃으며 일어났다. “그 고집이 오래가면 그것도 장사가 되지.” 손님들은 이 객잔에서 마음 놓고 취했다.';}}]});
+E({id:'innBrawl',tag:'job',job:'inn',t:'객잔 안의 칼부림',a:[16,90],w:2,cd:5,
+ prep:S=>{S.tmp.p=shuffle(Object.keys(ORGS)).slice(0,2);},
+ x:S=>`${ORGS[S.tmp.p[0]].n} 무사와 ${ORGS[S.tmp.p[1]].n} 무사가 술잔을 던지더니 칼을 뽑았다. 다른 손님들이 탁자 밑으로 숨는다.`,
+ ch:[{t:'술상을 들고 둘 사이에 끼어든다',h:'구력·처세',go:S=>{if(S.tongue+S.savvy+R(0,40)>=60){S.biz.rep+=10;S.biz.patrons+=2;return '“칼은 밖에서, 술은 안에서. 그게 이 객잔의 법이오.” 두 사람이 멈칫하더니 마주 앉아 술을 마셨다. 그 뒤로 둘 다 단골이 되었다.';}hurt(S,15,'객잔 칼부림');return '칼등에 맞았다. 그래도 둘은 칼을 거뒀다. 이마에 혹이 났다.';}},
+  {t:'끝난 뒤 부서진 값을 받아 낸다',h:'은자',go:S=>{A(S,{gold:40});return '탁자 셋, 의자 다섯, 술독 둘. 은자 마흔 냥을 받아 냈다. 무림인들도 셈은 했다.';}},
+  {t:'주방으로 숨는다',go:S=>{A(S,{mood:-5});S.biz.rep-=3;return '칼부림은 반 시진 만에 끝났다. 객잔은 엉망이 되었다.';}}]});
+E({id:'innWar',tag:'job',job:'inn',t:'피난민',a:[16,95],w:4,if:S=>S.w.demon>=2||S.w.pact==='broken',
+ x:S=>`${S.w.demon>=2?'정마대전':'맹약이 깨진 뒤의 싸움'}을 피해 사람들이 몰려왔다. 짐보따리를 진 노인, 아이를 업은 여인, 팔 하나를 잃은 무사. 객방은 열 칸뿐이다.`,
+ ch:[{t:'문을 활짝 연다',h:'은자↓ 도덕·평판↑',go:S=>{A(S,{gold:-Math.min(S.gold,100),moral:12});S.biz.rep+=20;deed(S,'난리 통에 객잔을 피난민에게 열었다');return '마당까지 사람이 찼다. 국수를 끓이고 또 끓였다. 난리가 끝난 뒤, 살아남은 이들이 객잔 앞에 비석을 세웠다.';}},
+  {t:'방값을 올린다',h:'은자↑ 도덕↓',go:S=>{A(S,{gold:150,moral:-10});S.biz.rep-=10;return '은자는 쌓였다. 사람들은 쌓인 은자를 보고 객잔 이름을 바꿔 불렀다.';}},
+  {t:'문을 걸어 잠근다',go:S=>{A(S,{mood:-10});return '문 너머에서 밤새 아이가 울었다.';}}]});
+E({id:'innFugitive',tag:'job',job:'inn',t:'쫓기는 손님',a:[16,85],w:2,cd:7,
+ x:'피투성이 사내가 뒷문으로 굴러 들어왔다. “숨겨 주시오.” 곧 말발굽 소리가 들렸다.',
+ ch:[{t:'술독 뒤에 숨겨 준다',go:S=>{A(S,{moral:5});if(chance(.6)){A(S,{gold:100});S.biz.patrons++;return '추격자들은 객잔을 뒤지다 돌아갔다. 반년 뒤, 그 사내가 은자 백 냥을 들고 다시 왔다. 어느 문파의 장로였다.';}A(S,{enemies:1});S.biz.rep-=5;return '추격자들이 사내를 찾아냈다. 그들은 객잔 주인 얼굴을 기억해 두겠다고 했다.';}},
+  {t:'추격자에게 알린다',go:S=>{A(S,{gold:50,moral:-10});return '사내는 끌려갔다. 탁자 위에 은자 쉰 냥이 남았다.';}},
+  {t:'못 본 척한다',go:S=>'사내는 스스로 담을 넘어 사라졌다. 핏자국만 남았다.'}]});
+E({id:'innRival',tag:'job',job:'inn',t:'맞은편 객잔',a:[20,75],w:2,if:S=>S.biz.owner&&S.biz.rep>=25,
+ x:'길 건너에 금칠 간판을 단 객잔이 문을 열었다. 주인은 당신 손님을 하나씩 빼 가더니 요리 대결을 청해 왔다. 진 쪽이 간판을 내린다.',
+ ch:[{t:'요리로 맞선다',h:'요리 솜씨',go:S=>{if(S.biz.cook+R(0,40)>=60){S.biz.rep+=20;S.biz.cook+=5;deed(S,'요리 대결에서 이겨 맞은편 객잔의 간판을 내리게 했다');return '심사를 맡은 걸개 노인이 두 그릇을 다 비우고 당신 그릇을 가리켰다. 맞은편 주인은 간판을 내리고 당신 주방에 들어왔다.';}S.biz.rep-=8;return '졌다. 간판은 내리지 않았지만 한동안 손님이 줄었다.';}},
+  {t:'합치자고 한다',h:'은자 200',if:S=>S.gold>=200,go:S=>{A(S,{gold:-200});S.biz.lv=Math.min(4,S.biz.lv+1);return '두 객잔이 하나가 되었다. 길 이쪽과 저쪽이 다 당신 객잔이다.';}},
+  {t:'신경 쓰지 않는다',go:S=>{A(S,{cult:2});return '손님은 오가는 것이다. 한 해가 지나자 맞은편 객잔은 조용히 문을 닫았다.';}}]});
+E({id:'innLegend',tag:'job',job:'inn',t:'주방의 노인',a:[16,50],w:2,if:S=>!S.flags.innMaster,
+ x:'주방의 늙은 숙수는 식칼 한 자루로 무를 깎는다. 깎인 껍질이 한 줄로 이어져 바닥까지 닿는다. 어느 밤, 칼을 든 자객 셋이 객잔에 들이닥쳤다. 노인이 식칼로 그들의 칼날을 모두 잘라 냈다. 소리도 나지 않았다.',
+ ch:[{t:'무릎 꿇고 배움을 청한다',go:S=>{S.flags.innMaster=1;learn(S,'hwahu');learn(S,'cleaver');SK(S,'도',12);S.mainW='도';A(S,{exp:30});deed(S,'객잔 숙수에게서 반근팔량도를 배웠다');return '노인은 한참 웃더니 무 한 개를 건넸다. “칼은 써는 것이다. 무든 사람이든. 무부터 썰어라.” 그날부터 밤마다 무를 썰었다. 불을 다루는 숨법, 화후(火候)도 함께 배웠다.';}},
+  {t:'모른 척한다',go:S=>{A(S,{mind:3});return '다음 날 노인은 여느 때처럼 무를 깎았다. 당신도 여느 때처럼 국수를 날랐다. 객잔에는 비밀 하나가 생겼다.';}}]});
+E({id:'innLegend2',tag:'job',job:'inn',t:'숙수의 유언',a:[22,75],w:3,if:S=>S.flags.innMaster&&!S.flags.innMaster2&&S.age-(S.last.innLegend??0)>=5,
+ x:'노인이 식칼을 숫돌에 마지막으로 갈았다. “나는 한때 도왕(刀王)이라 불렸다. 칼로 많은 걸 베었지. 그런데 제일 오래 남은 건 국수 맛이더구나.” 노인이 식칼을 내밀었다.',
+ ch:[{t:'객잔과 칼을 함께 잇는다',h:'객잔 주인이 된다. 무공도 계속 는다.',go:S=>{S.flags.innMaster2=1;S.biz.owner=true;S.biz.lv=Math.max(S.biz.lv,2);addWeapon(S,{n:'반근팔량',w:'도',q:3,kw:'강'});A(S,{exp:40,mood:10});deed(S,'도왕의 객잔과 식칼을 이었다');return '노인은 그해 겨울 눈을 감았다. 객잔 간판 아래 작은 글씨를 새겼다. “칼은 써는 것이다.”';}},
+  {t:'칼을 들고 강호로 나간다',h:'생업을 접고 무림인이 된다.',go:S=>{S.flags.innMaster2=1;addWeapon(S,{n:'반근팔량',w:'도',q:3,kw:'강'});leaveJob(S);A(S,{exp:40,fame:5});deed(S,'도왕의 식칼을 들고 강호로 나갔다');return '“가 보아라. 그리고 언젠가 돌아와 국수를 끓여라.” 노인이 객잔 문 앞에서 손을 흔들었다.';}}]});
+E({id:'innRich',tag:'job',job:'inn',t:'두둑한 주머니',a:[16,40],w:1.5,if:S=>!S.flags.innRich,
+ x:'비단옷의 무림인이 사흘을 묵고 떠나며 주머니 하나를 탁자에 놓았다. 은자 오백 냥. “네 국수 덕에 상처가 나았다. 이 돈으로 너도 칼을 배워라. 낙양 무관에 내 이름을 대면 받아 줄 것이다.”',
+ ch:[{t:'그 돈으로 무관에 들어간다',h:'생업을 접고 무림인이 된다.',go:S=>{S.flags.innRich=1;leaveJob(S);A(S,{gold:200,exp:25});learn(S,'escort');SK(S,'도',12);S.mainW='도';S.loc='하남';deed(S,'객잔 손님의 은자로 무관에 들어갔다');return '행주를 내려놓았다. 낙양 무관의 첫날, 사범이 말했다. “늦었다. 그러니 남보다 두 배 해라.”';}},
+  {t:'객잔에 쓴다',go:S=>{S.flags.innRich=1;const had=S.biz.owner;A(S,{gold:500});if(had)S.biz.lv=Math.min(4,S.biz.lv+1);else S.biz.owner=true;return had?'은자로 객잔을 넓혔다. 그 무림인이 다시 오면 제일 좋은 방을 내줄 것이다.':'은자로 주인에게서 객잔을 샀다. 점소이가 주인이 되었다.';}},
+  {t:'돌려준다',go:S=>{S.flags.innRich=1;A(S,{moral:6});S.biz.patrons+=3;S.biz.rep+=10;return '“국숫값은 이미 받았습니다.” 무림인이 크게 웃었다. 그 뒤로 그의 문파 사람들은 이 객잔만 찾았다.';}}]});
+E({id:'innOld',tag:'job',job:'inn',t:'등불을 넘기다',a:[58,130],w:3,if:S=>S.biz.owner&&!S.flags.innOld,
+ x:'계산대 뒤에 앉아 있는 날이 늘었다. 객잔 등불을 누구에게 넘길까.',
+ ch:S=>[...(S.kids?[{t:'자식에게 넘긴다',go:S=>{S.flags.innOld=1;A(S,{mood:20});deed(S,'객잔을 자식에게 물려주었다');return '자식이 앞치마를 둘렀다. 국수 맛이 조금 달랐다. 그래도 좋았다.';}}]:[]),
+  {t:'오래 일한 점소이에게 넘긴다',go:S=>{S.flags.innOld=1;A(S,{moral:5,mood:15});deed(S,'객잔을 점소이에게 물려주었다');return '그 아이는 당신이 처음 행주를 걸쳤을 때와 똑같은 얼굴을 하고 있었다.';}},
+  {t:'죽는 날까지 계산대를 지킨다',go:S=>{S.flags.innOld=1;A(S,{mood:5});return '이 등불은 내가 끈다.';}}]});
+// 대장간
+const SMITH_ORG_T={tang:'당가의 암기 도면은 모두 암호였다. 바늘 하나에 구멍이 일곱 개. 당신만 그것을 읽을 수 있게 되었다.',paeng:'팽가의 도는 무겁고도 빨라야 한다. 팽가 사람들은 당신이 벼린 도를 들고 “벽력!” 하고 외쳤다.',bandit:'녹림의 도끼는 산을 찍는다. 채주가 직접 와서 술 한 독을 놓고 갔다.',jangsu:'수적들의 작살은 녹슬면 안 된다. 강물에도 녹지 않는 쇠를 궁리했다.',namgung:'남궁세가는 검집 장식 하나까지 따졌다. 그 까다로움이 솜씨를 키웠다.',shaolin:'소림 무승들은 칼 대신 쇠 선장(禪杖)을 주문했다. 값 대신 경을 읽어 주었다.'};
+E({id:'smithOrg',tag:'job',job:'smith',t:'전속 대장장이',a:[18,75],w:2.5,if:S=>!S.biz.backer&&S.forge>=25&&!S.flags.smithOrg,
+ prep:S=>{S.tmp.o=shuffle(Object.keys(SMITH_ORG_T)).slice(0,2);},
+ x:S=>`${jo(ORGS[S.tmp.o[0]].n,'과','와')} ${ORGS[S.tmp.o[1]].n}에서 각각 사람이 왔다. 전속 대장장이가 되어 달라 한다.`,
+ ch:S=>[...S.tmp.o.map(o=>({t:`${ORGS[o].n}의 대장장이가 된다`,h:'해마다 일감과 은자가 들어온다',go:S=>{S.flags.smithOrg=1;S.biz.backer=o;S.biz.rep+=10;A(S,{gold:100});deed(S,`${ORGS[o].n}의 전속 대장장이가 되었다`);return SMITH_ORG_T[o];}})),
+  {t:'홀로 망치를 든다',go:S=>{S.flags.smithOrg=1;A(S,{cult:3});S.biz.rep+=3;return '“내 쇠는 내가 고른 사람에게 간다.” 둘 다 돌려보냈다.';}}]});
+E({id:'smithOre',tag:'job',job:'smith',t:'의뢰인의 광석',a:[18,95],w:3,cd:4,if:S=>S.forge>=25,
+ prep:S=>{S.tmp.m=pick(['현철','한철','운석','화린석']);S.tmp.c=pick(['젊은 협객','늙은 표두','복면의 여인','세가의 공자','살기 어린 사내']);},
+ x:S=>`${jo(S.tmp.c,'이','가')} 보자기를 풀었다. 주먹만 한 ${S.tmp.m}. “이걸로 내 칼을 벼려 주시오. 값은 부르는 대로.”`,
+ ch:[{t:'혼을 담아 벼린다',h:'단조·대장간',go:S=>{const q=clamp(Math.floor(1+S.forge/25+S.biz.lv*.4+Math.random()),1,5);S.biz.made++;S.biz.orders++;S.biz.rep+=q*4;A(S,{gold:q*60,forge:3,fame:q>=4?q*3:0});const n=smithName(S,S.tmp.m);S.biz.last=n;if(q>=4)deed(S,`명검 「${n}」을 벼렸다`);return `아흐레 밤낮 화로 앞을 떠나지 않았다. 「${n}」, 등급 ${q}. ${jo(S.tmp.c,'이','가')} 칼을 받아 들고 한참 말이 없었다.`;}},
+  {t:'빨리 벼려 넘긴다',h:'은자',go:S=>{A(S,{gold:60,forge:2});S.biz.orders++;S.biz.rep+=1;return '사흘 만에 넘겼다. 쓸 만한 칼이었다. 그뿐이었다.';}},
+  {t:'광석 일부를 빼돌린다',h:'재료↑ 도덕↓',go:S=>{A(S,{moral:-6,gold:40});S.mats[S.tmp.m]=(S.mats[S.tmp.m]||0)+1;if(chance(.25)){S.biz.rep-=15;return '들켰다. 소문이 났다. 한동안 아무도 광석을 맡기지 않았다.';}return '칼은 조금 가벼워졌다. 의뢰인은 몰랐다.';}}]});
+E({id:'smithSeries',tag:'job',job:'smith',t:'이름의 계보',a:[20,95],w:3,if:S=>!S.biz.series&&S.biz.made>=2,
+ x:'벼린 칼들이 강호에서 이름을 얻기 시작했다. 옛 장인들은 자기 칼에 하나의 이름을 이어 붙였다. 간장과 막야, 용천과 태아처럼. 당신의 칼은 무엇이라 부를까.',
+ ch:[['용천','龍泉','용이 사는 샘'],['추수','秋水','가을 물처럼 맑은 날'],['단심','丹心','붉은 마음'],['월영','月影','달 그림자']].map(([n,h,d])=>({t:`「${n}(${h})」`,h:d,go:S=>{S.biz.series=n;S.biz.rep+=10;return `이제부터 당신이 이름을 새기는 칼은 모두 「${n}」의 계보를 잇는다. 대장간 문 위에 ${h} 두 글자를 새겼다.`;}}))});
+E({id:'smithTang',tag:'job',job:'smith',t:'당가의 도면',a:[22,85],w:2,if:S=>S.forge>=45&&!S.flags.smithTang,
+ x:'사천당가의 장로가 도면 한 장을 펼쳤다. 대롱 하나에서 독침 스물네 개가 비처럼 쏟아지는 암기, 폭우이화침(暴雨梨花針). “당가에서도 만들 줄 아는 이가 끊겼소.”',
+ ch:[{t:'만든다',h:'명성·은자. 그 침에 누군가 죽을 것이다.',go:S=>{S.flags.smithTang=1;S.biz.rep+=25;S.biz.made++;A(S,{gold:300,fame:15,moral:-4});deed(S,'당가를 위해 폭우이화침을 되살렸다');return '석 달 뒤, 시험 삼아 쏜 침이 소나무 한 그루를 벌집으로 만들었다. 장로는 말없이 은자 삼백 냥을 놓고 갔다. 이듬해 강호에 폭우이화침이 다시 나타났다는 소문이 돌았다.';}},
+  {t:'독 홈을 빼고 만든다',h:'도덕',go:S=>{S.flags.smithTang=1;S.biz.rep+=10;A(S,{gold:120,moral:4});return '“독은 당가가 알아서 하시오. 나는 쇠만 다룹니다.” 장로가 웃었다. “고집 있는 장인이군.”';}},
+  {t:'거절한다',go:S=>{S.flags.smithTang=1;A(S,{cult:3});return '장로가 도면을 말아 넣었다. “언젠가 그 거절이 누군가를 살렸다는 걸 아시게 될 거요.”';}}]});
+E({id:'smithDivine',tag:'job',job:'smith',t:'하늘에서 떨어진 쇠',a:[25,110],w:3,if:S=>S.forge>=70&&S.biz.lv>=3&&!S.biz.divine,
+ x:'유성이 뒷산에 떨어졌다. 아직 뜨거운 운철 한 덩이. 이런 쇠는 평생 한 번만 온다. 천공로에 불을 지폈다.',
+ ch:[{t:'혼신을 다해 한 자루를 벼린다',go:S=>{S.biz.divine=1;const nm=(S.biz.series||'천외')+'신검';addWeapon(S,{n:nm,w:'검',q:5,kw:'강기',made:1});S.biz.made++;S.biz.rep+=60;A(S,{fame:60,forge:8,hp:-30});deed(S,`신병이기 「${nm}」을 벼려 신장이라 불리게 되었다`);return `일곱 날 일곱 밤. 마지막 담금질에 대장간 지붕이 날아갔다. 칼이 스스로 울었다. 「${nm}」. 강호는 당신을 신장(神匠)이라 불렀다.`;}},
+  {t:'운철을 나누어 여러 자루를 벼린다',go:S=>{S.biz.made+=3;S.biz.rep+=25;A(S,{gold:600,fame:15});return '한 자루의 신병 대신 세 자루의 명검이 나왔다. 세 자루는 세 사람을 지켰다.';}}]});
+E({id:'smithFame',tag:'job',job:'smith',t:'그 칼의 소식',a:[20,100],w:2,cd:6,if:S=>S.biz.made>=1,
+ prep:S=>{S.tmp.good=chance(.6);},
+ x:S=>S.tmp.good?`당신이 벼린 「${S.biz.last||'칼'}」의 이야기가 들려왔다. 그 칼을 든 협객이 산적 백 명을 막고 마을 하나를 지켰다고 한다.`:`당신이 벼린 「${S.biz.last||'칼'}」의 이야기가 들려왔다. 그 칼이 일가족을 베었다고 한다. 칼에는 당신의 낙인이 찍혀 있었다.`,
+ ch:S=>S.tmp.good?[{t:'술 한 잔을 따른다',go:S=>{S.biz.rep+=15;A(S,{mood:15});return '칼은 주인을 닮는다고들 한다. 그 말이 처음으로 기뻤다.';}}]
+  :[{t:'칼을 거두러 간다',h:'싸움',if:S=>S.realm>=2,go:S=>{const b=battle(S,mkFoe({n:'칼을 든 사내',realm:clamp(S.realm,2,5),q:1}),{spar:1});if(b.win){A(S,{moral:8,fame:10});S.biz.rep+=10;}return fightText(b,'칼을 되찾아 화로에 녹였다.','제가 벼린 칼에 베였다. 그 칼은 잘 들었다.');}},
+   {t:'칼은 칼일 뿐이다',go:S=>{A(S,{cult:3,mood:-10});return '쇠는 죄가 없다. 그렇게 말하며 그날은 망치를 들지 않았다.';}},
+   {t:'다시는 그런 자에게 팔지 않는다',go:S=>{A(S,{moral:5,mind:3});return '그날부터 칼을 주기 전에 사람의 눈을 먼저 보았다.';}}]});
+E({id:'smithWar',tag:'job',job:'smith',t:'전쟁의 주문',a:[18,95],w:4,if:S=>S.w.demon>=2&&!S.flags.smithWar,
+ x:'정마대전이다. 무림맹의 사자와 마교의 사자가 같은 날 대장간을 찾았다. 둘 다 창 천 자루를 원한다.',
+ ch:[{t:'무림맹에 댄다',go:S=>{S.flags.smithWar=1;S.biz.rep+=20;A(S,{gold:200,moral:5});deed(S,'정마대전에 무림맹의 창을 벼렸다');return '석 달 동안 화로가 꺼지지 않았다. 창 천 자루가 전장으로 갔다.';}},
+  {t:'마교에 판다',h:'은자↑↑ 도덕↓',go:S=>{S.flags.smithWar=1;A(S,{gold:600,moral:-15,enemies:1});return '마교의 은자는 무거웠다. 정파 사람들은 그 뒤로 대장간 앞을 지날 때 침을 뱉었다.';}},
+  {t:'둘 다 돌려보낸다',go:S=>{S.flags.smithWar=1;A(S,{cult:5});return '내 쇠로 죽는 사람을 하나라도 줄이고 싶었다. 그해에는 호미만 벼렸다.';}}]});
+E({id:'smithBlade',tag:'job',job:'smith',t:'내가 벼린 칼',a:[18,40],w:1.5,if:S=>S.forge>=40&&!S.flags.smithBlade,
+ x:'칼을 벼리다 보면 칼이 말을 걸어온다. 남의 손에 쥐여 주기만 하던 칼을 이제 내 손에 쥐고 싶어졌다.',
+ ch:[{t:'망치를 내려놓고 칼을 든다',h:'생업을 접고 무림인이 된다.',go:S=>{S.flags.smithBlade=1;S.biz.made++;const n=smithName(S,'정철');addWeapon(S,{n,w:'검',q:3,kw:'강',made:1});S.mainW='검';SK(S,'검',15);A(S,{exp:20,hp:10});leaveJob(S);deed(S,`손수 벼린 「${n}」을 들고 강호로 나갔다`);return '대장간 문을 잠갔다. 칼은 손에 꼭 맞았다. 당연했다. 내 손을 생각하며 벼린 칼이니까.';}},
+  {t:'칼은 남이 쓰는 것이다',go:S=>{S.flags.smithBlade=1;A(S,{forge:4,cult:2});return '망치를 다시 들었다. 내가 벼린 칼이 나 대신 강호를 걸어갈 것이다.';}}]});
+// 의원
+E({id:'docPlague',tag:'job',job:'doctor',t:'역병',a:[16,95],w:2,cd:10,
+ x:'이웃 고을에 역병이 돌았다. 관아는 성문을 닫았다. 성 안에는 아직 사람이 산다.',
+ ch:[{t:'성 안으로 들어간다',h:'목숨을 걸고 고친다',go:S=>{S.biz.cures+=40;S.biz.rep+=25;A(S,{med:6,moral:12,fame:10});deed(S,'역병 도는 성에 들어가 사람들을 살렸다');if(chance(.2)){hurt(S,35,'역병');return '석 달 동안 탕약을 끓였다. 그러다 당신도 쓰러졌다. 살아난 이들이 번갈아 당신을 간호했다.';}return '석 달 동안 탕약을 끓였다. 성문이 다시 열리던 날, 사람들이 당신 이름을 불렀다.';}},
+  {t:'처방을 써서 성벽 너머로 보낸다',go:S=>{S.biz.cures+=15;S.biz.rep+=8;A(S,{med:3});return '처방 백 장을 화살에 묶어 쏘았다. 몇 장이 사람을 살렸는지는 모른다.';}},
+  {t:'약값을 올린다',go:S=>{A(S,{gold:200,moral:-12});S.biz.rep-=15;return '약재가 금값이 되었다. 당신 곳간도 그랬다.';}}]});
+E({id:'docWounded',tag:'job',job:'doctor',t:'문 앞의 무림인',a:[16,95],w:2.5,cd:4,
+ prep:S=>{S.tmp.o=pick(Object.keys(ORGS));},
+ x:S=>`새벽, 의원 문 앞에 ${ORGS[S.tmp.o].n} 무복을 입은 사내가 쓰러져 있었다. 배에 검상, 입술이 검다. 독까지 맞았다.`,
+ ch:[{t:'살린다',h:'의술',go:S=>{if(S.med+R(0,40)>=50){S.biz.cures++;S.biz.rep+=6;A(S,{med:3});if(chance(.5)){A(S,{gold:120});return `사흘 만에 눈을 떴다. 보름 뒤 ${ORGS[S.tmp.o].n}에서 은자 백이십 냥과 감사장이 왔다.`;}A(S,{enemies:1});return '살려 냈다. 그런데 그를 찌른 자들이 의원을 찾아냈다. “그놈을 살린 게 너냐.”';}A(S,{mood:-10});return '밤새 매달렸지만 새벽에 숨이 멎었다.';}},
+  {t:'관아에 알린다',go:S=>{A(S,{moral:-3});return '포졸들이 들것에 싣고 갔다. 그 뒤 소식은 듣지 못했다.';}}]});
+E({id:'docPoison',tag:'job',job:'doctor',t:'풀리지 않는 독',a:[20,100],w:2,cd:6,if:S=>S.med>=40,
+ x:'온몸이 푸르게 변한 소년이 실려 왔다. 독마의 독이라고 했다. 이름난 의원 셋이 고개를 저었다.',
+ ch:[{t:'독으로 독을 다스린다',h:'의술·항독',go:S=>{if(S.med+S.rp/2+R(0,30)>=85){S.biz.cures++;S.biz.rep+=30;A(S,{med:6,fame:15});deed(S,'독마의 독을 풀었다');return '전갈, 두꺼비, 지네. 세 가지 독을 섞어 소년의 독을 눌렀다. 이레 뒤 소년이 죽을 먹었다. 강호에 “독마의 독도 푸는 의원”이 있다는 소문이 났다.';}A(S,{mood:-15});return '독이 독을 이기지 못했다. 소년은 당신 손을 잡고 갔다.';}},
+  {t:'고통이라도 덜어 준다',go:S=>{A(S,{moral:4,mood:-5});return '마지막 사흘을 아프지 않게 해 주었다. 그것도 의술이다.';}}]});
+E({id:'docPalace',tag:'job',job:'doctor',t:'황궁의 부름',a:[30,100],w:2,if:S=>S.med>=65&&!S.flags.docPalace,
+ x:'황궁의 내관이 왔다. 황태후가 석 달째 잠들지 못한다. 어의 넷이 이미 쫓겨났다.',
+ ch:[{t:'입궁한다',h:'의술. 실패하면 곤장을 맞는다.',go:S=>{S.flags.docPalace=1;if(S.med+R(0,40)>=85){A(S,{gold:800,fame:40});S.biz.rep+=40;deed(S,'황태후의 병을 고쳐 어의의 칭호를 받았다');return '병은 몸이 아니라 마음에 있었다. 침 대신 옛 노래 한 곡을 들려주었다. 황태후는 그날 밤 아이처럼 잤다.';}hurt(S,40,'황궁의 곤장');A(S,{fame:5});return '고치지 못했다. 곤장 서른 대를 맞고 쫓겨났다. 그래도 목은 붙어 있었다.';}},
+  {t:'고을 환자들이 기다린다며 사양한다',go:S=>{S.flags.docPalace=1;A(S,{moral:6});S.biz.rep+=10;return '내관이 혀를 찼다. 고을 사람들은 그 이야기를 오래 했다.';}}]});
+E({id:'docElixir',tag:'job',job:'doctor',t:'대환단',a:[30,110],w:2.5,if:S=>S.med>=60&&S.biz.herbs>=10&&!S.flags.docElixir,
+ x:'평생 모은 약재와 천년설삼 한 뿌리. 소림의 대환단에 비길 영단을 빚을 수 있을 것 같다.',
+ ch:[{t:'빚어서 판다',go:S=>{S.flags.docElixir=1;S.biz.herbs-=10;A(S,{gold:1000});S.biz.rep+=15;return '세가의 가주가 은자 천 냥을 냈다. 그 아들은 그 단약을 먹고 일류 고수가 되었다.';}},
+  {t:'스스로 먹는다',go:S=>{S.flags.docElixir=1;S.biz.herbs-=10;A(S,{ng:60,hp:50});S.flags.sinuiLife=(S.flags.sinuiLife||0)+5;return '단전에 불덩이가 들어앉았다. 몸이 가벼워졌다. 수명이 다섯 해 늘었다.';}},
+  {t:'죽어 가는 아이에게 먹인다',go:S=>{S.flags.docElixir=1;S.biz.herbs-=10;A(S,{moral:12});S.biz.cures++;S.biz.rep+=20;deed(S,'평생 한 알의 영단을 죽어 가는 아이에게 먹였다');return '아이가 살았다. 십 년 뒤 그 아이가 의원 문을 두드렸다. “제자로 받아 주십시오.”';}}]});
+E({id:'docLife',tag:'job',job:'doctor',t:'천수의 비밀',a:[40,130],w:3,if:S=>S.med>=85&&!S.flags.docLife,
+ x:'수십 년 동안 짚은 맥(脈)이 하나의 길로 이어졌다. 사람의 천수를 늘리는 처방. 신의(神醫)들만 안다는 그것.',
+ ch:[{t:'처방을 완성한다',go:S=>{S.flags.docLife=1;S.flags.sinuiLife=(S.flags.sinuiLife||0)+15;S.biz.rep+=40;A(S,{fame:30});deed(S,'천수를 늘리는 처방을 완성했다');return '스스로 첫 환자가 되었다. 흰머리 사이로 검은 머리가 돋았다. 강호의 노고수들이 수명을 구하러 의원 문 앞에 줄을 섰다.';}},
+  {t:'하늘이 정한 몫이다',go:S=>{S.flags.docLife=1;A(S,{cult:10});return '처방을 화로에 넣었다. 사람은 언젠가 간다. 의원은 가는 길을 덜 아프게 할 뿐이다.';}}]});
+E({id:'docWar',tag:'job',job:'doctor',t:'전장의 의원',a:[18,100],w:4,if:S=>S.w.demon>=2&&!S.flags.docWar,
+ x:'정마대전의 전장. 정파와 마교의 부상자가 같은 들판에 누워 있다. 약은 한쪽 분량뿐이다.',
+ ch:[{t:'누구든 가까운 사람부터',go:S=>{S.flags.docWar=1;S.biz.cures+=60;S.biz.rep+=30;A(S,{moral:10,fame:15});deed(S,'정마대전의 전장에서 정·마를 가리지 않고 고쳤다');return '정파 무사가 따졌다. “마두를 왜 살리오!” “피는 다 붉소.” 그 말이 강호에 퍼졌다.';}},
+  {t:'정파 부상자만 돌본다',go:S=>{S.flags.docWar=1;S.biz.cures+=40;S.biz.rep+=15;A(S,{fame:8});return '무림맹이 감사장을 보냈다.';}}]});
+// 생업과 무림을 잇는 길
+E({id:'docTurn',t:'독과 약은 한 몸',a:[18,60],w:2,if:S=>!S.job&&(S.org==='tang'||S.master==='dokma'||S.master==='yak')&&(S.med>=15||S.rp>=30)&&!S.flags.docTurn,
+ x:S=>`${S.master==='dokma'?'독마는 사람을 죽이는 독만 가르쳤다':S.master==='yak'?'약왕은 독과 약이 한 뿌리라 했다':'당가의 독은 사람을 죽이지만, 당가의 해독약은 사람을 살린다'}. 어느 밤, 독을 다루는 손으로 사람을 살리고 싶다는 생각이 들었다.`,
+ ch:[{t:'의원의 길을 간다',h:'생업: 의원. 무림인 사건 대신 의원 사건이 일어난다.',go:S=>{S.flags.docTurn=1;setJob(S,'doctor');A(S,{med:15});deed(S,'독을 다루던 손으로 의원을 열었다');return S.org==='tang'?'당가 외당 한쪽에 약방을 열었다. 당가 사람들이 처음으로 사람을 살리는 일로 당신을 찾았다.':'약방 간판을 걸었다. 독을 아는 의원은 해독을 누구보다 잘했다.';}},
+  {t:'아직은 칼의 길이다',go:S=>{S.flags.docTurn=1;A(S,{med:5});return '생각을 접었다. 그래도 그날 밤 해독약 한 첩을 지어 품에 넣었다.';}}]});
+E({id:'retire',t:'칼을 내려놓다',a:[35,85],w:1.2,if:S=>!S.job&&!S.flags.retire&&S.age>=40,
+ x:'칼끝이 무거워졌다. 상처가 비 오는 날마다 쑤신다. 강호를 떠나 사는 삶도 있다고, 옛 벗이 말했었다.',
+ ch:S=>[{t:'객잔을 연다',h:'은자 80 · 생업: 객잔 주인',if:S=>S.gold>=80,go:S=>{S.flags.retire=1;A(S,{gold:-80});if(S.org)leaveOrg(S);setJob(S,'inn',{owner:true,patrons:3,rep:15});deed(S,'칼을 내려놓고 객잔을 열었다');return '칼을 객잔 들보 위에 올려놓았다. 손님들은 주인이 누구였는지 몰랐다. 가끔 알아보는 사람만 조용히 고개를 숙였다.';}},
+  ...(S.forge>=30?[{t:'대장간을 연다',h:'생업: 대장간',go:S=>{S.flags.retire=1;if(S.org)leaveOrg(S);setJob(S,'smith',{rep:15});deed(S,'칼을 내려놓고 대장간을 열었다');return '칼을 쓰던 손으로 칼을 벼린다. 칼이 어디를 베는지 아는 대장장이는 드물다.';}}]:[]),
+  ...(S.med>=30?[{t:'의원을 연다',h:'생업: 의원',go:S=>{S.flags.retire=1;if(S.org)leaveOrg(S);setJob(S,'doctor',{rep:15});deed(S,'칼을 내려놓고 의원을 열었다');return '평생 사람을 베던 손으로 사람을 꿰맨다. 첫 환자를 살린 밤, 오래 울었다.';}}]:[]),
+  {t:'아직은 강호다',go:S=>{S.flags.retire=1;A(S,{temper:2});return '칼을 다시 쥐었다. 손이 기억하고 있었다.';}}]});
+E({id:'seekSinui',t:'신의를 찾아서',a:[45,140],w:3,if:S=>!S.job&&!S.flags.sinui&&S.age>=lifespan(S)-8,
+ x:'몸이 예전 같지 않다. 강호에 떠도는 말이 있다. 곤륜 깊은 골짜기에 화타의 후예, 신의(神醫)가 산다고. 그는 사람의 천수를 늘린다고.',
+ ch:[{t:'천금을 바친다',h:'은자 300',if:S=>S.gold>=300,go:S=>{S.flags.sinui=1;A(S,{gold:-300});S.flags.sinuiLife=(S.flags.sinuiLife||0)+10;return '신의는 은자를 보지도 않았다. 맥을 짚고 말했다. “욕심이 수명을 갉아먹었구려. 십 년을 더 드리리다. 그 십 년은 덜 욕심내며 사시오.”';}},
+  {t:'약초를 구해 오는 일을 맡는다',h:'설산의 영수와 싸워야 한다',go:S=>{S.flags.sinui=1;const b=battle(S,mkFoe({n:'설산의 백호',realm:clamp(S.realm,2,6),q:1}),{spar:1});if(b.win){S.flags.sinuiLife=(S.flags.sinuiLife||0)+12;A(S,{fame:5});}return fightText(b,'설련화를 품에 안고 돌아왔다. 신의가 웃었다. “약값은 이걸로 됐소. 열두 해요.”','백호에게 쫓겨 돌아왔다. 신의는 약 한 첩만 쥐여 주었다.');}},
+  {t:'하늘이 정한 몫을 받아들인다',go:S=>{S.flags.sinui=1;A(S,{cult:8,mood:10});return '골짜기 입구에서 돌아섰다. 남은 날을 세는 대신 남은 날을 살기로 했다.';}}]});
+// 환골탈태: 수명이 는다는 걸 알린다
+EV.filter(e=>e.id==='hwangol').forEach(e=>e.ch.forEach(c=>{const g=c.go;c.go=S=>{S.flags.hwangolAt=S.age;return g(S)+' 늙은 몸이 다시 짜이며 수명이 늘었다.';};}));
+
 const TAGMAP={hujigisu:'side',sibling:'side',sibling2:'side',sworn:'side',swornLater:'side',haMeet:'side',haTurn:'side',meet:'side',suitor:'side',propose:'side',overhear:'side',guest:'side',innRaid:'side',innRise:'side',guya:'side',order:'side',kidnap:'side',smTrial:'side',smLeave:'side',master:'side',masterEnd:'side',
   rumor:'key',alliance:'key',allyJoin:'key',leader:'key',cheonma:'key',jeol:'key',salBird:'trait',salSeen:'trait',salFate:'trait',salFrenzy:'trait',salHunt:'trait',salGod:'trait',yinFit:'trait',yinCure:'trait',dokin:'trait',hwangol:'trait',yyCrisis:'trait'};
 const REGW={tangInvite:['사천'],dokin:['사천'],music:['강남'],haoInfo:['강남'],zen:['하남'],dao:['호북'],kidnap:['호남','강남','광동','귀주'],grand:['하남'],assassin:['귀주','호남'],ggArhat:['하남'],srContest:['하북'],bandits:['산동','하북'],teBinggung:['북해','하북'],music2:null};
@@ -1662,6 +2061,7 @@ EVM.focus={id:'focus',t:'올해의 나날',
    S.tmp.line=pick(P)+(S.mood<-30?' 마음이 무겁다. 검도 무겁다.':S.mood>30?' 오랜만에 발걸음이 가볍다.':'');},
  x:S=>S.tmp.line+` 마음은 ${moodName(S.mood)}하다. 무엇에 마음을 쏟을까?`,
  ch:S=>{const L=[];
+  if(S.job)return jobChoices(S);
   if(S.age<13&&!S.org){
     L.push({t:'뒷산을 뛰어다닌다',h:'경공',go:S=>{A(S,{qing:4,exp:1,mood:6});return '해 질 녘까지 산을 뛰었다. 다리가 가벼워졌다.';}});
     L.push({t:'글을 배운다',h:'학문·구력',go:S=>{A(S,{lore:6,tongue:2});return '천자문을 다 외웠다.';}});
@@ -1718,7 +2118,7 @@ const forgeRange=(S,m)=>{const b=S.flags.smith?1:0,cap=MATS[m].cap;return [clamp
 const forgeDefault=(S,f)=>{const [lo,hi]=forgeRange(S,f.m);return (hi>=4?pick(EPIC):f.m)+WNAME[f.w];};
 function doForge(){const f=S.tmp.forge;if(!f)return;const before=SNAP(S);const [lo,hi]=forgeRange(S,f.m);const q=R(lo,hi);
   if(f.m!=='정철'){S.mats[f.m]--;if(!S.mats[f.m])delete S.mats[f.m];}
-  const n=(f.name||'').trim()||f.def;const wp={n,w:f.w,q,kw:MATS[f.m].kw,made:1};addWeapon(S,wp);A(S,{forge:4,fame:q>=4?q*5:0});
+  const n=(f.name||'').trim()||f.def;const wp={n,w:f.w,q,kw:MATS[f.m].kw,made:1};addWeapon(S,wp);if(S.job==='smith'){S.biz.made++;S.biz.rep+=q*3;S.biz.last=n;}A(S,{forge:4,fame:q>=4?q*5:0});
   if(q>=5)deed(S,`신병이기 ${jo(n,'을','를')} 벼려 냈다`);else if(q>=4)deed(S,`명병 ${jo(n,'을','를')} 벼려 냈다`);
   finish(S,'병기를 벼리다',`${n} (${f.m} · ${f.w})`,q>=5?`칼이 화로에서 나오던 밤 하늘에서 별똥이 떨어졌다. 강호 사람들은 구야자가 돌아왔다고 했다. ${n}, 병기 등급 5.`:`${q>=4?'석 달 밤낮을 망치질했다. ':''}${jo(n,'이','가')} 모습을 드러냈다. 병기 등급 ${q}${wp.kw?` · ${wp.kw}의 결이 깃들었다`:''}.`,before,true);}
 
@@ -1747,11 +2147,13 @@ function passive(S){
       addLog(S,`${o.n}에서 ${jo(o.ranks[S.rank],'이','가')} 되었다. ${r}`,1);if(S.rank===3)deed(S,`${o.n}의 ${jo(o.ranks[3],'이','가')} 되었다`);}}
   while(S.realm<2&&S.exp>=REALMS[S.realm+1].req){S.realm++;addLog(S,`자연스럽게 ${REALMS[S.realm].n}의 경지에 들었다.`,1);}
   A(S,{hp:8+S.t.bone});
+  if(S.job)jobYear(S);
   if(S.age>55)hurt(S,(S.age-55)*.4*Math.max(.1,1-S.realm*.1),'노환');
   if(has(S,'yin')&&!S.flags.yinCured&&S.age>=20){S.dead='구음절맥';S.hp=0;}
   const L=lifespan(S);if(!S.dead&&S.age>L&&chance(.2+(S.age-L)*.08))S.dead='천수를 다함';
   if(S.rp>=100&&!has(S,'manduk')){S.traits.push('manduk');addLog(S,'어떤 독도 몸에 들지 않게 되었다. 만독불침.',1);}}
 function eligible(S,e){
+  if(S.job){if(e.job){if(e.job!==S.job)return false;}else if(e.tag!=='family'&&e.tag!=='love'&&!JOB_OK.has(e.id))return false;}else if(e.job)return false;
   if(e.a&&(S.age<e.a[0]||S.age>e.a[1]))return false;
   if(e.cd){if(S.age-(S.last[e.id]??-99)<e.cd)return false;}else if(S.seen[e.id])return false;
   if(e.if&&!e.if(S))return false;return true;}
@@ -1821,6 +2223,9 @@ function nextYear(){if(S.dead){endLife();return;}
 function epitaph(S){if(S.flags.ascend)return '구름을 밟고 갔으니, 무덤에는 신발 한 켤레만 남았다.';
   if(S.flags.hyeolsin)return '그가 지나간 길에는 꽃이 피지 않았다. 그래도 그 길을 잊은 이는 없었다.';
   if(S.titles.includes('천하제일인'))return '천하의 꼭대기에 섰으나, 내려다본 것은 늘 사람이었다.';
+  if(S.job==='inn')return '객잔 등불은 밤새 꺼지지 않았다. 길 잃은 길손들이 그 불빛을 보고 길을 찾았다.';
+  if(S.job==='smith')return '그가 벼린 쇠는 지금도 누군가의 손에서 울고 있다.';
+  if(S.job==='doctor')return '이름 없는 목숨을 수없이 건졌다. 그 목숨들이 그의 비석이다.';
   const m={'대협':'칼로 산을 넘고 정으로 사람을 건넜다. 남긴 것은 이름보다 길었다.','대마두':'세상이 마두라 불렀다. 끝내 변명하지 않았다.','효웅':'천하를 셈하던 손이 마지막에는 빈손이었다. 그 빈손이 가장 가벼웠다.',
     '은사':'구름을 벗 삼았으니, 구름처럼 흩어졌다.','광인':'한 번도 고개를 숙이지 않았다. 바람조차 비켜 갔다.','군자':'말보다 침묵이 길었고, 침묵보다 마음이 깊었다.'}[persona(S)];
   if(m)return m;if(S.flags.unbowed)return '무릎은 하늘에만 꿇었고, 등뼈는 끝까지 곧았다.';
@@ -1832,10 +2237,12 @@ function bondsHTML(s){const ids=Object.keys(LOVE).filter(id=>NPCS[id]&&s.met[id]
 function persona(S){if(S.moral>=60)return '대협';if(S.moral<=-60)return '대마두';if(S.savvy>=70&&Math.abs(S.moral)<30)return '효웅';if(S.cult>=70)return '은사';if(S.temper>=60)return '광인';if(S.temper<=-50)return '군자';return '';}
 function grade(S){
   if(S.flags.ascend)return '우화등선한 신선';if(S.titles.includes('천하제일인'))return '천하제일인';
+  const ft=S.titles.find(t=>/^(정파|사파|마교)제일인$/.test(t));if(ft)return ft;
+  if(S.job&&S.realm<5)return jobTitle(S);
   if(S.realm>=7||S.fame>=400)return '절대고수';if(S.realm>=6||S.fame>=200)return '일대종사';
   if(S.realm>=4||S.fame>=60)return '강호의 고수';if(S.realm>=2||S.fame>=15)return '이름 있는 무인';
   if(S.forge>=70)return '이름난 장인';if(S.med>=70)return '이름난 의원';if(S.lore>=70)return '이름난 학자';return '평범한 범부';}
-const score=S=>Math.round(S.realm*120+S.fame*1.2+Math.min(S.age,100)+S.deeds.length*25+S.disciples*15+S.groups*80+(S.titles.includes('천하제일인')?400:0)+(S.flags.ascend?500:0));
+const score=S=>Math.round((S.biz?S.biz.rep*2+S.biz.made*15+S.biz.cures*1.5+S.biz.lv*40:0)+(S.titles.some(t=>/^(정파|사파|마교)제일인$/.test(t))?150:0)+S.realm*120+S.fame*1.2+Math.min(S.age,100)+S.deeds.length*25+S.disciples*15+S.groups*80+(S.titles.includes('천하제일인')?400:0)+(S.flags.ascend?500:0));
 function endLife(){S.phase='end';
   const rec={name:S.name,nick:S.nick?S.nick.n:'',age:S.age,realm:REALMS[S.realm].n,grade:grade(S),score:score(S),cause:S.dead,org:S.org?ORGS[S.org].n:'무소속'};
   const h=loadHall();h.push(rec);h.sort((a,b)=>b.score-a.score);saveHall(h.slice(0,10));
@@ -2066,7 +2473,7 @@ async function importFiles(g,fl){let ok=0;const bad=[];for(const f of fl){const 
 const ORG_TAGS={binggung:'white and silver robes, ice palace, frost',namgung:'blue and white hanfu, noble swordsman, jade hairpin',tang:'dark green robes, leather gloves, hidden weapons, poison',paeng:'red and black martial robes, broadsword, muscular',
   shaolin:S=>S.sex==='m'?'buddhist monk, bald, orange kasaya, prayer beads':'buddhist laywoman, grey robes, prayer beads',wudang:'taoist robes, white and blue, hair bun, yin yang symbol',
   huashan:'white hanfu, plum blossom pattern, plum blossoms',emei:'white robes, buddhist sword maiden',kunlun:'white fur-trimmed robes, snowy mountain',beggar:'ragged patched robes, wine gourd, bamboo staff',
-  bandit:'bandit, fur vest, headband, scar',haomun:'servant clothes, sly smile',gwiyeong:'black assassin outfit, mask',salmak:'black assassin outfit, face mask, hood, daggers',
+  bandit:'bandit, fur vest, headband, scar',jangsu:'river pirate, straw hat, spear, wooden boat, yangtze river',haomun:'servant clothes, sly smile',gwiyeong:'black assassin outfit, mask',salmak:'black assassin outfit, face mask, hood, daggers',
   manhwa:'elegant colorful hanfu, folding fan, flower hair ornament',demon:'black and red robes, demonic cult, dark aura',blood:'crimson robes, blood cult, red aura'};
 const WP_TAGS={검:'holding sword',도:'holding dao, broadsword',권:'martial arts stance, fists',창:'holding spear',봉:'holding staff',암기:'throwing knives between fingers',음공:'playing guqin',선:'holding folding fan'};
 function pcPrompt(S){const age=S.age<13?'child':S.age<18?'young':S.age<30?'young adult':S.age<50?'adult, mature':'old, wrinkles, grey hair, long beard';
@@ -2112,7 +2519,7 @@ const EV_TAGS={sectTest:'village square, many children lined up, martial sect en
  grand:'grand martial tournament, luoyang, huge crowd, imperial banners',headMission:'treasure vault, empty pedestal, elders',focus:'ancient chinese landscape, mountains, mist, seasons',bt:'meditation, breakthrough, qi explosion, light'};
 Object.assign(EV_TAGS,{pactRumor:'storyteller in teahouse, mount hua, legend',lostVillage:'empty village at night, bloody talisman in well',pactCouncil:'summit of mount hua, three factions meeting, banners',pact2:'red mist at night, assassins attacking meeting',bloodRite:'red lake, blood altar, crimson sky, cult ritual',bloodCalamity:'blood rain, burning villages',chuldo:'young martial artist on road, crossroads, city gate',chuldo2:'inn, two strangers sharing a table',chuldo3:'wanted posters on wall, inn',warBattle:'battlefield, clash of armies',warAfter:'prisoners kneeling, riverbank',cwFall:'one-armed swordsman in dark room',cwReturn:'one-armed swordsman, plum blossoms',dmKidnap:'purple poison mist, night road',dmOrder:'poison bottle, teacup',eyWudang:'taoist priest, wudang mountain, yin yang',eyTaiji:'sword drawing circle, yin yang, moon reflection',eyHunt:'demonic cult elder blocking road',hvContest:'three envoys visiting a child',hvEnvy:'masked man drawing sword at night',hvPeak:'master surrounded by many weapons, golden light',grKunlun:'snowy kunlun mountain, wind',grNature:'meditating on mountain peak, clouds flowing',tyVolcano:'volcano crater, lava, stone chamber',tyRage:'fire aura, rage',teBinggung:'ice palace envoy, white fur',ggArhat:'eighteen arhats formation, shaolin',srContest:'lifting huge bronze cauldron, crowd',caZhuge:'go board, strategist, feather fan',sgTomb:'sword tomb, thousands of swords in ground',sgCrane:'old immortal riding crane, clouds',mdTang:'sichuan mansion, marriage proposal',first:'mount hua summit, masters gathering',hwasan2:'two masters dueling above clouds, ancient carving',yb2:'tournament stage',yb3:'tournament final, dragon and phoenix banners',sectTest2:'child lifting boulder, examiner',sectTest3:'injured child on mountain path, sunset'});
 const evPrompt=id=>{const m=/^lv_(\w+?)_\d$/.exec(id);if(m&&NPC_TAGS[m[1]]){const t=NPC_TAGS[m[1]];return (typeof t==='function'?t(S):t)+', emotional scene, soft light, cinematic';}return (EV_TAGS[id]||'ancient chinese landscape, mountains, mist')+', scenery, wide shot, cinematic composition';};
-Object.assign(EV_TAGS,{sage:'old master and young martial artist talking, tea, mist',momHands:'mother washing clothes, cracked hands, child',fatherBack:'father carrying child on back, dusk',homeLetter:'letter, brush writing, candle',momSilk:'silk robe, mother smiling, village house',parentDeath:'deathbed, holding hands, candle',orphanRoots:'two nameless graves on hill',kneel:'palace eunuch palanquin, crowd kneeling, one person standing',unbowedPoem:'scholars reading poem, academy',helpless:'child hiding behind well, burning village',vowEnd:'old one-armed man drinking alone in inn',lvWed:'married couple, morning, courtyard',lvOld:'old couple holding hands, plum blossoms',lvFate:'distant figure, letter, wind'});
+Object.assign(EV_TAGS,{lifePath:'crossroads, inn, smithy, herbal clinic, young person with bundle',jn_bandit:'mountain bandit fortress, wooden palisade, bandit chief',jn_jangsu:'river pirates boat, yangtze rapids',jn_beggar:'beggars under bridge, rain',jn_haomun:'inn back door, waiter whispering',jn_demon:'black mountains, demonic cult envoy on black horse',jn_blood:'crimson lake, blood cult priest',factionTop:'martial arts duel on great stage, elders watching',sadoMeet:'underworld meeting hall, many factions, banners',innBacker:'thugs in chinese inn, overturned table',innDish:'chinese kitchen, steaming noodles, chef',innInfo:'old woman drinking tea in inn corner',innBrawl:'martial artists fighting in inn',innWar:'refugees at inn gate, war',innFugitive:'wounded man hiding in inn storeroom',innRival:'two inns facing across street, cooking contest',innLegend:'old cook with cleaver, peeling radish',innLegend2:'old cook handing cleaver, sunset inn',innRich:'pouch of silver on inn table',innOld:'old innkeeper behind counter, lantern',smithOrg:'blacksmith forge, sect envoys',smithOre:'blacksmith holding meteorite ore',smithSeries:'swords on rack, carved names',smithTang:'hidden weapon blueprint, needles',smithDivine:'divine sword glowing in forge, lightning',smithFame:'hero with sword defending village',smithWar:'forge full of spears, war',smithBlade:'smith holding own sword, leaving forge',docPlague:'plague town, doctor with medicine',docWounded:'wounded martial artist at clinic door, dawn',docPoison:'poisoned boy, doctor with needles',docPalace:'imperial palace bedchamber, physician',docElixir:'glowing pill in alchemy furnace',docLife:'old doctor writing prescription, candle',docWar:'battlefield field hospital',docTurn:'herbal clinic, poison and medicine',retire:'old swordsman putting sword on beam',seekSinui:'snowy valley, hermit doctor hut',sage:'old master and young martial artist talking, tea, mist',momHands:'mother washing clothes, cracked hands, child',fatherBack:'father carrying child on back, dusk',homeLetter:'letter, brush writing, candle',momSilk:'silk robe, mother smiling, village house',parentDeath:'deathbed, holding hands, candle',orphanRoots:'two nameless graves on hill',kneel:'palace eunuch palanquin, crowd kneeling, one person standing',unbowedPoem:'scholars reading poem, academy',helpless:'child hiding behind well, burning village',vowEnd:'old one-armed man drinking alone in inn',lvWed:'married couple, morning, courtyard',lvOld:'old couple holding hands, plum blossoms',lvFate:'distant figure, letter, wind'});
 
 /* ══ 그리기 ════════════════════════════════════════ */
 const app=document.getElementById('app');
@@ -2150,7 +2557,7 @@ function modalHTML(){if(!modal)return '';
    ${src?`<p class="small muted" style="margin:0">${local?'내 그림 · 이 브라우저에 저장됨':'저장소 그림 · img 폴더'}</p>`:''}
    <label for="n_prompt">그릴 대상 (영어 태그)</label><textarea id="n_prompt">${esc(modal.prompt)}</textarea>
    ${custom?'<div><button class="ghost" data-a="nreset">기본 프롬프트로 되돌리기</button></div>':''}
-   <p class="grp-t" style="margin:0">실제로 쓰는 프롬프트 (그림체 포함)</p><p class="pv" id="n_full">${esc(fullPrompt(k,modal.prompt))}</p>
+   <p class="grp-t" style="margin:0">실제로 쓰는 프롬프트 (그림체 포함)</p><p class="ppv" id="n_full">${esc(fullPrompt(k,modal.prompt))}</p>
    <div class="row wrap"><button class="ghost" data-a="gcopy" data-w="full">프롬프트 복사</button><button class="ghost" data-a="gcopy" data-w="neg">네거티브 복사</button>${u&&port&&!k.startsWith('pc:')?'<button class="ghost" data-a="ncut">배경 지우기</button>':''}</div>
    ${modal.err?`<p class="status">${esc(modal.err)}</p>`:''}${busy?'<p class="status">그리는 중… 창을 닫아도 계속 그린다.</p>':''}
    <div class="row wrap" style="justify-content:space-between"><span class="row wrap"><button class="ghost" data-a="mclose">${modal.back?'← 목록으로':'닫기'}</button><label class="ghost btnl" for="n_file">파일에서 넣기</label><input type="file" id="n_file" accept="image/*" hidden>${local?'<button class="ghost" data-a="nsavefile">파일로 저장</button><button class="ghost" data-a="ndel">내 그림 지우기</button>':''}</span>
@@ -2168,7 +2575,7 @@ function galHTML(){const g=modal,c=ncfg(),T=[['style','그림체'],['map','지�
    <label for="g_tmap">지도에만 더할 태그</label><input type="text" id="g_tmap" value="${esc(c.tmap)}" placeholder="예: aged paper, compass rose">
    <label for="g_neg">빼고 싶은 것 (네거티브)</label><textarea id="g_neg">${esc(c.neg)}</textarea>
    <label class="row"><input type="checkbox" id="g_q" ${c.q?'checked':''}> 모델 품질 태그를 붙인다 <span class="muted small">(${esc(NAI_Q[c.model]||'')})</span></label>
-   <p class="grp-t" style="margin:0">미리보기 · 남궁 서린</p><p class="pv" id="g_pv">${esc(fullPrompt('st:seorin'))}</p><div><button class="ghost" data-a="gcopy" data-w="pv">복사</button></div>`;
+   <p class="grp-t" style="margin:0">미리보기 · 남궁 서린</p><p class="ppv" id="g_pv">${esc(fullPrompt('st:seorin'))}</p><div><button class="ghost" data-a="gcopy" data-w="pv">복사</button></div>`;
   else{const ks=galKeys(g.tab),src=ks.map(k=>imgSrc(k)),nl=src.filter(x=>x&&x.s==='local').length,nr=src.filter(x=>x&&x.s==='repo').length;
    const cards=ks.map((k,i)=>{const x=src[i];if(g.miss&&x)return '';return `<button class="gcard" data-a="gslot" data-k="${esc(k)}"><span class="gth ${isPort(k)?'p':'l'} ${g.tab==='st'?'chk':''}">${x?`<img src="${x.u}" alt="" loading="lazy">`:'빈 칸'}</span><span class="gn">${esc(slotName(k))}</span><span class="gs ${x?x.s:''}">${x?x.s==='local'?'내 그림':'저장소':'—'}</span></button>`;}).join('');
    body=`<p class="muted small" style="margin:0">칸을 눌러 NovelAI로 그리거나, 프롬프트를 복사해 다른 곳에서 그린 뒤 넣는다. 내 그림은 이 브라우저에만 저장되고 기본 그림보다 먼저 나온다.${REPO_ON?'':' <b>지금은 기본 그림을 끄고 내 그림만 쓰는 중이다.</b>'}</p>
@@ -2183,6 +2590,7 @@ function galHTML(){const g=modal,c=ncfg(),T=[['style','그림체'],['map','지�
    <div class="ggrid ${g.tab}">${cards||'<p class="muted small">빈 칸이 없다.</p>'}</div>`;}
   return `<div class="modal" data-a="mbg"><div class="sheet wide" role="dialog" aria-modal="true" aria-labelledby="mt">${head}${body}</div></div>`;}
 function tabHTML(t){const s=S;
+  if(t==='job')return s.job?jobHTML(s):tabHTML('ab');
   if(t==='ab')return `<div>${talentsHTML(s)}</div>${traitsHTML(s,true)}
    <div><p class="grp-t">전투</p><div class="grid2">${kv('체력',`${Math.round(s.hp)}/${hpMax(s)}`,s.hp/hpMax(s)*100)}${kv('내력',ngText(s.ng),Math.min(100,s.ng/3))}${kv('경공',Math.round(s.qing),s.qing)}${kv('받는 피해',`${Math.round(dmgMult(s)*100)}%`)}
      ${WEAPONS.filter(w=>s.sk[w]>0||w===s.mainW).map(w=>kv(`${w}${w===s.mainW?' (주)':''}`,Math.round(s.sk[w]),s.sk[w])).join('')}</div></div>
@@ -2274,23 +2682,23 @@ function endHTML(){const s=S;const org=ORIGINS.find(o=>o.id===s.origin);const pe
   ${hallHTML()}
   ${s.hist.length?`<section class="sec"><h3>강호사</h3><ol class="tl">${s.hist.map(h=>`<li><span class="a">${h.age}세</span><span>${esc(h.t)}</span></li>`).join('')}</ol></section>`:''}
   <details class="chron"><summary class="muted small">연대기 전체 보기</summary><ol style="margin-top:8px">${s.log.map(l=>`<li class="${l.k?'k':''}"><span class="a">${l.age}세</span><span>${esc(l.t)}</span></li>`).join('')}</ol></details>`;}
-const TAGL={key:'★ 천하대세',side:'외전',trait:'체질',arc:'집중',love:'인연',family:'가족'};
+const TAGL={key:'★ 천하대세',side:'외전',trait:'체질',arc:'집중',love:'인연',family:'가족',job:'생업'};
 function tagChips(e){if(!e)return '';const t=[];if(e.tag)t.push(`<span class="chip ${e.tag==='key'?'g':'t'}">${TAGL[e.tag]}</span>`);if(e.arc&&e.tag!=='arc')t.push('<span class="chip">집중</span>');return t.length?`<span class="tags">${t.join('')}</span>`:'';}
 function affText(s){const parts=[];
-  if(s.org){const o=ORGS[s.org];parts.push(`${o.n} ${o.ranks[s.rank]} <span class="muted">(${o.side}·${styleOf(s)}파)</span>`);}else parts.push(s.flags.expelled?'파문당한 낭인':s.age<13?esc(ORIGINS.find(o=>o.id===s.origin).n):'무소속 낭인');
+  if(s.org){const o=ORGS[s.org];parts.push(`${o.n} ${o.ranks[s.rank]} <span class="muted">(${SIDE_L[o.side]||o.side} · ${styleOf(s)}공)</span>`);if(s.job)parts.push(esc(jobTitle(s)));}else parts.push(s.job?esc(jobTitle(s)):s.flags.expelled?'파문당한 낭인':s.age<13?esc(ORIGINS.find(o=>o.id===s.origin).n):'무소속 낭인');
   if(s.flags.ally&&s.flags.ally!=='-')parts.push(`무림맹 ${s.flags.ally}`);
   if(s.groups)parts.push(`<span class="grp">${GROUPS[s.groups-1].n}</span>`);s.titles.filter(t=>t!=='-').forEach(t=>parts.push(`<span class="grp">${t}</span>`));
   if(s.enemies)parts.push(`<span style="color:var(--seal)">원한 ${s.enemies}</span>`);
   return parts.join(' · ');}
 function topHTML(){const s=S,hm=hpMax(s);
   return `<header class="top">${portrait('pc:'+s.lifeId,'주인공')}<div class="tinfo"><div class="tn">${esc(s.name)}${s.nick?` <span class="nick">${esc(s.nick.n)}</span>`:''}</div>
-   <div class="ts"><span>${s.age}세</span><span>${REALMS[s.realm].n}</span><span>전투력 <b>${num(pow(s))}</b></span><span>${esc(s.loc)}</span></div>
+   <div class="ts"><span>${s.age}세</span>${s.job?`<span>${esc(jobTitle(s))}</span><span>은자 <b>${num(s.gold)}</b></span>`:`<span>${REALMS[s.realm].n}</span><span>전투력 <b>${num(pow(s))}</b></span>`}<span>${esc(s.loc)}</span></div>
    <div class="bar hp" title="체력 ${Math.round(s.hp)}/${hm}"><i style="width:${s.hp/hm*100}%"></i></div></div><button class="ghost" data-a="nai">설정</button></header>`;}
 function navHTML(){const pend=S.phase==='event'||S.phase==='craft'||S.phase==='forge';
   return `<nav class="nav" aria-label="화면">${[['ev','사건'],['me','나'],['map','지도'],['world','강호'],['log','연대기']].map(([k,l])=>`<button class="${view===k?'on':''}" data-a="view" data-v="${k}" ${view===k?'aria-current="page"':''}>${l}${k==='ev'&&view!=='ev'&&pend?'<i class="dot" aria-label="고를 것이 있음"></i>':''}</button>`).join('')}</nav>`;}
 function meHTML(){const s=S,nx=REALMS[s.realm+1],cur=REALMS[s.realm];const prog=nx?clamp((s.exp-cur.req)/(nx.req-cur.req),0,1):1;const hm=hpMax(s);const bt=bestTier(s);
   return `<section class="plate"><div class="aff">${affText(s)}</div>
-  <div class="powrow"><div><b>전투력</b><div class="pv">${num(pow(s))}</div></div><div class="pk">${esc(s.mainW)} · ${bt?'★'.repeat(bt):'무공 없음'}${s.wpn?`<br>${esc(s.wpn.n)} (등급 ${s.wpn.q})`:''}</div></div>
+  ${s.job?`<div class="powrow"><div><b>${JOB_N[s.job]}</b><div class="pv">${esc(jobTitle(s))}</div></div><div class="pk">평판 ${num(s.biz.rep)}<br>전투력 ${num(pow(s))}</div></div>`:''}<div class="powrow" ${s.job?'style="display:none"':''}><div><b>전투력</b><div class="pv">${num(pow(s))}</div></div><div class="pk">${esc(s.mainW)} · ${bt?'★'.repeat(bt):'무공 없음'}${s.wpn?`<br>${esc(s.wpn.n)} (등급 ${s.wpn.q})`:''}</div></div>
   <div class="stats">
    <div class="st"><b>경지</b><span>${cur.n}</span><div class="bar"><i style="width:${prog*100}%"></i></div></div>
    <div class="st"><b>내공 · ${yyName(s.yy)}</b><span>${ngText(s.ng)}</span></div>
@@ -2299,7 +2707,7 @@ function meHTML(){const s=S,nx=REALMS[s.realm+1],cur=REALMS[s.realm];const prog=
    <div class="st"><b>도덕</b><span>${moralName(s.moral)} ${s.moral>0?'+':''}${s.moral}</span></div>
    <div class="st"><b>심상 · 은자</b><span>${moodName(s.mood)} · ${num(s.gold)}냥</span></div>
   </div>
-  <div class="tabs" role="tablist">${[['ab','능력'],['ps','인격·심상'],['ar','무공·병기']].map(([k,l])=>`<button class="ghost ${tab===k?'on':''}" data-a="tab" data-t="${k}" role="tab" aria-selected="${tab===k}">${l}</button>`).join('')}</div>
+  <div class="tabs" role="tablist">${[...(s.job?[['job','가업']]:[]),['ab','능력'],['ps','인격·심상'],['ar','무공·병기']].map(([k,l])=>`<button class="ghost ${tab===k?'on':''}" data-a="tab" data-t="${k}" role="tab" aria-selected="${tab===k}">${l}</button>`).join('')}</div>
   <div class="tabbody">${tabHTML(tab)}</div><p class="muted small">수명 약 ${lifespan(s)}세 · 출신 ${esc(s.region)}</p></section>`;}
 function eraLines(S){const w=S.w,L=[];
   L.push(w.pact==='renewed'?'백년맹약이 다시 맺어졌다. 정·사·마가 서로의 땅을 넘지 않는다.':w.pact==='broken'?'백년맹약이 깨졌다. 정·사·마가 서로를 겨눈다.':S.seen.pactRumor?'백년맹약의 끝이 다가온다.':'백년맹약이 아직 강호를 묶고 있다.');
