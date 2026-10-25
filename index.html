@@ -707,6 +707,9 @@ function nickCands(S){const r=S.realm,f=S.fame,W=WCH[S.mainW]||'검',A_=adjPool(
   if((r>=6&&f>=350)||r>=7){add('무황',6);add('패황',6);if(!evil)add(W+'황',6);if(S.org==='beggar'||S.org==='bandit')add('군황',6);if(evil)add('마황',6);}
   if(r>=6&&f>=250){add(W+'제',5);add('무제',5);}
   if(r>=6){add(evil?W+'마':W+'왕',4);if(S.org==='beggar'&&S.rank===4)add('걸왕',4);if(S.org==='bandit'&&S.rank===4)add('녹림왕',4);}
+  if(S.org==='bandit'){if(S.rank===4){add('녹림왕',4);if(r>=6&&f>=250)add('녹림대제',5);}if(S.rank===3)add('녹림채주',3);if((S.flags.hdYi||0)>=4)add('녹림의적',3);if((S.flags.hdYi||0)<=-4)add('녹림혈귀',3);}
+  if(S.org==='jangsu'){if(S.rank===4){add('수로맹주',4);if(r>=6&&f>=250)add('장강수왕',5);}if(S.rank===3)add('대수채주',3);if((S.flags.hdYi||0)>=4)add('장강의적',3);if((S.flags.hdYi||0)<=-4)add('장강수귀',3);}
+  if(S.org==='haomun'){if(S.rank===4)add('하오문주',4);if(S.rank>=2)add('천이',3);if(S.flags.hmThief)add('귀수',2);}
   if(S.sex==='f'&&r>=5&&f>=150){add(W+'후',4);add('무후',4);}
   if(S.med>=80)add(S.moral>=10?'의선':'귀의',4); if(S.rp>=80&&allKw(S).has('독'))add(evil?'독마':'독왕',4); if(S.forge>=80)add('신장',4);
   if(r>=4&&evil){add(S.region+pick(A_).slice(0,1)+'마',3);add(pick(A_)+pick(['광','흑','혈'])+'마',3);}
@@ -12215,6 +12218,278 @@ ${NN('paengmj')}: “나는 평생 화만 냈다. 그래서 이 도법을 반밖
  [{t:'조상의 도로 하늘에 벼락을 긋는다',h:'벽력신도',go:S=>{const r=learn(S,'paeng_3');A(S,{fame:30,temper:-5});sTitle(S,'벽력');deed(S,'팽가 조상의 도로 벽력신도를 펼쳤다');return `도가 하늘을 그었다. 소리가 나지 않았다. 한 박자 뒤 벼락이 쳤다. 화는 없었다. 다 태운 뒤의 고요만 있었다. 팽 무적이 그걸 보고 조용히 웃었다. 사호가 그 장면을 그렸다. ${r}`;}},
   {t:'도를 사호에게 넘긴다',go:S=>{TK(S,'paengsa',10);TK(S,'paengmj',5);return '사호가 놀라 도를 받아 들었다. 무릎까지 올라갔다. 놓지 않았다. 팽 무적이 아들을 오래 보다가 말했다. “…붓 쥐는 손으로도 도를 드는구나.” 그날 팽가 사당에 그림이 하나 더 걸렸다.';}}]);
 
+/* ══ 흑도의 낭만 ══════════════════════════════════
+   녹림맹·장강수로채·하오문. 칼과 범죄가 밥이지만, 의리와 술과 웃음이 있는 사람들.
+   의적인지 악당인지는 매번의 선택이 쌓여 정해진다(hdYi: 약한 자를 살리면 +, 짓밟으면 −). 의적이면 ‘의적’, 악당이면 ‘혈귀’ 계열 별호가 붙는다.
+   녹림 칠십이 채는 셋으로 나뉜다: 청룡채(관을 털어 백성에게), 흑풍채(사람까지 판다), 호두채(통행세만 받고 술을 마신다).
+   장강 십팔 채는 둘로 나뉜다: 철선방(칼로 뱃길을 쥔다), 은선방(밀수와 장사로 뱃길을 쥔다).
+   하오문은 마부·뱃사공·점소이·짐꾼·도둑·소매치기·기녀. 세상의 맨 밑바닥이 세상의 모든 길과 귀를 쥐고 있다. */
+const hdYi=(S,n)=>{S.flags.hdYi=(S.flags.hdYi||0)+n;if(n>0)A(S,{moral:n*2});else A(S,{moral:n*3,salgi:-n});};
+const hdWay=S=>(S.flags.hdYi||0)>=4?'의적':(S.flags.hdYi||0)<=-4?'악당':'';
+Object.assign(NPCS,{
+ hongok:{n:'염 홍옥',nick:'혈화낭자',org:'bandit',lv:S=>clamp(3+Math.floor((S.age-18)/6),3,6),q:1.1,hide:.1,hs:40,kw:['중','쾌'],sex:'f',title:'녹림 누님',d:'녹림총채의 이인자. 붉은 비단 위에 대감도를 메고 다닌다. 술을 물처럼 마시고, 그녀가 웃으면 산채 사내들이 고개를 숙인다. 모두가 누님이라 부른다.',love:'의리'},
+ arang:{n:'호 아랑',nick:'산고양이',org:'bandit',lv:S=>clamp(1+Math.floor((S.age-12)/5),1,5),q:1.0,hide:0,hs:0,kw:['쾌','경'],sex:'f',title:'호두채의 막내딸',d:'호두채 채주의 막내딸. 활로 날아가는 참새를 맞힌다. 산채 사내들의 귀염둥이이자 골칫거리. 산 아래 세상이 궁금해 죽겠다.',love:'경공'},
+ yeonhyang:{n:'수 연향',nick:'장강인어',org:'jangsu',lv:S=>clamp(3+Math.floor((S.age-18)/6),3,6),q:1.05,hide:.4,hs:70,kw:['유','환'],sex:'f',title:'은선방 두령',d:'장강수로채 은선방의 두령. 맨발로 뱃전을 걷고 노래 한 소절로 뱃사람을 홀린다. 웃는 얼굴로 밀수 장부를 쓴다.',love:'처세'},
+ maehyang:{n:'소 매향',nick:'홍루일화',org:'haomun',lv:S=>clamp(2+Math.floor((S.age-16)/6),2,5),q:1.0,hide:.6,hs:90,kw:['환','암'],sex:'f',title:'홍루의 꽃',d:'강남 홍루의 기녀이자 하오문의 당주. 술잔 하나로 관리의 입을 연다. 웃음 뒤에 비녀 모양의 비수를 감추고 다닌다.',love:'구력'}});
+LOVE_X.m.push('hongok','arang','yeonhyang','maehyang');
+/* ── 녹림맹 ── */
+const NR_CHAE={cheong:['청룡채','관을 털어 백성에게 나눈다'],heuk:['흑풍채','돈이 되면 사람도 판다'],hodu:['호두채','통행세만 받고 나머지는 술로 푼다']};
+E({id:'nrJoin',tag:'arc',t:'산채의 첫 술잔',a:[10,40],w:S=>S.org==='bandit'&&!S.seen.nrJoin?9:0,
+ x:S=>`산동 태산 깊은 골짜기, 녹림총채. 횃불 백 개 아래 사내 수백이 술독을 끼고 앉아 있었다. 고기 굽는 연기와 웃음소리, 칼 가는 소리가 한데 섞였다.
+상석의 거구가 일어섰다. 녹림왕 ${NN('nokrim')}. 주먹 하나로 칠십이 채를 묶은 사내.
+${NN('nokrim')}: “새 식구다! 잔 채워라!”
+사발 가득 독한 술이 넘어왔다. 옆에 붉은 비단을 걸친 여인이 앉았다. 등에 대감도를 멨는데, 다리를 꼬고 앉은 모양새가 칼보다 위험해 보였다.
+${NN('hongok')}: “막내구나. 마셔. 녹림에서는 술을 못 마시는 놈보다 술을 남기는 놈을 더 싫어해.”
+당신: “…누구세요?”
+${NN('hongok')}: “다들 누님이라 부르지. 너도 그렇게 불러.”
+누님이 당신 사발에 자기 술을 반 덜어 주었다. 그리고 눈을 반쯤 감고 웃었다.
+${NN('hongok')}: “녹림 칠십이 채는 셋으로 갈린다. 청룡채는 관을 턴다. 흑풍채는 돈이 되면 뭐든 한다. 호두채는… 통행세만 받고 술을 마시지. 어디로 갈래?”`,
+ ch:S=>Object.entries(NR_CHAE).map(([k,[n,d]])=>({t:`${n}로 간다`,h:d,go:S=>{S.flags.nrChae=k;S.met.hongok=1;S.met.nokrim=1;TK(S,'hongok',6);if(k==='cheong')hdYi(S,2);if(k==='heuk'){hdYi(S,-2);A(S,{gold:30});}if(k==='hodu'){A(S,{mood:10});S.met.arang=1;}
+   return {cheong:'청룡채의 채주는 말수가 적은 사내였다. 첫날 밤 그가 말했다. “우리는 산적이다. 의적이라 불리면 부끄러워해라. 다만 굶는 자의 밥은 털지 마라.”',heuk:'흑풍채의 채주는 웃으면서 사람 값을 매기는 사내였다. 첫날 밤 그가 은자 서른 냥을 던져 주었다. “녹림에서 의리는 공짜가 아니다. 이건 선금이다.”',hodu:`호두채는 산채라기보다 커다란 술집이었다. 채주의 막내딸이 지붕 위에서 활을 겨누고 있었다. ${NN('arang')}: “신입이다! 나보다 어리면 심부름, 나보다 늙으면 짐꾼!” 채주가 껄껄 웃었다. “우리 딸이다. 산고양이라고들 부르지.”`}[k];}}))});
+const NR_TRAV=[['비단 상인',  '말 세 필에 비단을 가득 실었다. 배가 나왔다.',60,'rich'],['과거 보러 가는 선비','짚신이 다 해졌다. 보따리에는 책뿐이다.',2,'poor'],['피난 가는 가족','아이 둘을 업은 아낙과 다리를 저는 사내.',0,'poor'],['세금 걷어 가는 관리','호위 넷을 거느렸다. 가마 안에서 은자 소리가 난다.',120,'official'],['탁발승','바리때 하나와 염주. 눈빛이 맑다.',0,'monk']];
+E({id:'nrToll',t:'고갯길의 통행세',title:S=>S.tmp.tv?`통행세 · ${S.tmp.tv[0]}`:'고갯길의 통행세',a:[13,80],w:S=>S.org==='bandit'?5:0,cd:1,
+ prep:S=>{S.tmp.tv=pick(NR_TRAV);},
+ x:S=>{const [who,look]=S.tmp.tv;return `산채 앞 고갯길. 녹림의 고갯길은 공짜로 넘을 수 없다. 오늘의 길손은 ${who}. ${look}
+졸개: “형님, 통행세 얼마 받을까요?”
+${S.flags.nrChae==='heuk'?'흑풍채의 법은 간단하다. 가진 것의 반, 못 내면 몸으로.':S.flags.nrChae==='cheong'?'청룡채의 법은 하나다. 가진 자에게서 받고, 없는 자는 보낸다.':'호두채의 법은 술값만큼. 그날 기분에 따라 다르다.'}
+${who}: “나, 나리… 살려만 주십시오.”`;},
+ ch:S=>{const [who,,amt,kind]=S.tmp.tv;return [{t:'정해진 통행세만 받는다',h:'은자',go:S=>{A(S,{gold:amt,contrib:5});return amt?`${who}${bat(who)?'이':'가'} 떨리는 손으로 은자를 내밀었다. 받고 길을 비켜 주었다. 녹림의 길은 공짜가 아니지만, 값을 치르면 안전하다. 그게 녹림의 신용이다.`:`${who}에게는 낼 것이 없었다. 졸개가 투덜댔다. “형님, 이러면 산채가 굶습니다.”`;}},
+  {t:'가진 것을 몽땅 턴다',h:'은자↑↑ · 악명',go:S=>{hdYi(S,kind==='official'?1:-2);A(S,{gold:amt*2+20,contrib:10,fame:2});return kind==='official'?'관리의 가마에서 은자 상자 셋이 나왔다. 고을에서 걷은 세금이었다. 관리가 길바닥에 엎드려 울었다. 산채의 사내들이 웃었다. 그 웃음은 시원했다.':`${who}의 보따리를 탈탈 털었다. ${kind==='poor'?'아이가 울었다. 졸개 하나가 고개를 돌렸다.':'길손은 맨몸으로 고개를 넘어갔다.'}`;}},
+  {t:'오히려 노잣돈을 쥐여 보낸다',h:'의적',if:()=>kind==='poor'||kind==='monk',go:S=>{hdYi(S,2);A(S,{gold:-Math.min(S.gold,10),fame:3,mood:6});return kind==='monk'?'탁발승의 바리때에 은자 한 냥을 넣었다. 승려가 합장했다. “산적에게 시주를 받기는 처음이오.” “산적이 시주하는 것도 처음이오.”':`${who}에게 은자 몇 냥과 육포를 쥐여 주었다. 아이가 당신 손가락을 잡고 놓지 않았다. 졸개들이 웃었다. “형님, 이러다 산채 망합니다.” “망하면 다시 털면 되지.”`;}},
+  {t:'관리를 묶어 고을로 돌려보낸다',h:'의적·관과 원수',if:()=>kind==='official',go:S=>{hdYi(S,3);A(S,{fame:10,enemies:1});return '관리를 가마째 묶어 고을 장터에 세워 두었다. 은자 상자는 열어서 장터 바닥에 쏟았다. 고을 사람들이 은자를 줍고, 관리에게 침을 뱉었다. 그해 겨울 관군이 산을 올라왔다. 그래도 고을에는 아무도 산채를 밀고하지 않았다.';}}];}});
+E({id:'nrConvoy',t:'표국을 치는 밤',a:[16,70],w:S=>S.org==='bandit'?3:0,cd:2,
+ prep:S=>{S.tmp.foe=mkFoe({n:'표국 표사들',realm:clamp(S.realm,2,6),q:1,group:1});S.tmp.rich=chance(.5);},
+ x:S=>`누님이 지도를 펼쳤다. 등잔불에 붉은 손톱이 빛났다.
+${NN('hongok')}: “내일 밤, 이 골짜기로 표국 수레 열 대가 지나간다. ${S.tmp.rich?'남궁세가로 가는 혼수다. 금이 수레 셋.':'관아로 가는 군량미다. 굶는 고을이 셋인데 저건 군대 밥이지.'}”
+${NN('nokrim')}: “표사가 서른이다. 피 좀 보겠군.”
+${NN('hongok')}: “그래서 막내를 데려가려고.” 누님이 당신 볼을 손가락으로 툭 쳤다. “무서워?”
+당신: “…아니요.”
+${NN('hongok')}: “거짓말. 무서워야 살아. 무섭지 않은 놈이 제일 먼저 죽어.”`,
+ ch:S=>[{t:'앞장서서 친다',h:'싸움',go:S=>{const b=battle(S,S.tmp.foe);if(b.win){A(S,{gold:S.tmp.rich?150:40,contrib:25,fame:6});TK(S,'hongok',6);if(!S.tmp.rich)hdYi(S,2);return fightText(b,S.tmp.rich?'금 수레 셋이 산채로 올라왔다. 누님이 금괴 하나를 당신 품에 던졌다. “첫 몫. 여자한테 쓰든 술에 쓰든 네 맘이야. 나한테 쓰면 더 좋고.”':'군량미 수레를 굶는 고을 세 곳으로 나눠 보냈다. 누님이 담뱃대를 물고 웃었다. “녹림이 관보다 밥을 잘 나눠 주네. 세상 참.”','');}hurt(S,25,'표국');return fightText(b,'','표두의 칼이 매서웠다. 수레는 지나갔다. 누님이 당신 상처를 싸매 주며 혀를 찼다. “다음엔 무서워하라고 했잖아.”');}},
+  {t:'표사들은 죽이지 말자고 한다',h:'의적',go:S=>{hdYi(S,2);const b=battle(S,S.tmp.foe,{spar:1});A(S,{gold:b.win?60:0,contrib:b.win?15:0});TK(S,'hongok',4);return fightText(b,'표사들을 묶어 길가에 앉혀 두었다. 표두가 묶인 채로 말했다. “산적이 사람을 살려 두다니.” 누님이 웃었다. “살려 둬야 다음에 또 털지.” 그 표국은 그 뒤로 녹림 고갯길에서 통행세를 군말 없이 냈다.','표사들이 강했다. 죽이지 않으려다 오히려 밀렸다. 누님이 당신을 끌고 빠져나왔다.');}},
+  {t:'표사를 모조리 베어 본보기로 삼는다',h:'악당',go:S=>{hdYi(S,-3);const b=battle(S,S.tmp.foe);if(b.win){A(S,{gold:S.tmp.rich?200:60,contrib:20,salgi:8,enemies:1});return fightText(b,'골짜기에 시체 서른이 남았다. 이튿날부터 그 길로는 표국 깃발이 오지 않았다. 대신 통행세가 두 배로 올라왔다. 누님은 그날 당신에게 술을 따르지 않았다.','');}hurt(S,30,'표국');return fightText(b,'','칼을 휘두르다 포위당했다.');}}]});
+E({id:'nrGranary',tag:'side',t:'관곡을 털다',a:[18,70],w:S=>S.org==='bandit'&&S.flags.nrChae!=='heuk'&&!S.seen.nrGranary?3:0,
+ prep:S=>{S.tmp.foe=mkFoe({n:'관창의 수비대',realm:clamp(S.realm,2,6),q:1.05,group:1});},
+ x:S=>`흉년이었다. 산 아래 고을 셋에서 사람이 굶어 죽기 시작했다. 그런데 현청 관창에는 쌀이 썩어 가고 있었다. 현령이 값이 오르기를 기다린다고 했다.
+${NN('nokrim')}: “녹림은 산적이다. 관창을 털면 관군이 온다. 산채가 불탈 수도 있다.”
+${NN('hongok')}: “산채가 타는 게 무서우면 산적을 왜 해, 형님.”
+녹림왕이 오래 술잔을 돌렸다. 그리고 당신을 보았다.
+${NN('nokrim')}: “막내. 네가 정해라. 네 목도 같이 걸린다.”`,
+ ch:[{t:'관창을 턴다',h:'의적·관군이 온다',go:S=>{const b=battle(S,S.tmp.foe);if(b.win){hdYi(S,4);A(S,{fame:20,enemies:1});deed(S,'관창을 털어 굶는 고을에 쌀을 나눴다');S.flags.nrGranary=1;return fightText(b,'밤새 쌀 천 섬을 날랐다. 새벽에 고을 셋의 우물가에 쌀가마가 쌓여 있었다. 아무도 누가 했는지 묻지 않았다. 다들 알았다. 그해 겨울 관군 삼천이 산을 포위했다. 고을 사람들이 산으로 몰래 밥을 날라 왔다.','');}hurt(S,25,'관창');return fightText(b,'','관창 수비대가 기다리고 있었다. 누군가 밀고했다. 녹림 안에서.');}},
+  {t:'털지 않는다',go:S=>{A(S,{mood:-10});return '털지 않았다. 그 겨울 고을 셋에서 백 명이 죽었다. 산채는 무사했다. 누님은 그 겨울 내내 술을 마시지 않았다.';}}]});
+E({id:'nrHeuk',t:'흑풍채의 마을',a:[18,70],w:S=>S.org==='bandit'&&!S.seen.nrHeuk?2.5:0,
+ prep:S=>{S.tmp.foe=mkFoe({n:'흑풍채 부채주',nick:'인두귀',realm:clamp(S.realm,2,6),q:1.08,kw:['중']});},
+ x:S=>`산 아래 마을에 불길이 올랐다. 흑풍채였다. 통행세를 못 냈다고 마을을 통째로 태우고 처녀 셋을 끌고 가는 중이었다.
+흑풍채 부채주: “어, 같은 녹림 형제 아니신가. 구경 오셨소? 하나 나눠 드릴까?”
+끌려가는 처녀 하나가 당신을 보았다. 울지도 않았다. 이미 다 울었다는 눈이었다.
+${S.flags.nrChae==='heuk'?'당신도 흑풍채 사람이었다. 부채주가 당신 어깨를 툭 쳤다. “우리 채 몫이야. 너도 한 명 골라.”':'녹림의 법에는 같은 녹림 형제의 일에 끼어들지 말라는 조항이 있다.'}`,
+ ch:[{t:'부채주를 벤다',h:'의적·녹림의 법을 어긴다',go:S=>{const b=battle(S,S.tmp.foe);if(b.win){hdYi(S,4);A(S,{fame:12,contrib:-10});deed(S,'흑풍채 부채주를 베고 끌려가던 사람들을 풀어 주었다');return fightText(b,'인두귀가 쓰러졌다. 처녀들의 밧줄을 끊었다. 녹림총채에서 회의가 열렸다. 녹림왕이 당신을 노려보다가 술잔을 내밀었다. “법을 어겼다. 벌은 술 열 사발이다.” 누님이 뒤에서 웃었다.','');}hurt(S,30,'흑풍채');return fightText(b,'','인두귀의 칼이 깊었다. 처녀들은 끌려갔다.');}},
+  {t:'처녀들을 값을 치르고 산다',h:'은자 100',go:S=>{if(S.gold<100){A(S,{mood:-10});return '주머니에 그만한 돈이 없었다. 처녀들은 끌려갔다.';}hdYi(S,2);A(S,{gold:-100});return '은자 백 냥을 던졌다. 부채주가 혀를 찼다. “장사할 줄 아는구먼.” 처녀들을 고향으로 돌려보냈다. 산채에서는 당신을 바보라 했다. 누님만 아무 말도 하지 않고 당신 잔을 채웠다.';}},
+  {t:'한 명을 고른다',h:'악당',go:S=>{hdYi(S,-5);A(S,{salgi:6,mood:-6});return '골랐다. 그 처녀의 눈을 다시는 보지 않았다. 흑풍채 사내들이 당신을 형님이라 부르기 시작했다. 누님은 그날부터 당신을 막내라 부르지 않았다. 이름도 부르지 않았다.';}}]});
+E({id:'nrSiege',tag:'key',t:'관군 삼천',a:[20,80],w:S=>S.org==='bandit'&&S.rank>=1&&!S.seen.nrSiege?2.5:0,
+ prep:S=>{S.tmp.foe=mkFoe({n:'토벌군 선봉',realm:clamp(S.realm,3,6),q:1.05,group:1});},
+ x:S=>`관군 삼천이 태산을 에워쌌다. 깃발에 ‘토비(討匪)’ 두 글자가 펄럭였다. 녹림총채의 모든 채주가 모였다.
+${NN('nokrim')}: “싸우면 반은 죽는다. 흩어지면 칠십이 채가 다시 모이는 데 십 년이 걸린다.”
+${NN('hongok')}: “나는 싸운다. 십 년을 기다릴 바엔 오늘 죽는 게 낫지.”
+${(S.flags.hdYi||0)>=4?'산 아래에서 횃불이 올라왔다. 관군이 아니었다. 고을 사람들이었다. 쌀가마를 지고 있었다. “산채가 굶으면 안 된다고들 해서요.”':'산 아래는 조용했다. 고을 사람들은 관군에게 길을 안내하고 있었다.'}`,
+ ch:S=>[{t:'선봉을 꺾고 관군을 흔든다',h:'목숨을 건 싸움',go:S=>{const b=battle(S,S.tmp.foe,{ally:(S.flags.hdYi||0)>=4?1.3:1});if(b.win){A(S,{fame:30,contrib:40});deed(S,'관군 삼천의 토벌을 막아 냈다');hist(S,'녹림 토벌군이 태산에서 물러났다.');return fightText(b,'선봉장의 깃발이 꺾였다. 관군은 사흘 뒤 물러갔다. 그날 밤 녹림총채의 잔치는 이레 동안 이어졌다. 누님이 술에 취해 당신 무릎을 베고 잠들었다. “…무섭다고 했잖아. 그래서 살았네.”','');}hurt(S,35,'토벌군');A(S,{contrib:10});return fightText(b,'','밀렸다. 산채 셋이 불탔다. 녹림왕이 퇴각 명령을 내렸다. 흩어지면서 누님이 소리쳤다. “살아만 있어! 다시 모이면 돼!”');}},
+  {t:'관군 장수와 담판을 짓는다',h:'구력·명성',go:S=>{if(S.tongue+S.fame/4+(S.flags.hdYi||0)*5+R(0,40)>=70){A(S,{fame:20,contrib:30});hdYi(S,1);return '혼자 내려가 관군 장수와 마주 앉았다. “우리를 치면 피 삼천이 흐르오. 우리를 두면 이 고갯길에서 상인이 털리지 않소. 통행세는 관청 세금보다 싸고.” 장수가 오래 웃었다. 관군은 물러갔다. 녹림은 그해부터 고갯길의 치안을 맡았다. 이상한 일이었다.';}hurt(S,20,'담판');return '장수가 칼을 뽑았다. 겨우 달아났다.';}}]});
+E({id:'nrBetray',t:'형제의 밀고',a:[20,80],w:S=>S.org==='bandit'&&!S.seen.nrBetray?2:0,
+ prep:S=>{S.tmp.foe=mkFoe({n:'의형제 독안룡',realm:clamp(S.realm,2,6),q:1.05});},
+ x:S=>`관군이 산채의 비밀 통로를 알고 있었다. 누군가 밀고했다. 누님이 사흘 동안 뒤를 캤다. 이름 하나가 나왔다. 당신과 의형제를 맺은 독안룡이었다. 함께 피를 섞은 술을 마신 사이.
+${NN('hongok')}: “관아에 잡혀간 그놈 노모를 풀어 준다는 조건이었대.”
+독안룡이 당신 앞에 꿇어앉았다. 외눈이 붉었다.
+독안룡: “죽여라. 녹림의 법대로. 대신… 우리 어머니는.”
+${NN('hongok')}: “녹림의 법은 하나다. 배신자는 사지를 찢어 산채 문에 건다.”`,
+ ch:[{t:'녹림의 법대로 벤다',h:'악당·공헌',go:S=>{hdYi(S,-2);A(S,{contrib:25,salgi:8,mood:-15});return '한 칼에 끝냈다. 사지를 찢지는 않았다. 그 정도의 의리는 남겨 두었다. 그날 밤 누님이 처음으로 당신 앞에서 울었다. “…녹림은 이래서 싫어.”';}},
+  {t:'노모를 구해 오고 형제는 산채에서 내쫓는다',h:'의적·녹림의 법을 어긴다',go:S=>{const b=battle(S,mkFoe({n:'관아의 옥졸들',realm:clamp(S.realm,2,5),q:1,group:1}));if(b.win){hdYi(S,3);A(S,{fame:8,contrib:-10});deed(S,'배신한 의형제의 노모를 관아에서 구해 냈다');return fightText(b,'관아 옥을 부수고 노모를 업고 나왔다. 독안룡이 노모를 받아 안고 땅에 이마를 찧었다. 그는 산채를 떠났다. 몇 해 뒤, 관군의 토벌 계획이 적힌 쪽지가 산채 앞에 놓여 있었다. 외눈 그림이 그려져 있었다.','');}hurt(S,20,'관아');return fightText(b,'','관아가 생각보다 단단했다. 노모를 구하지 못했다.');}},
+  {t:'술 한 사발을 따라 주고 보낸다',h:'의리',go:S=>{hdYi(S,1);A(S,{mood:-5,contrib:-5});return '말없이 술 한 사발을 따라 주었다. 독안룡이 마셨다. 그리고 산을 내려갔다. 다시는 보지 못했다. 누님이 말했다. “녹림의 법보다 독한 게 있네. 그 술 한 사발.”';}}]});
+E({id:'nrFeast',t:'산채의 잔치',a:[14,90],w:S=>S.org==='bandit'?2:0,cd:3,
+ x:S=>`산채의 잔치는 명분이 필요 없다. 누가 이겼거나, 누가 졌거나, 누가 태어났거나, 비가 그쳤거나.
+돼지 세 마리가 통째로 돌아갔다. 사내들이 웃통을 벗고 씨름을 했다. ${NN('arang')}${bat(NN('arang'))?'이':'가'} 지붕 위에서 활로 술병 마개를 하나씩 맞혀 떨어뜨렸다. 마개가 날 때마다 환호가 터졌다.
+${NN('hongok')}${bat(NN('hongok'))?'이':'가'} 술독 위에 걸터앉아 당신을 손짓했다. 붉은 비단 자락이 횃불에 일렁였다.
+${NN('hongok')}: “막내, 이리 와. 누님 술 좀 따라 봐.”
+${NN('arang')}: “누님! 걔는 내 심부름꾼이에요!”
+${NN('hongok')}: “산고양이는 활이나 쏴.”`,
+ ch:[{t:'누님의 잔을 채운다',h:'누님의 호감',go:S=>{S.met.hongok=1;TK(S,'hongok',8);A(S,{mood:12});return '누님이 잔을 비우고 당신 턱을 손가락으로 들어 올렸다. “막내가 많이 컸네.” 웃음소리가 산채를 울렸다. 당신 얼굴이 횃불보다 빨갰다. 누님은 그걸 보고 더 크게 웃었다.';}},
+  {t:'아랑과 활 내기를 한다',h:'아랑의 호감',go:S=>{S.met.arang=1;TK(S,'arang',8);A(S,{mood:10});return chance(.4)?'당신 화살이 아랑의 화살을 반으로 갈랐다. 산채가 뒤집어졌다. 아랑이 얼굴이 빨개져 소리쳤다. “우, 운이야! 내일 다시 해!”':'아랑의 화살이 당신 상투를 꿰고 지나갔다. 산채가 웃음바다가 되었다. 아랑이 지붕에서 내려와 당신 상투를 다시 묶어 주었다. “…미안. 조금 빗나갔어.”';}},
+  {t:'씨름판에 뛰어든다',h:'근골·명성',go:S=>{A(S,{hp:-5,fame:3,mood:10});if(chance(.4))T(S,'bone',1);return '열한 명을 넘기고 열두 번째에 넘어갔다. 녹림왕이었다. 녹림왕이 당신을 일으켜 세우며 웃었다. “좋아! 내년엔 나랑 붙자!”';}}]});
+E({id:'nrSis',tag:'love',t:'누님의 흉터',a:[18,60],w:S=>S.org==='bandit'&&S.met.hongok&&(S.rel.hongok||0)>=30&&!S.seen.nrSis?4:0,
+ x:S=>`달 밝은 밤, 누님이 산채 망루에 혼자 앉아 있었다. 술병 대신 낡은 비녀 하나를 쥐고 있었다.
+${NN('hongok')}: “왔어? 앉아.”
+누님이 옷깃을 조금 내렸다. 쇄골 아래 오래된 낙인이 있었다. 관노(官奴)의 표식이었다.
+${NN('hongok')}: “열네 살에 팔려 갔어. 현령 집 종으로. 그 집 아들이 밤마다 문을 두드렸지.”
+당신: “…”
+${NN('hongok')}: “열여섯에 그놈 머리를 이 비녀로 찔렀어. 그리고 산으로 도망쳤지. 녹림왕 형님이 날 주웠어. 그날부터 나는 녹림이야.”
+누님이 비녀를 달빛에 비췄다. 녹이 슬어 있었다.
+${NN('hongok')}: “다들 나더러 요염하다느니 위험하다느니 하지. 맞아. 위험해야 살아남아. 그런데 너는… 내가 위험해 보여?”`,
+ ch:[{t:'“아니요. 외로워 보여요”',h:'호감',go:S=>{TK(S,'hongok',15);npcMem(S,'hongok','망루에서 흉터를 보여 주었다');return `누님이 한참 말이 없었다. 그러다 웃었다. 처음 보는 웃음이었다. 요염하지도 위험하지도 않은.\n${NN('hongok')}: “…건방진 막내. 누님한테 그런 말 하면 큰일 나.”\n누님이 당신 어깨에 머리를 기댔다. 달이 질 때까지 그대로 있었다.`;}},
+  {t:'“네, 조금”이라고 웃는다',h:'호감',go:S=>{TK(S,'hongok',8);return `${NN('hongok')}: “그치? 그게 정답이야.”\n누님이 웃으며 비녀를 머리에 꽂았다. “위험한 누님 곁에 오래 있으면 너도 위험해져. 각오해.”`;}}]});
+E({id:'nrKing',tag:'key',t:'녹림대회',a:[28,90],w:S=>S.org==='bandit'&&S.rank>=3&&!S.seen.nrKing?4:0,
+ prep:S=>{const old=!S.dead_npc.nokrim;S.tmp.foe=old?npcFoe(S,'nokrim',{}):mkFoe({n:'흑풍채 채주',realm:clamp(S.realm,4,6),q:1.1});},
+ x:S=>`녹림 칠십이 채의 채주가 태산에 모였다. ${S.dead_npc.nokrim?'녹림왕이 죽은 뒤 삼 년, 총채주 자리가 비어 있었다.':'녹림왕 철패산이 늙었다. 그가 직접 대회를 열었다.'} 녹림의 왕은 물려받는 것이 아니다. 주먹으로, 술로, 그리고 의리로 빼앗는 것이다.
+${S.dead_npc.nokrim?'':`${NN('nokrim')}: “막내야. 아니, 이제 막내가 아니지. 나와 붙자. 이기면 녹림이 네 거다.”`}
+${NN('hongok')}${bat(NN('hongok'))?'이':'가'} 당신 등을 손바닥으로 쳤다.
+${NN('hongok')}: “지면 내가 업어서 내려가 줄게. 이기면… 그건 그때 말해 줄게.”`,
+ ch:[{t:'주먹으로 녹림을 잡는다',h:'목숨을 건 비무',go:S=>{const b=battle(S,S.tmp.foe,{spar:1});if(b.win){S.rank=4;A(S,{fame:60,contrib:100});const t=S.realm>=6&&S.fame>=250?'녹림대제':'녹림왕';sTitle(S,t);deed(S,`녹림 칠십이 채의 ${t}이 되었다`);hist(S,`녹림에 새 왕이 섰다.`);TK(S,'hongok',10);return fightText(b,`칠십이 채주가 동시에 무릎을 꿇었다. 태산이 함성으로 울렸다. ${S.dead_npc.nokrim?'':'철패산이 바닥에 누운 채 껄껄 웃었다. “좋다! 이제 술만 마시면 되겠군!”'} 누님이 당신 귀에 속삭였다. “그때 말해 준다던 거… 오늘 밤에 망루로 와.”`,'');}hurt(S,30,'녹림대회');return fightText(b,'','졌다. 누님이 정말로 당신을 업고 산을 내려왔다. “다음엔 이겨. 업기 무거워.”');}},
+  {t:'술로 겨룬다',h:'근골·체력',go:S=>{if(chance(.3+S.t.bone*.04+S.hp/500)){S.rank=4;A(S,{fame:40,contrib:80,hp:-20});sTitle(S,'녹림왕');deed(S,'술 대결로 녹림왕이 되었다');return '술독 아홉 개가 비었다. 열 번째 독 앞에서 상대가 쓰러졌다. 당신은 열한 번째 독을 들어 올리고 쓰러졌다. 녹림 사내들이 그걸 보고 한목소리로 외쳤다. “녹림왕!”';}A(S,{hp:-15});return '일곱 독째에 쓰러졌다. 깨어 보니 사흘 뒤였다.';}}]});
+/* ── 장강수로채 ── */
+E({id:'srJoin',tag:'arc',t:'물 위의 첫날',a:[10,40],w:S=>S.org==='jangsu'&&!S.seen.srJoin?9:0,
+ x:S=>`장강 삼협. 절벽 사이로 강물이 용처럼 뒤틀린다. 그 물 위에 배 수백 척이 떠 있다. 장강수로채 십팔 채.
+대채주 ${NN('galch')}${bat(NN('galch'))?'이':'가'} 뱃머리에 서서 당신을 내려다보았다.
+${NN('galch')}: “물에 빠져라.”
+당신: “…예?”
+${NN('galch')}: “빠져서 저 배까지 헤엄쳐 가라. 못 가면 물귀신이고, 가면 수로채 사람이다.”
+당신은 물에 뛰어들었다. 차가웠다. 물살이 몸을 끌어당겼다. 반쯤 갔을 때 노래 소리가 들렸다. 맨발의 여인이 저쪽 배의 뱃전에 앉아 발을 물에 담그고 노래하고 있었다.
+${NN('yeonhyang')}: “힘내, 꼬마. 여기까지 오면 술 한잔 줄게.”
+간신히 뱃전을 붙잡자 여인이 손을 내밀었다. 젖은 손을 잡아 끌어 올려 주며 웃었다.
+${NN('yeonhyang')}: “수로채는 둘로 갈라. 철선방은 칼로 뱃길을 쥐고, 은선방은 장부로 뱃길을 쥐지. 나는 은선방이야. 너는?”`,
+ ch:[{t:'철선방으로 간다',h:'칼로 뱃길을 쥔다',go:S=>{S.flags.srBang='cheol';S.met.galch=1;S.met.yeonhyang=1;A(S,{temper:3,mu:3});return '철선방의 배는 쇠를 덧댄 전선이었다. 갈 천호가 당신 등을 쳤다. “물 위에서 칼 쓰는 법부터 배워라. 땅에서 쓰는 칼은 물 위에선 장난감이다.”';}},
+  {t:'은선방으로 간다',h:'밀수와 장사로 뱃길을 쥔다',go:S=>{S.flags.srBang='eun';S.met.galch=1;S.met.yeonhyang=1;TK(S,'yeonhyang',8);A(S,{savvy:4,gold:20});return `연향이 당신 손에 주판을 쥐여 주었다. “칼보다 이게 무서워. 이걸로 관청 세금 장부를 맞출 줄 알면 장강 전체가 네 거야.” 그리고 술잔을 내밀었다. “약속한 거.”`;}}]});
+const SR_SHIP=[['소금 실은 관선','관에서 독점하는 소금이다. 갑판에 관병 여섯.',100,'official'],['비단 상선','강남 거상의 배. 선주가 뱃전에서 부채질을 한다.',80,'rich'],['고기잡이 쪽배','늙은 어부와 손자. 그물은 비어 있다.',0,'poor'],['피난민을 태운 나룻배','배가 가라앉을 듯 사람이 가득하다.',0,'poor']];
+E({id:'srToll',t:'뱃길의 통행세',title:S=>S.tmp.sh?`뱃길의 통행세 · ${S.tmp.sh[0]}`:'뱃길의 통행세',a:[13,80],w:S=>S.org==='jangsu'?5:0,cd:1,
+ prep:S=>{S.tmp.sh=pick(SR_SHIP);},
+ x:S=>{const [who,look]=S.tmp.sh;return `삼협의 좁은 물목. 쇠사슬을 강을 가로질러 걸어 두었다. 이 사슬을 내려야 배가 지나간다. 오늘의 배는 ${who}. ${look}
+수졸: “형님, 사슬 올립니까?”
+${S.flags.srBang==='cheol'?'철선방의 법: 배 값의 열에 하나. 거부하면 배째로 가라앉힌다.':'은선방의 법: 배 값의 열에 하나, 대신 영수증을 써 준다. 다음 물목에서는 안 받는다. 장사는 신용이니까.'}`;},
+ ch:S=>{const [who,,amt,kind]=S.tmp.sh;return [{t:'정해진 통행세만 받는다',go:S=>{A(S,{gold:amt,contrib:5});return amt?'사슬이 내려갔다. 배가 지나갔다. 선주가 영수증을 소중히 품에 넣었다. 장강에서는 수로채 영수증이 관청 통행증보다 잘 통한다.':`${who}에게는 낼 것이 없었다. 사슬을 그냥 내렸다.`;}},
+  {t:'배를 통째로 턴다',h:'악당·은자↑↑',go:S=>{hdYi(S,kind==='official'?1:-3);A(S,{gold:amt*2+30,contrib:10});return kind==='official'?'관선의 소금을 다 퍼냈다. 그 소금은 이튿날 강변 마을에 관청 값의 반에 풀렸다. 관청은 노했고 백성은 웃었다.':`${who}${bat(who)?'을':'를'} 털었다. ${kind==='poor'?'어부의 손자가 울면서 빈 그물을 끌어안았다.':'선주가 강물에 뛰어들었다.'}`;}},
+  {t:'오히려 물고기를 나눠 준다',h:'의적',if:()=>kind==='poor',go:S=>{hdYi(S,2);A(S,{mood:8,fame:2});return '수로채 배에서 잡은 물고기 한 바구니를 쪽배에 실어 주었다. 늙은 어부가 뱃전에서 절을 했다. 그해부터 그 마을 사람들은 수로채 배가 지나가면 손을 흔들었다.';}}];}});
+E({id:'srSalt',tag:'side',t:'소금 배',a:[16,70],w:S=>S.org==='jangsu'&&!S.seen.srSalt?3:0,
+ x:S=>`관에서 소금을 독점했다. 소금 한 말이 쌀 열 말 값이 되었다. 강변 마을 사람들이 소금이 없어 김치를 못 담그고 고기를 못 절였다.
+${NN('yeonhyang')}${bat(NN('yeonhyang'))?'이':'가'} 장부를 펼쳤다. 맨발을 탁자 위에 올려놓고.
+${NN('yeonhyang')}: “해염 삼천 말이 동해에서 올라오고 있어. 관선 몰래. 이걸 받아서 어떻게 풀지 정해. 관 값의 반에 풀면 우리는 조금 남고 백성은 숨 쉬어. 관 값 그대로 받으면 우리는 부자가 되고.”
+연향이 붉은 입술로 웃었다.
+${NN('yeonhyang')}: “나는 어느 쪽이든 좋아. 네가 정하는 걸 보고 싶어서 물어보는 거야.”`,
+ ch:[{t:'관 값의 반에 푼다',h:'의적',go:S=>{hdYi(S,3);A(S,{gold:60,fame:10});TK(S,'yeonhyang',6);return '소금이 강변 마을마다 풀렸다. 김치 냄새가 돌아왔다. 관청에서는 밀수꾼을 잡겠다고 방을 붙였다. 그 방 아래서 아낙들이 소금을 샀다. 연향이 장부에 적었다. ‘이익: 조금. 기분: 많이.’';}},
+  {t:'관 값 그대로 받는다',h:'은자↑↑',go:S=>{hdYi(S,-1);A(S,{gold:300,contrib:20});return '은자 삼백 냥이 들어왔다. 연향이 주판을 튕기며 웃었다. “장사꾼 소질 있네.” 그런데 웃음이 조금 짧았다.';}},
+  {t:'공짜로 뿌린다',h:'의적·장부가 운다',go:S=>{hdYi(S,4);A(S,{fame:15,contrib:-20});TK(S,'yeonhyang',3);return '소금 삼천 말을 강변에 공짜로 뿌렸다. 마을마다 잔치가 열렸다. 연향이 장부를 덮고 한숨을 쉬었다. “…밑지는 장사는 처음이야. 그런데 이상하게 기분은 좋네.”';}}]});
+E({id:'srStorm',t:'장강의 폭풍',a:[14,80],w:S=>S.org==='jangsu'?2:0,cd:4,
+ x:S=>`삼협에 폭풍이 몰아쳤다. 물살이 산처럼 일어섰다. 관선 한 척이 뒤집혔다. 물속에서 관병들이 허우적댔다. 우리 수로채를 토벌하러 온 배였다.
+수졸: “형님! 놔두면 다 죽습니다. 잘된 일 아닙니까?”
+뱃머리에서 갈 천호가 비에 젖은 채 웃었다.
+${NN('galch')}: “장강의 법이 하나 있다. 물에 빠진 놈은 원수라도 건진다. 물이 사람을 데려가는 건 우리가 정하는 게 아니니까.”`,
+ ch:[{t:'뛰어들어 건진다',h:'근골·명성',go:S=>{hurt(S,15,'폭풍');A(S,{fame:10,moral:6});hdYi(S,2);return '관병 열둘을 건졌다. 마지막으로 건진 것은 토벌군 장수였다. 장수가 젖은 채 갑판에 앉아 오래 말이 없었다. 그해 토벌은 흐지부지되었다. 장강의 법이 관의 법보다 길었다.';}},
+  {t:'건지되 무기는 강에 버린다',h:'처세',go:S=>{A(S,{fame:6,savvy:3});hdYi(S,1);return '건져 낸 관병들의 칼을 하나씩 강에 던졌다. “목숨은 장강이 준 것이고, 칼은 장강이 가져간 것이오.” 관병들은 맨손으로 돌아갔다.';}},
+  {t:'모른 척한다',h:'악당',go:S=>{hdYi(S,-2);A(S,{mood:-8});return '폭풍이 지나가고 강물이 잠잠해졌다. 아무것도 떠오르지 않았다. 갈 천호가 당신을 오래 보았다. 아무 말도 하지 않았다.';}}]});
+E({id:'srWar',t:'상류와 하류',a:[20,70],w:S=>S.org==='jangsu'&&S.rank>=1&&!S.seen.srWar?2.5:0,
+ prep:S=>{S.tmp.foe=mkFoe({n:'철선방 행동대',realm:clamp(S.realm,3,6),q:1.05,group:1});},
+ x:S=>`철선방과 은선방이 칼을 뽑았다. 철선방이 은선방의 밀수선 셋을 가라앉혔다. 장부 싸움이 칼싸움이 되었다.
+철선방 두령: “장부로 장강을 쥔다고? 장강은 칼로 쥐는 거다.”
+${NN('yeonhyang')}: “칼로 쥐면 손이 베여. 우리 배 셋 값, 은자 천 냥이야. 갚을 거야, 가라앉을 거야?”
+대채주 갈 천호는 술만 마셨다. 당신이 ${S.flags.srBang==='eun'?'은선방':'철선방'} 사람이라는 걸 모두가 알았다.`,
+ ch:[{t:'칼로 끝낸다',h:'싸움',go:S=>{const b=battle(S,S.tmp.foe);if(b.win){A(S,{contrib:30,fame:10});return fightText(b,'강 위에서 사흘 동안 칼이 오갔다. 사흘째 저녁 철선방 두령이 뱃전에서 칼을 강에 던졌다. 갈 천호가 그제야 술잔을 내려놓았다. “끝났냐? 그럼 같이 마셔라.”','');}hurt(S,25,'수채 전쟁');return fightText(b,'','밀렸다. 배 둘이 가라앉았다.');}},
+  {t:'두 방을 한 배에 태운다',h:'구력·처세',go:S=>{if(S.tongue+S.savvy+R(0,40)>=65){A(S,{fame:15,contrib:35});TK(S,'yeonhyang',6);deed(S,'장강의 철선방과 은선방을 화해시켰다');return '철선방의 칼이 은선방의 배를 지키고, 은선방의 장부가 철선방의 통행세를 셈하기로 했다. 연향이 웃었다. “칼이랑 주판이 같이 배를 타네.” 갈 천호가 그날 처음으로 크게 웃었다.';}return '아무도 듣지 않았다. 칼 소리가 더 컸다.';}}]});
+E({id:'srKing',tag:'key',t:'수로맹',a:[28,90],w:S=>S.org==='jangsu'&&S.rank>=3&&!S.seen.srKing?4:0,
+ prep:S=>{S.tmp.foe=S.dead_npc.galch?mkFoe({n:'철선방 방주',realm:clamp(S.realm,4,6),q:1.1}):npcFoe(S,'galch',{});},
+ x:S=>`장강 십팔 채, 황하 구 채, 동정호 오 채. 천하의 물길을 쥔 수채의 채주들이 삼협에 모였다. 수로맹. 물 위의 모든 배가 따르는 하나의 깃발을 세우는 날이다.
+${S.dead_npc.galch?'':`${NN('galch')}: “나는 장강의 용왕이었다. 천하의 물의 왕이 될 그릇은 아니야. 너는 어떠냐.”`}
+${NN('yeonhyang')}${bat(NN('yeonhyang'))?'이':'가'} 맨발로 뱃전을 걸어와 당신 옆에 섰다.
+${NN('yeonhyang')}: “물 위에서 이기면 수로맹주. 배 위에서 쓰러지면 물귀신. 나는 어느 쪽이든 네 옆에 있을게.”`,
+ ch:[{t:'뱃전 위에서 겨룬다',h:'비무',go:S=>{const b=battle(S,S.tmp.foe,{spar:1});if(b.win){S.rank=4;A(S,{fame:60,contrib:100});const t=S.realm>=6&&S.fame>=250?'장강수왕':'수로맹주';sTitle(S,t);deed(S,`천하 물길의 ${t}이 되었다`);hist(S,'수로맹이 세워졌다. 천하의 물길이 하나의 깃발 아래 섰다.');TK(S,'yeonhyang',10);return fightText(b,'뱃전이 기울어도 발이 미끄러지지 않았다. 상대가 강물에 떨어졌다. 수백 척의 배에서 동시에 징이 울렸다. 연향이 당신 손을 잡아 높이 들었다. “수로맹주!” 장강이 그 이름을 받아 굽이쳤다.','');}hurt(S,25,'수로맹');return fightText(b,'','강물에 떨어졌다. 연향이 뛰어들어 건져 냈다. “물귀신 되기엔 아직 아까워.”');}},
+  {t:'배 위의 잔치에서 술로 채주들을 얻는다',h:'구력·처세',go:S=>{if(S.tongue+S.savvy+S.fame/5+R(0,40)>=90){S.rank=4;A(S,{fame:40,contrib:80});sTitle(S,'수로맹주');deed(S,'술과 말로 수로맹주가 되었다');return '사흘 밤낮 배 위의 잔치가 이어졌다. 채주 하나하나와 술잔을 부딪쳤다. 나흘째 아침, 채주들이 한 사람씩 당신 배에 깃발을 꽂았다. 칼 한 번 뽑지 않고.';}A(S,{hp:-10});return '술이 모자랐다. 아니, 말이 모자랐다.';}}]});
+/* ── 하오문: 밑바닥의 낭만 ── */
+E({id:'hmJoin',tag:'arc',t:'하오문의 첫 일',a:[10,40],w:S=>S.org==='haomun'&&!S.seen.hmJoin?9:0,
+ x:S=>`하오문에 들면 먼저 일자리를 준다. 무공이 아니라 일자리. 하오문 사람은 낮에는 마부고 점소이고 뱃사공이고 짐꾼이다. 밤에는 귀다.
+장로 ${NN('eunsn')}${bat(NN('eunsn'))?'이':'가'} 객잔 구석에서 국수를 말며 말했다.
+${NN('eunsn')}: “강남의 모든 마차는 하오문 마부가 몬다. 모든 객잔 술상은 하오문 점소이가 나른다. 모든 나루는 하오문 뱃사공이 젓는다. 그래서 강남의 모든 말은 하오문을 거친다.”
+당신: “그럼 하오문이 제일 강하네요.”
+${NN('eunsn')}: “아니. 제일 약하지. 그래서 제일 많이 듣는 거야. 약한 놈 앞에서는 다들 입이 가벼워지거든.”
+노파가 국수 그릇을 내밀었다.
+${NN('eunsn')}: “자, 일자리 골라. 셋 다 하오문이야.”`,
+ ch:[{t:'마부가 된다',h:'경공·길',go:S=>{S.flags.hmJob='mabu';A(S,{qing:4,savvy:3});return '첫날 고관의 마차를 몰았다. 마차 안에서 두 사람이 은밀한 얘기를 나눴다. 당신은 말만 보았다. 그날 밤 은 삼낭에게 그 얘기를 전했다. 노파가 엽전 세 닢을 주었다. “잘 들었다. 말은 잘 몰았고?”';}},
+  {t:'점소이가 된다',h:'구력·처세',go:S=>{S.flags.hmJob='jeom';A(S,{tongue:4,savvy:4});S.met.soryeong=1;return '어깨에 행주를 걸쳤다. 옆 탁자의 점소이가 윙크를 했다. 소령이었다. “신입이야? 나는 막내였는데 이제 네가 막내다! 술 나를 때 손님 얘기 귀에 담는 거, 내가 가르쳐 줄게.”';}},
+  {t:'짐꾼이 된다',h:'근골·체력',go:S=>{S.flags.hmJob='jim';A(S,{hp:15});if(chance(.4))T(S,'bone',1);return '부두에서 짐을 졌다. 하루 백 짐. 짐꾼들은 말이 없었다. 대신 짐 무게로 배 안의 물건을 알았다. 무거운 상자 셋, 쇳소리가 났다. 소금이 아니었다. 무기였다.';}}]});
+E({id:'hmThief',t:'소매치기의 도',a:[12,60],w:S=>S.org==='haomun'&&!S.seen.hmThief?3:0,
+ x:S=>`장터의 늙은 소매치기가 당신을 불렀다. 손가락이 열 개 다 굽어 있었다. 젊어서 잘렸다가 붙은 손가락이라 했다. 사람들은 그를 귀수(鬼手) 노인이라 불렀다.
+귀수 노인: “하오문에서 소매치기는 천한 일이지. 그래도 법이 있다. 셋.”
+귀수 노인: “하나, 노인과 아이 주머니는 안 턴다. 둘, 굶는 놈 주머니는 안 턴다. 셋, 턴 주머니에 사람 목숨 값이 들었으면 돌려준다.”
+당신: “…그럼 누구 걸 털어요?”
+귀수 노인: “배부른 놈 거. 장터에 배부른 놈은 차고 넘친다.”
+노인이 손을 털자 당신 품에서 엽전 꾸러미가 사라져 노인 손에 있었다. 언제 가져갔는지 몰랐다.`,
+ ch:[{t:'손을 배운다',h:'암기·처세',go:S=>{SK(S,'암기',6);A(S,{savvy:4,gold:20});S.flags.hmThief=1;return '석 달 동안 노인의 법대로 털었다. 비단옷 입은 사내의 지갑, 관리 집사의 은자 주머니. 한 번은 주머니를 열었더니 약방 처방전과 은자 다섯 냥이 있었다. 셋째 법. 그날 밤 그 집 문틈으로 돌려 넣었다. 노인이 웃었다. “이제 하오문 사람이구나.”';}},
+  {t:'노인의 손을 고쳐 줄 의원을 찾는다',h:'의술·호감',go:S=>{A(S,{moral:5,med:3});return '의원은 굽은 손가락을 펴지 못했다. 대신 통증을 덜어 주는 약을 지어 주었다. 노인이 약을 받아 들고 한참 말이 없었다. “…쉰 해 만에 처음으로 누가 내 손을 걱정했다.” 그날 노인은 당신에게 법 하나를 더 가르쳐 주었다. 넷째. ‘손이 아니라 사람을 봐라.’';}}]});
+E({id:'hmGisaeng',tag:'side',t:'홍루의 밤',a:[16,70],w:S=>S.org==='haomun'&&!S.seen.hmGisaeng?3:0,
+ x:S=>`강남 홍루. 등불이 강물에 흔들렸다. 하오문 당주 ${NN('maehyang')}${bat(NN('maehyang'))?'이':'가'} 당신을 뒷방으로 불렀다. 향 냄새가 짙었다. 비단 소매 아래로 하얀 손목이 보였다.
+${NN('maehyang')}: “앉아요. 오늘은 술 대신 부탁.”
+${NN('maehyang')}${bat(NN('maehyang'))?'이':'가'} 병풍을 걷었다. 그 뒤에 피투성이 젊은이 하나가 숨어 있었다.
+${NN('maehyang')}: “관아에서 쫓기는 사람이에요. 현령의 비리를 고발하려다 누명을 썼죠. 오늘 밤 이 사람을 성 밖으로 빼내야 해요. 관병이 홍루를 뒤지러 오고 있어.”
+당신: “기녀가 왜 이런 일을 해요?”
+${NN('maehyang')}${bat(NN('maehyang'))?'이':'가'} 웃었다. 술잔을 들 때처럼 요염하게, 그런데 눈은 웃지 않았다.
+${NN('maehyang')}: “기녀는 웃음을 팔죠. 그런데 웃음을 판다고 마음까지 판 건 아니거든요.”`,
+ ch:[{t:'마차에 숨겨 성문을 빠져나간다',h:'심계·경공',go:S=>{S.met.maehyang=1;TK(S,'maehyang',10);hdYi(S,2);if(chance(.45+S.mind/150+S.qing/200)){A(S,{fame:5});return '하오문 마부가 마차를 몰고, 하오문 문지기가 눈을 감고, 하오문 뱃사공이 강을 건네주었다. 성 밖에서 젊은이가 울며 절했다. 이튿날 매향이 당신 잔에 술을 따르며 말했다. “맨 밑바닥 사람들이 손을 잡으면 성문도 열려요. 그게 하오문이에요.”';}hurt(S,15,'관병');return '성문에서 들켰다. 젊은이를 강에 밀어 넣고 당신은 관병을 끌고 반대쪽으로 달렸다. 젊은이가 살았는지는 사흘 뒤 하오문 뱃사공이 알려 주었다. 살았다.';}},
+  {t:'관병을 홍루 안에 붙잡아 둔다',h:'구력·매향과 함께',go:S=>{S.met.maehyang=1;TK(S,'maehyang',8);hdYi(S,1);A(S,{tongue:3});return '매향이 관병 대장에게 술을 따랐다. 당신은 옆에서 노래를 불렀다. 못 불렀다. 그게 더 웃겼다. 관병들이 웃느라 뒷문으로 빠져나가는 그림자를 못 보았다. 새벽에 매향이 당신 어깨를 툭 쳤다. “노래는 최악인데, 타이밍은 최고였어요.”';}}]});
+E({id:'hmStrike',tag:'key',t:'멈춘 강남',a:[18,70],w:S=>S.org==='haomun'&&S.rank>=1&&!S.seen.hmStrike?3:0,
+ x:S=>`부두의 짐꾼 하나가 맞아 죽었다. 비단 거상의 짐을 떨어뜨렸다는 이유로. 거상의 하인들이 몽둥이로. 관아는 ‘사고’라 적었다.
+그날 밤 하오문 장로들이 객잔 지하에 모였다. 마부, 뱃사공, 점소이, 짐꾼, 기녀, 소매치기. 강남의 맨 밑바닥이 한 방에 앉았다.
+${NN('eunsn')}: “우리는 칼이 없다. 대신 손이 있지. 내일부터 그 손을 멈추면 어떻게 될까.”
+${NN('myoyeong')}: “마차가 서고, 배가 서고, 객잔 술상이 안 나오고, 짐이 부두에 쌓이지. 강남이 멈춰.”
+${NN('maehyang')}: “홍루도 문 닫을게요. 관리들 술 마실 데가 없어지겠네.”
+모두의 눈이 당신에게 왔다. 이 일을 앞장서 이끌 사람이 필요했다.`,
+ ch:[{t:'강남을 멈춘다',h:'하오문의 힘',go:S=>{hdYi(S,3);A(S,{fame:25,contrib:40});deed(S,'하오문의 손을 멈춰 강남을 세웠다');hist(S,'강남의 마부와 뱃사공과 짐꾼이 사흘 동안 일손을 놓았다.');return '이튿날 아침 강남이 멈췄다. 마차가 서고, 나루가 비고, 부두에 짐이 산처럼 쌓였다. 사흘째 저녁, 비단 거상이 죽은 짐꾼의 집 앞에 무릎을 꿇었다. 관아가 하인들을 잡아갔다. 넷째 날 아침, 강남이 다시 움직였다. 아무도 이긴 줄 몰랐다. 하오문 사람들만 알았다.';}},
+  {t:'몰래 거상의 창고를 턴다',h:'은자·악명',go:S=>{hdYi(S,-1);A(S,{gold:150,contrib:15});return '거상의 창고에서 비단 백 필이 사라졌다. 그 돈의 절반은 죽은 짐꾼의 가족에게 갔다. 나머지 절반은 하오문 금고로. 거상은 범인을 찾지 못했다. 하오문 사람들은 그날 술을 마셨다. 웃지는 않았다.';}},
+  {t:'관아에 정식으로 고발한다',h:'구력',go:S=>{if(S.tongue+R(0,40)>=55){A(S,{fame:10,moral:5});return '현령 앞에서 증언했다. 증인은 마부 셋, 점소이 둘, 기녀 하나. 현령이 웃었다. “천한 것들의 말을 어찌 믿으라고.” 그때 매향이 말했다. “나리, 어젯밤 홍루에서 하신 말씀도 증언할까요?” 현령의 얼굴이 하얘졌다. 하인들은 그날 잡혀갔다.';}A(S,{mood:-8});return '고발장은 관아 문 앞에서 찢겼다. “천한 것들이.”';}}]});
+E({id:'hmFeast',t:'밑바닥의 설날',a:[12,90],w:S=>S.org==='haomun'?2:0,cd:4,
+ x:S=>`설날 밤, 강남 뒷골목의 낡은 객잔에 하오문 사람들이 모였다. 일 년 내내 남의 상을 차리던 점소이가 오늘은 자기 상을 차렸다. 남의 마차를 몰던 마부가 오늘은 자기 술을 마셨다.
+${NN('soryeong')}${bat(NN('soryeong'))?'이':'가'} 탁자 위에 올라가 노래를 불렀다. 음이 다 틀렸다. 다들 웃었다. 기녀들이 제대로 된 노래로 받아쳤다. 귀수 노인이 굽은 손가락으로 젓가락 장단을 맞췄다.
+${NN('eunsn')}: “하오문에는 설날이 하루 늦게 와. 남들 설날엔 우리가 일하니까.”
+노파가 국수를 한 그릇씩 말아 돌렸다. 국수 위에 고기가 한 점씩 올라가 있었다. 일 년에 한 번 올라가는 고기였다.
+${NN('nangcheong')}: “올해는 고기가 두 점이네요, 삼낭!”
+${NN('eunsn')}: “올해는 좀 벌었잖아.”`,
+ ch:[{t:'노래를 한 곡 한다',h:'심상',go:S=>{A(S,{mood:20});TK(S,'soryeong',4);return '못 불렀다. 소령보다 더 못 불렀다. 객잔이 웃음바다가 되었다. 그날 밤 세상의 맨 밑바닥은 세상에서 제일 시끄러웠다. 그리고 따뜻했다.';}},
+  {t:'내 고기 한 점을 막내에게 덜어 준다',h:'도덕·의리',go:S=>{A(S,{mood:12,moral:3});return '막내 짐꾼 아이의 그릇에 고기를 올렸다. 아이가 고기를 한참 보다가 반으로 갈라 은 삼낭 그릇에 올렸다. 삼낭이 그걸 또 갈라 귀수 노인 그릇에. 고기 한 점이 그날 밤 열 번을 돌았다.';}}]});
+E({id:'hmTorture',t:'입을 열지 않는 사람',a:[18,70],w:S=>S.org==='haomun'&&!S.seen.hmTorture?2.5:0,
+ x:S=>`관아에 잡혀갔다. 동창이 하오문의 명부를 원했다. 강남의 하오문 사람 삼천 명의 이름이.
+동창 무사: “이름만 대라. 마부 하나, 점소이 하나. 그럼 보내 주마.”
+쇠꼬챙이가 화로에서 달아올랐다. 옆방에서 비명이 들렸다. 같이 잡혀 온 늙은 뱃사공이었다.
+늙은 뱃사공: “…말하지 마라. 우리는 이름이 없어서 하오문이다.”
+동창 무사가 웃었다.
+동창 무사: “천한 것들이 의리는.”`,
+ ch:[{t:'끝까지 입을 열지 않는다',h:'의리·크게 다친다',go:S=>{hurt(S,35,'고문');A(S,{fame:15,contrib:50,cult:5});hdYi(S,2);deed(S,'동창의 고문에도 하오문의 이름을 말하지 않았다');return '이레 동안 아무 이름도 말하지 않았다. 여드레째 아침, 감옥 문이 열렸다. 옥졸이 하오문 사람이었다. 성문지기가 하오문이었고, 마부가 하오문이었다. 맨 밑바닥이 손을 잡자 동창의 감옥도 열렸다. 은 삼낭이 성 밖에서 국수를 말아 놓고 기다리고 있었다.';}},
+  {t:'가짜 이름을 줄줄이 댄다',h:'구력·심계',go:S=>{A(S,{mind:5,tongue:3,hp:-10});return '열두 개의 이름을 댔다. 다 죽은 사람들이었다. 동창이 그 이름들을 쫓는 동안 하오문은 사흘을 벌었다. 나와서 은 삼낭에게 이 얘기를 하자 노파가 배를 잡고 웃었다. “그중 하나는 내 죽은 영감 이름이잖아!”';}}]});
+/* 흑도의 여인들: 혼례와 둘째 자리 */
+Object.assign(WED_SCENE,{
+ hongok:S=>`녹림총채에서 혼례를 올렸다. 산적의 혼례답게 시끄러웠다. 돼지가 열 마리, 술독이 백 개.
+${NN('hongok')}${bat(NN('hongok'))?'은':'는'} 붉은 혼례복 위에 대감도를 멘 채 나타났다.
+${NN('hongok')}: “벗으라고? 싫어. 혼례 날 칼 벗는 녹림 여자 봤어?”
+녹림왕이 상석에서 술독째 들이켜며 울었다. “우리 홍옥이가… 우리 홍옥이가 시집을….”
+${NN('hongok')}: “형님, 울지 마. 창피해.”
+맞절을 하고 고개를 드니 누님이 당신을 보고 있었다. 요염하지도 위험하지도 않은 얼굴로.
+${NN('hongok')}: “막내가 서방이 되네. 이제 누님이라고 부르면 혼나.”
+당신: “그럼 뭐라고 불러요?”
+${NN('hongok')}: “…홍옥. 아무도 안 부르던 이름이야. 너만 불러.”`,
+ arang:S=>`호두채의 혼례는 활쏘기로 시작한다. 신랑이 백 걸음 밖 과녁의 정중앙을 맞혀야 신부를 데려간다.
+${NN('arang')}: “빗나가면 내가 대신 쏴 줄게. 대신 평생 놀릴 거야.”
+화살이 정중앙에 꽂혔다. 아랑이 입을 삐죽였다. 그리고 웃었다.
+${NN('arang')}: “…운이야.”
+채주인 아랑의 아버지가 껄껄 웃으며 딸의 등을 떠밀었다. “산고양이 데려가라! 대신 산 아래 구경은 네가 시켜 줘라!”
+${NN('arang')}: “맞다! 약속했지? 장터, 객잔, 바다. 다 보여 줘.”`,
+ yeonhyang:S=>`혼례는 장강 한가운데 배 위에서 올렸다. 수로채의 배 백 척이 둘레를 에워쌌다.
+${NN('yeonhyang')}${bat(NN('yeonhyang'))?'은':'는'} 혼례 날에도 맨발이었다.
+${NN('yeonhyang')}: “신발 신으면 뱃전 감각이 없어. 평생 맨발로 살 거야. 너도 각오해.”
+배 위의 술잔에 강물빛이 담겼다. 연향이 노래를 불렀다. 뱃사람을 홀리던 그 노래였다. 오늘은 한 사람만 들으라고 불렀다.
+${NN('yeonhyang')}: “장부에 하나 더 적었어. ‘평생 이익: 너.’”`,
+ maehyang:S=>`홍루 기녀가 혼인한다는 소식에 강남이 술렁였다. 관리들은 아쉬워했고, 하오문은 잔치를 열었다.
+${NN('maehyang')}${bat(NN('maehyang'))?'은':'는'} 혼례복을 입고 거울 앞에 오래 앉아 있었다.
+${NN('maehyang')}: “이상해요. 웃음을 판 지 십 년인데, 오늘은 어떻게 웃어야 할지 모르겠어.”
+당신: “그냥 웃어요.”
+${NN('maehyang')}: “그냥 웃는 게 제일 어려워요.”
+그런데 맞절을 하고 고개를 들었을 때, 매향은 그냥 웃고 있었다. 비녀 모양의 비수는 그날 처음으로 머리에서 빠져 있었다.`});
+Object.assign(CONCUB,{
+ hongok:S=>`산채 망루에서 누님이 술을 마시고 있었다. 당신이 혼인한 지 한 해.
+${NN('hongok')}: “축하주야. 녹림은 의리지. 막내가 장가간 걸 축하 안 하면 누님 체면이 안 서.”
+${NN('hongok')}${bat(NN('hongok'))?'이':'가'} 술잔을 비우고 웃었다. 너무 빨리.
+${NN('hongok')}: “근데 말이야. 위험한 누님 곁에 오래 있으면 너도 위험해진다고 했지. 이미 늦었어. 둘째 자리 줘. 아니면 산채에서 납치해 갈 거야. 산적이니까.”`,
+ arang:S=>`${NN('arang')}${bat(NN('arang'))?'이':'가'} 지붕 위에서 활을 겨누고 있었다. 화살 끝에 쪽지가 매달려 있었다.
+쪽지: ‘장가갔다며. 산 아래 구경시켜 준다던 약속은?’
+${NN('arang')}: “약속 지켜. 둘째여도 돼. 산고양이는 원래 마당 구석에서 자.”`,
+ yeonhyang:S=>`${NN('yeonhyang')}${bat(NN('yeonhyang'))?'이':'가'} 장부를 펼쳐 보였다. 마지막 장에 한 줄이 적혀 있었다. ‘손해: 너를 놓친 것.’
+${NN('yeonhyang')}: “밑지는 장사는 안 해. 둘째 자리라도 줘. 그럼 장부가 맞아.”`,
+ maehyang:S=>`홍루 뒷방. 매향이 술을 따랐다. 웃음은 팔지 않았다.
+${NN('maehyang')}: “기녀는 둘째, 셋째 자리에 익숙해요. 그래서 싫었어요. 평생.”
+${NN('maehyang')}: “그런데 당신 곁이라면… 둘째 자리라도 처음으로 웃음을 안 팔아도 될 것 같아요.”`});
+['nrJoin','nrToll','nrConvoy','nrGranary','nrHeuk','nrSiege','nrBetray','nrFeast','nrSis','nrKing','srJoin','srToll','srSalt','srStorm','srWar','srKing','hmJoin','hmThief','hmGisaeng','hmStrike','hmFeast','hmTorture'].forEach(id=>JOB_OK.add(id));
+
 /* 처음 마주친 인연의 첫 만남 이야기를 순서대로 띄운다 */
 function fmNext(S){const f=S.flags.fmAt||(S.flags.fmAt={});
   if(!S.flags.fmInit){S.flags.fmInit=1;for(const id of romList(S))if(S.met[id])f[id]=-99;}
@@ -12618,7 +12893,7 @@ function saveHall(h){try{localStorage.setItem(HKEY,JSON.stringify(h));}catch(e){
 const NAI_URL='https://image.novelai.net/ai/generate-image';
 const NAI_MODELS=[['nai-diffusion-4-5-full','V4.5 Full'],['nai-diffusion-4-5-curated','V4.5 Curated'],['nai-diffusion-5-full','V5 Full'],['nai-diffusion-5-curated','V5 Curated'],['nai-diffusion-4-full','V4 Full']];
 const NAI_Q={'nai-diffusion-5-full':'very aesthetic, masterpiece, best quality','nai-diffusion-5-curated':'very aesthetic, masterpiece, best quality','nai-diffusion-4-5-full':'very aesthetic, masterpiece, no text','nai-diffusion-4-5-curated':'location, masterpiece, no text','nai-diffusion-4-full':'no text, best quality, very aesthetic, absurdres'};
-const GAME_VER='2026.10.25-48';
+const GAME_VER='2026.10.25-49';
 const NAI_NEG='nsfw, nude, lowres, bad anatomy, bad hands, missing fingers, extra digits, text, watermark, signature, logo, worst quality, low quality, blurry, modern clothes, glasses, eyewear, jpeg artifacts';
 const NKEY='murim-nai';
 function ncfg(){let c={};try{c=JSON.parse(localStorage.getItem(NKEY)||'{}');}catch(e){}return Object.assign({key:'',relay:'',model:'nai-diffusion-4-5-full',style:'wuxia, ancient china, hanfu, detailed illustration, cinematic lighting',autoEv:false,autoPc:false,vn:true,neg:NAI_NEG,tnpc:'',tev:'',tmap:'',q:true},c,{pr:Object.assign({},c.pr)});}
@@ -13002,7 +13277,7 @@ const ORG_ALIAS=(()=>{const a=[];for(const o in ORGS){const n=ORGS[o].n;a.push([
   a.push(['마교','demon'],['교도','demon'],['산적','bandit'],['수적','jangsu'],['살수','salmak'],['거지','beggar']);return a.sort((x,y)=>y[0].length-x[0].length);})();
 const MOB_ELDER=/장로|장문|원로|태상|문주|교주|방주|련주|채주|궁주|가주|호법|당주/,MOB_FEM=/사저|사매|여제자|여협|소저|낭자|비구니|성녀|궁녀/;
 const MOB_RULE2=[[/흑도.*(두목|대장|우두머리)/,'heukdo_boss'],[/흑도|칼잡이|낭인/,'heukdo'],[/녹림.*(채주|두목)|산채 두목/,'nokrim_boss'],[/녹림|산적/,'nokrim'],[/수적/,'sujeok'],[/표사|표두/,'pyosa'],[/동창|제독/,'dongchang'],[/관병|관군/,'gwanbyeong'],[/포졸|포두|포쾌/,'pojol'],
- [/점소이/,'jeomsoi'],[/주모/,'jumo'],[/기녀|기생/,'gisaeng'],[/악사/,'akssa'],[/농부/,'farmer'],[/뱃사공|어부/,'fisher'],[/사냥꾼/,'hunter'],[/나그네|길손/,'traveler'],[/취객|술꾼/,'drunk'],[/노름꾼|도박/,'gambler'],[/사범|교두/,'sabeom'],[/의녀/,'uinyeo'],[/하녀/,'nobi_f'],[/하인|노비|종놈/,'nobi'],[/^장수$|장군/,'general'],[/병사|군졸/,'soldier'],[/설서인/,'storyteller'],[/거지 아이/,'kid_beggar'],[/사신|칙사/,'official'],[/교관/,'e_salmak'],[/^동기$|[가-힣]호$/,'d_salmak']];
+ [/점소이/,'jeomsoi'],[/주모/,'jumo'],[/기녀|기생/,'gisaeng'],[/악사/,'akssa'],[/농부/,'farmer'],[/뱃사공|어부/,'fisher'],[/사냥꾼/,'hunter'],[/나그네|길손/,'traveler'],[/취객|술꾼/,'drunk'],[/노름꾼|도박/,'gambler'],[/사범|교두/,'sabeom'],[/의녀/,'uinyeo'],[/하녀/,'nobi_f'],[/하인|노비|종놈/,'nobi'],[/^장수$|장군/,'general'],[/병사|군졸/,'soldier'],[/설서인/,'storyteller'],[/거지 아이/,'kid_beggar'],[/사신|칙사/,'official'],[/졸개/,'d_bandit'],[/수졸|철선방|은선방/,'d_jangsu'],[/흑풍채|청룡채|호두채/,'nokrim'],[/독안룡/,'heukdo'],[/피난/,'farmer'],[/선주|상인|행수/,'merchant'],[/교관/,'e_salmak'],[/^동기$|[가-힣]호$/,'d_salmak']];
 function mobOrg(S,nm){const hit=ORG_ALIAS.find(([a])=>nm.includes(a));let o=hit&&hit[1];
   if(!o&&/^(사형|사저|사제|사매|제자|동문|사숙|사백)/.test(nm)&&S.org)o=S.org;if(!o&&MOB_ELDER.test(nm)&&/^(장로|원로|장문인|집법 장로|태상장로)$/.test(nm)&&S.org)o=S.org;
   if(!o||!ORGS[o])return null;if(MOB_ELDER.test(nm)&&!/제자/.test(nm))return 'e_'+o;return (MOB_FEM.test(nm)||o==='emei')?'f_'+o:'d_'+o;}
@@ -13035,6 +13310,10 @@ const NPC_TAGS={binghu:'1girl, solo, mature beautiful woman, white and silver ro
  jegalun:'1boy, solo, young scholar, handsome, white robes, feather fan, gentle smile',mugyeol:'1boy, solo, young man, handsome, dark green robes, quiet, sharp eyes, hidden weapons',
  ha:S=>`${S.sex==='m'?'1girl, young woman':'1boy, young man'}, solo, beautiful, black and red hanfu, red eyes, playful smile, dark aura`};
 Object.assign(NPC_TAGS,{hyeono:'1boy, solo, old buddhist abbot, bald, white eyebrows, red and gold kasaya, broom, serene',cheongjin:'1boy, solo, old taoist master, white beard, blue and white robes, hair bun, gentle smile',unhak:'1boy, solo, middle-aged swordsman, elegant, white hanfu with plum blossom pattern, sword, smiling',jeonghye:'1girl, solo, middle-aged buddhist nun, stern, grey robes, sword, wind',unjung:'1boy, solo, middle-aged taoist, white fur-trimmed robes, snow, light footed',tangcw:'1boy, solo, middle-aged man, dark green robes, leather gloves, sly smile, tea cup',paengmj:'1boy, solo, huge muscular man, beard, red and black robes, giant broadsword, shouting',songhak:'1boy, solo, young taoist, blue and white robes, carrying bundles, honest face',baekms:'1boy, solo, middle-aged noble swordsman, white robes, folding fan, hypocritical smile',wipc:'1boy, solo, middle-aged man, black fur cloak, scar, sitting on large chair, arrogant',eunsn:'1girl, solo, old woman, plain clothes, eating sunflower seeds, sharp eyes',galch:'1boy, solo, huge man, pirate captain, straw hat, spear, river boat, pouring wine',nangis:'1boy, solo, wandering swordsman, loose black robes, wine gourd, dancing with sword, moonlight',cheolms:'1boy, solo, one-armed man, amputee, missing arm, empty sleeve, bandit, scar, chopping wood, stoic',eumsg:'1boy, solo, middle-aged man, pale, elegant black robes, chrysanthemum, sinister smile',sagong:'1boy, solo, thin strategist, black robes, go board, candle, cunning',yohr:'1girl, solo, seductive woman, red hanfu, folding fan, dangerous smile, red lanterns',gwangma:'1boy, solo, old man, wild hair, ragged robes, mad laughter, sword, ruined shrine',pyeon:'1girl, solo, woman doctor, plain robes, cutting herbs, calm',gusc:'1boy, solo, old storyteller, white hair, folding fan, inn',yongm:'1boy, solo, escort captain, scars, armor vest, cart, broadsword'});
+Object.assign(NPC_TAGS,{hongok:'1girl, solo, mature beautiful woman, bandit lieutenant, red silk robe slipping off shoulder, giant saber on back, smoky eyes, confident smirk, long black hair, wine gourd',
+ arang:'1girl, solo, teenage girl, mountain bandit daughter, short bow, fur vest, ponytail, freckles, mischievous grin, barefoot',
+ yeonhyang:'1girl, solo, beautiful woman, river pirate captain, barefoot, light blue robe, wet hair, abacus, sly smile, boat',
+ maehyang:'1girl, solo, beautiful courtesan, elegant layered red hanfu, hair ornaments, hairpin dagger, folding fan, seductive smile, lantern light'});
 Object.assign(NPC_TAGS,{
  sowol:S=>S&&S.flags&&S.flags.ngAdult?'1girl, solo, young woman, long white hair, ancient calm eyes, oversized faded blue robe, hair ribbon, faint smile, wise':'1girl, solo, child, small girl, long white hair dragging, oversized faded blue robe, sleeves too long, candy stick in mouth, arrogant smirk, ancient eyes',
  sobaek:S=>S&&S.flags&&S.flags.ngAdult?'1boy, solo, young man, long white hair tied, ancient calm eyes, oversized faded grey robe, faint smile, wise':'1boy, solo, child, small boy, white hair topknot, oversized faded grey robe, sleeves too long, taffy in hand, arrogant smirk, ancient eyes'});
