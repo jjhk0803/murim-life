@@ -206,7 +206,7 @@ button.chip.on{background:var(--jade);color:var(--card);border-color:var(--jade)
 .main:has(> .vnfull){padding:0;overflow:hidden}
 .vnfull{position:relative;flex:1;min-height:0;overflow:hidden;background:radial-gradient(ellipse at 50% 30%,#4a524d,#1c211f 75%);color:#f3efe6;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
 .vnfull.done{cursor:default}
-.vnfade .vnbox,.vnfade .vnsps{animation:vnt .35s ease-out}
+.vnfade .vnsps{animation:vnt .35s ease-out}
 .vnbg{position:absolute;inset:0}.vnbg img{width:100%;height:100%;object-fit:cover;display:block;transition:filter .3s}
 .vnfull.done .vnbg img{filter:brightness(.7)}
 .vnsps{position:absolute;inset:0;pointer-events:none}
@@ -255,11 +255,11 @@ button.chip.on{background:var(--jade);color:var(--card);border-color:var(--jade)
 .vnplate{position:absolute;left:12px;top:-14px;background:var(--seal,#9b2c2c);color:#fff;font-family:var(--f-ui);font-size:.95rem;font-weight:700;padding:3px 14px 4px;border-radius:4px;line-height:1.15;box-shadow:0 2px 6px rgba(0,0,0,.3)}
 .vnplate small{display:block;font-size:.68rem;font-weight:400;opacity:.85}
 .vnplate.me{background:#3d4f63}
-.vnt{white-space:pre-line;line-height:1.7;animation:vnt .25s ease-out}
+.vnt{white-space:pre-line;line-height:1.7}
 .vnt.nar{color:#d9d3c4;font-style:italic}
 @keyframes vnt{from{opacity:0}to{opacity:1}}
-.vnar{position:absolute;right:12px;bottom:6px;font-size:.75rem;opacity:.7;animation:vnbl 1s steps(2) infinite}
-@keyframes vnbl{50%{opacity:.15}}
+.vnar{position:absolute;right:12px;bottom:6px;font-size:.75rem;opacity:.55;animation:vnbl 1.6s ease-in-out infinite}
+@keyframes vnbl{50%{transform:translateY(3px)}}
 .vnbar{display:flex;align-items:center;gap:6px;justify-content:flex-end;margin-top:6px}
 .vnbar .muted{margin-right:auto}
 .vnbar .ghost{padding:4px 10px;font-size:.8rem}
@@ -349,7 +349,7 @@ const shuffle=a=>a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(x=>x[1])
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 // 받침에 따라 조사 고르기: jo('검법','을','를')
-const bat=w=>{const c=w.charCodeAt(w.length-1);return c>=0xAC00&&c<=0xD7A3&&(c-0xAC00)%28>0;};
+const bat=w=>{w=String(w==null?'':w);if(!w)return false;const c=w.charCodeAt(w.length-1);return c>=0xAC00&&c<=0xD7A3&&(c-0xAC00)%28>0;};
 const jo=(w,a,b)=>w+(bat(w)?a:b);
 const qra=w=>`'${w}'${bat(w)?'이라':'라'}`;
 const num=n=>Math.round(n).toLocaleString('ko-KR');
@@ -9168,7 +9168,7 @@ E({id:'eraLife',tag:'power',t:'천하의 나날',title:S=>S.w.era&&PW_SIDE[S.w.e
 
 /* ══ 연애: 인연이 깊어지면 고백하고, 연인이 되어 함께 시간을 보내다 혼인한다 ══ */
 const LOVE_X={m:['eunha','yeonhwa','soryeong','seola','uihyang','sohwa','yohr','myoyeong','binghu'],f:['seolhan','mukya','nangcheong','hongchil','unhae','seokdol','songhak','nangis']}; // 이야기(LOVE)는 없지만 마음이 깊어지면 연인이 될 수 있는 사람들
-const romList=S=>[...loveList(S),...LOVE_X[S.sex==='m'?'m':'f'],...(S.flags&&S.flags.ngAdult&&S.flags.ngDone==='saved'?[S.sex==='m'?'sowol':'sobaek']:[])].filter(id=>NPCS[id]);
+const romList=S=>[...loveList(S),...LOVE_X[S.sex==='m'?'m':'f'],...(S.flags&&S.flags.ngAdult&&S.flags.ngDone==='saved'?[S.sex==='m'?'sowol':'sobaek']:[]),...(S.flags&&S.flags.cf&&S.flags.cf.sex!==S.sex&&(S.flags.cf.love||0)>=1&&!S.flags.cf.dead?['cfriend']:[])].filter(id=>NPCS[id]);
 const lover=S=>S.lover&&NPCS[S.lover]&&!S.dead_npc[S.lover]&&!loveBlocked(S,S.lover)&&S.spouse!==S.lover&&!S.flags['noMarry_'+S.lover]?S.lover:null;
 const propCands=S=>romList(S).filter(id=>((S.rel[id]||0)>=70||(S.lover===id&&(S.rel[id]||0)>=60&&(S.flags['dates_'+id]||0)>=2))&&!S.dead_npc[id]&&!S.flags['noMarry_'+id]&&!loveBlocked(S,id)&&(LOVE[id]||S.lover===id)).sort((a,b)=>(b===S.lover)-(a===S.lover)||S.rel[b]-S.rel[a]);
 const CONFESS={
@@ -10406,7 +10406,7 @@ const cfYa=S=>{const n=cfN(S);return n+(bat(n)?'아':'야');}; // 부를 때: �
 const parentOf=S=>({farm:'어머니',orphan:'할멈',scholar:'아버지',escort:'아버지',clan:'어머니',medic:'아버지',smith:'아버지',demon:'어머니'})[S.origin]||'어머니';
 const homeOf=S=>({farm:'산골 마을',orphan:'저잣거리 다리 밑',scholar:'허물어진 고택',escort:'표국 뒷골목',clan:`${S.flags.clanOf==='paeng'?'팽가':'남궁세가'} 별채`,medic:'약방 다락',smith:'대장간 뒤채',demon:'외딴 산집'})[S.origin]||'산골 마을';
 E({id:'hometown',arc:1,t:'고향의 아침',a:[6,7],force:S=>!S.flags.cf&&!S.seen.hometown,
- prep:S=>{const sx=chance(.5)?'m':'f',a=pick(CF_NAMES[sx]);S.tmp.cf={n:a,sex:sx};},
+ prep:S=>{const op=S.sex==='m'?'f':'m',sx=chance(.7)?op:S.sex,a=pick(CF_NAMES[sx]);S.tmp.cf={n:a,sex:sx};},
  x:S=>{const c=S.tmp.cf.n,p=parentOf(S);return `여섯 살의 봄. ${homeOf(S)}에서 맞는 아침은 늘 같은 소리로 시작했다. ${S.origin==='smith'?'풀무가 숨 쉬는 소리':S.origin==='medic'?'약절구 찧는 소리':S.origin==='scholar'?'아버지가 책장을 넘기는 소리':S.origin==='escort'?'표사들이 마당에서 칼 가는 소리':S.origin==='orphan'?'다리 위로 수레가 지나가는 소리':'닭 우는 소리와 개울 소리'}.
 그날은 다른 소리가 섞여 있었다. 개울 쪽에서 누가 엉엉 울고 있었다.
 가 보니 또래 아이 하나가 물에 빠진 고무신 한 짝을 바라보며 서 있었다. 신은 물살을 타고 점점 멀어졌다.
@@ -11606,6 +11606,80 @@ ${cfN(S)!=='동무'?`${cfN(S)}에게서 짧은 서찰이 왔다. ‘스물이다
 const CREED_W={hyeop:/^(jp|helpless|bandits|kneel|jpVillage|rescue|lostVillage|famine|tavern)/,gang:/^(challenge|fastDuel|nongeom|grand|eldChallenge|enemyMeet|tourney|first|factionTop)/,ja:/^(sd|travel|hermit|cliff|oreFind|elixir|haoInfo|music)/,jeong:/^(visit|talk|wedLife|date|cf|sworn|lv|duo)/,han:/^(revenge|feud|ambush|assassin|hitman|salFrenzy|bloodLure|orgHunt)/};
 
 ['yt12','yt14','yt16','yt18','yt20'].forEach(id=>JOB_OK.add(id));
+/* ══ 소꿉동무 연인 루트 ══
+   주인공과 다른 성별의 동무라면, 열여섯~열아홉에 마음이 처음 기울고(동무의 등불), 다시 만난 날 손을 잡거나,
+   스물 넘어 동무가 혼처를 받았을 때 붙잡으면 연인이 된다. 그 뒤로는 다른 인연처럼 연인·청혼·혼례·첩이 이어진다.
+   동무는 명부에 'cfriend'로 올라 있고 이름·성별은 이번 삶의 동무를 따른다. */
+NPCS.cfriend={get n(){return (typeof S!=='undefined'&&S&&S.flags&&S.flags.cf&&S.flags.cf.n)||'소꿉동무';},get sex(){return (typeof S!=='undefined'&&S&&S.flags&&S.flags.cf&&S.flags.cf.sex)||'f';},
+ nick:'소꿉동무',org:null,lv:S=>clamp(1+Math.floor((S.age-10)/8),1,4),q:1,hide:0,hs:0,kw:['유'],d:'여섯 살 개울가에서 신 한 짝을 잃고 울던 아이. 평생의 동무.',love:'수양'};
+const cfCan=S=>{const c=cf(S);return !!c&&c.sex!==S.sex&&!c.dead&&!c.wedOther;};
+E({id:'cfSpark',tag:'love',t:'동무의 등불',a:[16,19],force:S=>cfCan(S)&&S.seen.cfLetter&&!S.seen.cfSpark&&!S.chain&&S.age>=16,
+ x:S=>{const c=cf(S),n=c.n;const set=c.path==='same'?`사문의 원소절 밤. 수련을 빼먹고 둘이 몰래 산문 아래 장터로 내려갔다.`:`원소절 밤, ${n}${bat(n)?'이':'가'} 불쑥 찾아왔다. ${c.path==='escort'?'표행 길에 들렀다며 먼지투성이였다.':c.path==='home'?'고향에서 사흘을 걸어왔다고 했다.':'사문에 사흘 말미를 받았다고 했다.'}`;
+  return `${set}
+장터에는 등불이 강처럼 흘렀다. ${n}${bat(n)?'이':'가'} 토끼 모양 등불 앞에서 걸음을 멈췄다.
+${n}: “어릴 때 저거 갖고 싶었는데. 돈이 없어서 맨날 구경만 했잖아.”
+당신은 엽전을 털어 등불을 샀다. ${n}${bat(n)?'이':'가'} 등불을 받아 들고 한참 말이 없었다.
+${n}: “…너 요즘 이상해.”
+당신: “뭐가.”
+${n}: “예전엔 내 앞에서 아무렇게나 웃었는데, 요즘엔 웃다가 멈춰.”
+등불 불빛이 ${n}의 얼굴에 흔들렸다. 개울가에서 울던 그 얼굴이었다. 그런데 처음 보는 얼굴이기도 했다.
+${n}: “나 하나만 물어봐도 돼?”
+당신: “…응.”
+${n}: “너, 좋아하는 사람 있어?”
+장터의 소음이 갑자기 멀어졌다.`;},
+ ch:S=>{const c=cf(S),n=c.n;return [{t:'“너”라고 말한다',go:S=>{c.love=2;S.rel.cfriend=Math.max(S.rel.cfriend||0,55+(c.bond||0)*3);TKcf(S,2);A(S,{mood:15});return `당신: “너.”\n${n}${bat(n)?'이':'가'} 등불을 떨어뜨릴 뻔했다.\n${n}: “…바보 아니야?”\n열 몇 해 전 개울가에서 들은 그 말이었다. 그런데 이번엔 ${n}${bat(n)?'이':'가'} 웃지 않았다. 고개를 숙이고, 등불 손잡이를 꼭 쥐고, 아주 작게 말했다.\n${n}: “나도.”\n그날 밤 둘은 아무것도 하지 않았다. 손도 잡지 않았다. 등불 하나를 사이에 두고 장터 끝까지 걸었을 뿐이다. 그게 전부였다. 그걸로 충분했다.`;}},
+  {t:'대답을 얼버무린다',go:S=>{c.love=1;S.rel.cfriend=Math.max(S.rel.cfriend||0,45);A(S,{mood:4});return `당신: “…모르겠어.”\n${n}: “그래.”\n${n}${bat(n)?'은':'는'} 등불을 들고 앞서 걸었다. 뒷모습이 조금 쓸쓸해 보였다. 당신은 그 등을 오래 보았다. 왜 대답하지 못했는지는, 몇 해가 지나서야 알았다.`;}},
+  {t:'“너는 내 동무잖아”라고 한다',go:S=>{c.love=0;TKcf(S,1);return `${n}${bat(n)?'이':'가'} 웃었다. 너무 빨리 웃었다.\n${n}: “그치. 당연하지. 그냥 물어본 거야.”\n그날 이후로도 둘은 좋은 동무였다. 평생.`;}}];}});
+/* 다시 만난 날에 손을 잡는 선택지 */
+{const e=EV.find(x=>x.id==='cfReunion');if(e){const oc=e.ch;e.ch=S=>{const L=(typeof oc==='function'?oc(S):oc).slice();if(cfCan(S)&&(cf(S).love||0)>=1&&!S.spouse&&!lover(S))L.push({t:'그 손을 잡는다',h:'연인이 된다',go:S=>{const c=cf(S),n=c.n;S.met.cfriend=1;S.lover='cfriend';S.rel.cfriend=Math.max(S.rel.cfriend||0,72);S.flags.dates_cfriend=1;TKcf(S,3);A(S,{mood:25});deed(S,`소꿉동무 ${jo(n,'과','와')} 연인이 되었다`);
+  return `할 말이 너무 많아서, 당신은 말 대신 손을 내밀었다.\n${n}${bat(n)?'이':'가'} 그 손을 내려다보았다. 개울가에서 신 한 짝을 내밀던 손. 고목 아래서 새끼손가락을 걸던 손.\n${n}: “…이번엔 뭘 주려고.”\n당신: “나.”\n${n}${bat(n)?'이':'가'} 웃다가 울었다. 울다가 웃었다. 그리고 그 손을 잡았다. 놓지 않았다.\n${n}: “늦었잖아. 열여섯 원소절에 말했어야지.”\n당신: “그때 말했잖아.”\n${n}: “…그랬나. 그럼 내가 늦었네.”`;}});return L;};}}
+E({id:'cfConfess',tag:'love',t:'동무의 혼처',a:[21,35],w:S=>cfCan(S)&&(cf(S).love||0)>=1&&S.seen.cfReunion&&!S.spouse&&S.lover!=='cfriend'&&!S.seen.cfConfess?6:0,
+ x:S=>{const n=cfN(S);return `${n}에게서 서찰이 왔다. 짧았다.
+‘집에서 혼처를 정했다. 이웃 고을 사람이다. 좋은 사람이라고 한다. 다음 달에 간다. 그 전에 한 번만 얼굴 보자. 고목 아래서.’
+고목 아래에 ${n}${bat(n)?'이':'가'} 서 있었다. 혼례 날을 받은 사람답지 않게 수수한 차림이었다.
+${n}: “왔네.”
+당신: “…축하해.”
+${n}: “고마워.”
+둘 다 그다음 말을 찾지 못했다. 바람이 고목을 흔들었다. 껍질에 새긴 두 이름이 아직 희미하게 남아 있었다.
+${n}: “나 하나만 물어볼게. 마지막으로.”
+${n}: “열여섯 원소절에, 너 좋아하는 사람 있냐고 물었을 때. 그때 진짜 대답이 뭐였어?”`;},
+ ch:S=>{const n=cfN(S),c=cf(S);return [{t:'“너였어. 지금도”라고 붙잡는다',h:'연인이 된다',go:S=>{S.met.cfriend=1;S.lover='cfriend';S.rel.cfriend=Math.max(S.rel.cfriend||0,72);S.flags.dates_cfriend=1;c.love=2;TKcf(S,3);A(S,{mood:22,moral:-2});deed(S,`혼처를 받은 소꿉동무 ${jo(n,'을','를')} 붙잡았다`);
+   return `당신: “너였어. 그때도, 지금도.”\n${n}${bat(n)?'이':'가'} 눈을 감았다. 한참을 그대로 있었다.\n${n}: “…그 말 듣고 싶어서 서찰 쓴 거야. 듣고 나면 마음 편히 시집가려고.”\n당신: “가지 마.”\n${n}: “…바보.”\n그다음 달, 이웃 고을의 혼례는 열리지 않았다. 고을에 소문이 무성했다. ${n}${bat(n)?'은':'는'} 그 소문을 다 듣고 다니면서 웃었다.`;}},
+  {t:'“잘 살아”라고 보내 준다',go:S=>{c.wedOther=1;TKcf(S,1);A(S,{mood:-12,cult:4});return `당신: “…잘 살아. 그 사람한테 잘해 줘.”\n${n}${bat(n)?'이':'가'} 웃었다. 열여섯 원소절 그날처럼, 너무 빨리.\n${n}: “응. 너도.”\n돌아서는 ${n}의 손에 납작한 돌 하나가 쥐어져 있는 걸 보았다. 아주 오래전, 갈림길에서 당신이 쥐여 준 그 돌이었다.`;}}];}});
+const CF_WED=S=>{const n=cfN(S),p=parentOf(S);return `혼례는 고향 고목 아래에서 올렸다. 다른 데는 생각도 안 해 봤다고, 둘 다 말했다.
+하객은 고을 사람들이었다. 개울가에서 둘이 신을 잃고 울던 걸 기억하는 사람들. ${S.flags.parentsGone?'':`${p}${bat(p)?'이':'가'} 맨 앞에 앉아 계속 코를 훌쩍였다.`}
+${n}: “우리 처음 만난 날 기억나?”
+당신: “신 한 짝.”
+${n}: “그거. 그날 너 개울에 뛰어들었잖아.”
+당신: “안 뛰어들었는데. 신 벗어 줬지.”
+${n}: “아니야, 뛰어들었어.”
+몇십 년째 같은 일로 다투었다. 하객들이 웃었다. 둘은 다투면서 맞절을 했다.
+고개를 드니 ${n}${bat(n)?'이':'가'} 품에서 무언가를 꺼냈다. 감자 두 알이었다. 삶은 감자.
+${n}: “첫 거래. 이자 쳐서 갚는 거야. 평생 할부로.”`;};
+const CF_CON=S=>{const n=cfN(S);return `고목 아래에 ${n}${bat(n)?'이':'가'} 앉아 있었다. 당신이 혼인했다는 소식을 듣고 사흘을 걸어왔다고 했다.
+${n}: “축하해. 진짜로.”
+당신: “…”
+${n}: “근데 이상해. 축하하는데 왜 이렇게 숨이 차지.”
+${n}${bat(n)?'이':'가'} 웃었다. 열여섯 원소절 그날처럼, 너무 빨리.
+${n}: “동무로 평생 곁에 있으려고 했는데, 그게 안 되더라. 둘째 자리라도… 고목 아래 같이 누울 자리 하나만.”`;};
+Object.assign(WED_SCENE,{cfriend:CF_WED});Object.assign(CONCUB,{cfriend:CF_CON});
+/* 반려가 된 동무의 늘그막 */
+E({id:'cfLastW',tag:'love',t:'고목 아래, 둘이서',a:[50,95],force:S=>S.spouse==='cfriend'&&cf(S)&&!cf(S).dead&&!S.seen.cfLastW&&!S.chain&&S.age>=(cf(S).at3||60),
+ x:S=>{const n=cfN(S);return `머리가 하얗게 센 ${n}${bat(n)?'이':'가'} 고목 아래 평상에 누워 있었다. 요즘 들어 부쩍 그 자리에 오래 누웠다.
+${n}: “이리 와. 누워.”
+당신이 옆에 누웠다. 나뭇잎 사이로 하늘이 보였다. 여섯 살 그날처럼.
+${n}: “약속 지켰네. 늙어서도 여기 와서 눕기.”
+당신: “둘이서.”
+${n}: “응. 둘이서.”
+${n}${bat(n)?'이':'가'} 당신 손을 찾아 쥐었다. 평생 쥐던 손이었다. 조금 차가웠다.
+${n}: “나 먼저 가도 서운해하지 마. 개울에 신 떠내려가듯 그렇게 가는 거야. 울면 신이 돌아와?”
+당신: “…안 돌아오지.”
+${n}: “그러니까 우는 거잖아.”
+${n}${bat(n)?'이':'가'} 웃었다. 처음 만난 날, 개울가에서 울다 웃던 그 얼굴로.`;},
+ ch:[{t:'손을 놓지 않는다',go:S=>{const c=cf(S);c.dead=1;S.dead_npc.cfriend=1;S.flags.widowed=1;(S.wu||(S.wu={})).grief=1;A(S,{mood:-15,cult:10});deed(S,`평생의 동무이자 반려 ${jo(c.n,'의','의')} 마지막을 지켰다`.replace('의의','의'));return '바람이 불었다. 잎사귀가 한꺼번에 소리를 냈다. 당신은 그 손을 해가 질 때까지 놓지 않았다. 그해 봄, 고목에 새순이 돋았다. 껍질에 새긴 두 이름 바로 위에서.';}}]});
+{const e=EV.find(x=>x.id==='cfLast');if(e){const of=e.force;e.force=S=>S.spouse!=='cfriend'&&of(S);}}
+['cfSpark','cfConfess','cfLastW'].forEach(id=>JOB_OK.add(id));
+
 /* 처음 마주친 인연의 첫 만남 이야기를 순서대로 띄운다 */
 function fmNext(S){const f=S.flags.fmAt||(S.flags.fmAt={});
   if(!S.flags.fmInit){S.flags.fmInit=1;for(const id of romList(S))if(S.met[id])f[id]=-99;}
@@ -11687,10 +11761,11 @@ const MOB_RULE=[[/엄마|어머니|아낙|주모|아주머니/,'woman'],[/할머
  [/자객|살수/,'assassin'],[/사자$/,'envoy'],[/부문주/,'man'],[/객잔 주인|점소이|장사|상인|짐꾼|엿장수|국숫집|주인/,'merchant'],[/시비|시녀/,'maid'],[/노인|영감|할아버지|노고수|원수|노형/,'old_m'],
  [/아버지|사내|표두/,'man'],[/아이|꼬마|소년|손자|손주/,'kid_m'],[/소녀|계집/,'kid_f'],[/사저|여협|낭자|소저/,'youth_f'],[/검객|무사|무인|사형|제자|표사|형님|도전자|자식/,'youth_m']];
 function mobOf(S,nm){if(!nm)return null;const c=S.flags&&S.flags.cf;
-  if(c&&nm===c.n){const a=S.age;return a<14?(c.sex==='f'?'kid_f':'kid_m'):a<45?(c.sex==='f'?'youth_f':'youth_m'):(c.sex==='f'?'old_f':'old_m');}
+  if(c&&nm===c.n){const a=S.age,f=c.sex==='f';return a<14?(f?'cf_kid_f':'cf_kid_m'):a<50?(f?'cf_f':'cf_m'):(f?'cf_old_f':'cf_old_m');}
+  {const o=typeof mobOrg==='function'&&mobOrg(S,nm);if(o&&MOB[o])return o;const r2=typeof MOB_RULE2!=='undefined'&&MOB_RULE2.find(([re])=>re.test(nm));if(r2)return r2[1];}
   if(nm===parentOf(S))return /어머니|할멈/.test(nm)?(S.age>=40?'old_f':'woman'):(S.age>=40?'old_m':'man');
   const r=MOB_RULE.find(([re])=>re.test(nm));return r?r[1]:null;}
-const castKey=x=>x.startsWith('mob:')?x:'st:'+x;
+const castKey=x=>x.startsWith('mob:')?x:x==='cfriend'?'mob:'+(mobOf(S,cfN(S))||'cf_f'):'st:'+x;
 const beatKey=(S,b)=>b.s==='@'?(mobOf(S,b.n)?'mob:'+mobOf(S,b.n):null):b.s;
 
 {const e=EV.find(x=>x.id==='wedding');if(e){const ox=e.x;e._src=Object.values(WED_SCENE).map(String).join(' ')+String(ox);e.x=S=>WED_SCENE[S.spouse]?WED_SCENE[S.spouse](S)+'\n\n어떤 혼례를 올릴까?':ox(S);}}
@@ -12007,7 +12082,7 @@ function saveHall(h){try{localStorage.setItem(HKEY,JSON.stringify(h));}catch(e){
 const NAI_URL='https://image.novelai.net/ai/generate-image';
 const NAI_MODELS=[['nai-diffusion-4-5-full','V4.5 Full'],['nai-diffusion-4-5-curated','V4.5 Curated'],['nai-diffusion-5-full','V5 Full'],['nai-diffusion-5-curated','V5 Curated'],['nai-diffusion-4-full','V4 Full']];
 const NAI_Q={'nai-diffusion-5-full':'very aesthetic, masterpiece, best quality','nai-diffusion-5-curated':'very aesthetic, masterpiece, best quality','nai-diffusion-4-5-full':'very aesthetic, masterpiece, no text','nai-diffusion-4-5-curated':'location, masterpiece, no text','nai-diffusion-4-full':'no text, best quality, very aesthetic, absurdres'};
-const GAME_VER='2026.10.25-45';
+const GAME_VER='2026.10.25-46';
 const NAI_NEG='nsfw, nude, lowres, bad anatomy, bad hands, missing fingers, extra digits, text, watermark, signature, logo, worst quality, low quality, blurry, modern clothes, glasses, eyewear, jpeg artifacts';
 const NKEY='murim-nai';
 function ncfg(){let c={};try{c=JSON.parse(localStorage.getItem(NKEY)||'{}');}catch(e){}return Object.assign({key:'',relay:'',model:'nai-diffusion-4-5-full',style:'wuxia, ancient china, hanfu, detailed illustration, cinematic lighting',autoEv:false,autoPc:false,vn:true,neg:NAI_NEG,tnpc:'',tev:'',tmap:'',q:true},c,{pr:Object.assign({},c.pr)});}
@@ -12343,6 +12418,59 @@ const ORG_TAGS={binggung:'white and silver robes, ice palace, frost',namgung:'bl
   huashan:'white hanfu, plum blossom pattern, plum blossoms',emei:'white robes, buddhist sword maiden',kunlun:'white fur-trimmed robes, snowy mountain',beggar:'ragged patched robes, wine gourd, bamboo staff',
   bandit:'bandit, fur vest, headband, scar',jangsu:'river pirate, straw hat, spear, wooden boat, yangtze river',haomun:'servant clothes, sly smile',gwiyeong:'black assassin outfit, mask',salmak:'black assassin outfit, face mask, hood, daggers',
   manhwa:'elegant colorful hanfu, folding fan, flower hair ornament',demon:'black and red robes, demonic cult, dark aura',blood:'crimson robes, blood cult, red aura'};
+/* ══ 모브 늘리기 ══ 문파마다 제자(남·여)와 장로, 흑도·녹림·관·저잣거리 사람들. 모브는 얼굴 없이(faceless) 그린다.
+   소꿉동무는 모브가 아니라 얼굴이 있는 칸(cf_*)을 따로 쓴다 */
+(()=>{const ot=o=>{const g=ORG_TAGS[o];try{return typeof g==='function'?g({sex:'m'}):g||'';}catch(e){return '';}},otf=o=>{const g=ORG_TAGS[o];try{return typeof g==='function'?g({sex:'f'}):g||'';}catch(e){return '';}};
+ for(const o in ORGS){const n=ORGS[o].n;
+  MOB['d_'+o]={n:`${n} 제자`,t:`1boy, solo, young martial artist, ${ot(o)}`};
+  MOB['f_'+o]={n:`${n} 여제자`,t:`1girl, solo, young female martial artist, ${otf(o)}`};
+  MOB['e_'+o]={n:`${n} 장로`,t:`1boy, solo, old man, sect elder, long grey beard, dignified, ${ot(o)}`};}
+ Object.assign(MOB,{
+  heukdo:{n:'흑도 무사',t:'1boy, solo, black-clad swordsman, gangster, scar, black headband, sneering, dao on shoulder'},
+  heukdo_boss:{n:'흑도 두목',t:'1boy, solo, gang boss, big muscular man, black fur coat, gold rings, broadsword, menacing'},
+  nokrim:{n:'녹림 산적',t:'1boy, solo, mountain bandit, fur vest, headband, axe, rough beard'},
+  nokrim_boss:{n:'녹림 채주',t:'1boy, solo, bandit chief, huge man, tiger pelt cloak, giant saber, scarred'},
+  sujeok:{n:'수적',t:'1boy, solo, river pirate, straw hat, bare arms, harpoon, wet clothes'},
+  pyosa:{n:'표사',t:'1boy, solo, armed escort guard, leather armor, saber, escort flag, rugged'},
+  gwanbyeong:{n:'관병',t:'1boy, solo, imperial soldier, lamellar armor, helmet, spear'},
+  pojol:{n:'포졸',t:'1boy, solo, constable, red and black uniform, cloth hat, wooden club'},
+  dongchang:{n:'동창 무사',t:'1boy, solo, eunuch agent, dongchang, black official robe, embroidered spring knife, cold'},
+  jeomsoi:{n:'점소이',t:'1boy, solo, young inn waiter, cloth on shoulder, apron, holding teapot'},
+  jumo:{n:'주모',t:'1girl, solo, middle-aged tavern keeper, apron, sleeves rolled up, wine jar'},
+  gisaeng:{n:'기녀',t:'1girl, solo, courtesan, elegant layered hanfu, hair ornaments, holding fan'},
+  akssa:{n:'악사',t:'1boy, solo, wandering musician, erhu, worn robes'},
+  farmer:{n:'농부',t:'1boy, solo, farmer, straw hat, hoe, rolled up trousers'},
+  farmer_f:{n:'아낙(농가)',t:'1girl, solo, farm woman, headscarf, basket of vegetables'},
+  fisher:{n:'뱃사공',t:'1boy, solo, boatman, bamboo hat, oar, river'},
+  hunter:{n:'사냥꾼',t:'1boy, solo, hunter, fur hat, bow, quiver'},
+  traveler:{n:'나그네',t:'1boy, solo, traveler, bamboo hat, travel bundle, walking stick, dusty cloak'},
+  drunk:{n:'취객',t:'1boy, solo, drunk man, red cheeks, wine jug, disheveled robe'},
+  gambler:{n:'노름꾼',t:'1boy, solo, gambler, dice, sly grin, cheap silk robe'},
+  sabeom:{n:'무관 사범',t:'1boy, solo, martial arts instructor, muscular, training clothes, wooden staff'},
+  uinyeo:{n:'의녀',t:'1girl, solo, female physician, medicine box, plain robes, apron'},
+  nobi:{n:'하인',t:'1boy, solo, servant, plain grey clothes, bowing'},
+  nobi_f:{n:'하녀',t:'1girl, solo, servant girl, plain clothes, carrying bucket'},
+  soldier:{n:'병사',t:'1boy, solo, soldier, armor, shield, spear'},
+  general:{n:'장수',t:'1boy, solo, general, ornate armor, red cape, halberd'},
+  storyteller:{n:'설서인',t:'1boy, solo, storyteller, folding fan, gesturing, teahouse'},
+  kid_beggar:{n:'거지 아이',t:'1boy, solo, small beggar child, ragged clothes, bare feet, bowl'},
+  // 소꿉동무: 얼굴이 있다
+  cf_kid_m:{n:'소꿉동무 · 어린 사내아이',t:'1boy, solo, child, little boy, round face, bright eyes, patched peasant clothes, grin',face:1},
+  cf_kid_f:{n:'소꿉동무 · 어린 계집아이',t:'1girl, solo, child, little girl, round face, bright eyes, braided hair, patched peasant clothes, grin',face:1},
+  cf_m:{n:'소꿉동무 · 사내',t:'1boy, solo, young man, warm eyes, simple hanfu, tanned, friendly smile',face:1},
+  cf_f:{n:'소꿉동무 · 여인',t:'1girl, solo, young woman, warm eyes, simple hanfu, braided hair, friendly smile',face:1},
+  cf_old_m:{n:'소꿉동무 · 노인',t:'1boy, solo, old man, white hair, kind wrinkles, simple robe, warm smile',face:1},
+  cf_old_f:{n:'소꿉동무 · 노파',t:'1girl, solo, old woman, white hair bun, kind wrinkles, simple robe, warm smile',face:1}});
+})();
+const ORG_ALIAS=(()=>{const a=[];for(const o in ORGS){const n=ORGS[o].n;a.push([n,o]);const s=n.replace(/(세가|가|파|사|궁|맹|채|루|방|신교|교|문)$/,'');if(s.length>=2&&s!==n)a.push([s,o]);}
+  a.push(['마교','demon'],['교도','demon'],['산적','bandit'],['수적','jangsu'],['살수','salmak'],['거지','beggar']);return a.sort((x,y)=>y[0].length-x[0].length);})();
+const MOB_ELDER=/장로|장문|원로|태상|문주|교주|방주|련주|채주|궁주|가주|호법|당주/,MOB_FEM=/사저|사매|여제자|여협|소저|낭자|비구니|성녀|궁녀/;
+const MOB_RULE2=[[/흑도.*(두목|대장|우두머리)/,'heukdo_boss'],[/흑도|칼잡이|낭인/,'heukdo'],[/녹림.*(채주|두목)|산채 두목/,'nokrim_boss'],[/녹림|산적/,'nokrim'],[/수적/,'sujeok'],[/표사|표두/,'pyosa'],[/동창|제독/,'dongchang'],[/관병|관군/,'gwanbyeong'],[/포졸|포두|포쾌/,'pojol'],
+ [/점소이/,'jeomsoi'],[/주모/,'jumo'],[/기녀|기생/,'gisaeng'],[/악사/,'akssa'],[/농부/,'farmer'],[/뱃사공|어부/,'fisher'],[/사냥꾼/,'hunter'],[/나그네|길손/,'traveler'],[/취객|술꾼/,'drunk'],[/노름꾼|도박/,'gambler'],[/사범|교두/,'sabeom'],[/의녀/,'uinyeo'],[/하녀/,'nobi_f'],[/하인|노비|종놈/,'nobi'],[/^장수$|장군/,'general'],[/병사|군졸/,'soldier'],[/설서인/,'storyteller'],[/거지 아이/,'kid_beggar']];
+function mobOrg(S,nm){const hit=ORG_ALIAS.find(([a])=>nm.includes(a));let o=hit&&hit[1];
+  if(!o&&/^(사형|사저|사제|사매|제자|동문|사숙|사백)/.test(nm)&&S.org)o=S.org;if(!o&&MOB_ELDER.test(nm)&&/^(장로|원로|장문인|집법 장로|태상장로)$/.test(nm)&&S.org)o=S.org;
+  if(!o||!ORGS[o])return null;if(MOB_ELDER.test(nm)&&!/제자/.test(nm))return 'e_'+o;return (MOB_FEM.test(nm)||o==='emei')?'f_'+o:'d_'+o;}
+
 const WP_TAGS={검:'holding sword',도:'holding dao, broadsword',권:'martial arts stance, fists',창:'holding spear',봉:'holding staff',암기:'throwing knives between fingers',음공:'playing guqin',선:'holding folding fan'};
 /* 겉나이: 환골탈태하면 몸이 스무 살 남짓으로 다시 짜이고 그 뒤로는 천천히 늙는다. 현경 이상은 반로환동으로 늙음이 멈춘다 */
 function lookAge(S){let a=S.age;const h=S.flags&&S.flags.hwangolAt;if(h!=null&&S.age>=h&&S.age>=22)a=Math.min(a,22+(S.age-h)*.35);if(S.realm>=7&&a>40)a=Math.max(40,a-(S.realm-6)*15);return Math.round(a);}
@@ -12425,7 +12553,7 @@ function traitsHTML(s,full){const t=s.traits.map(k=>`<span class="chip t" title=
   ['극양지체','극음지체'].forEach(k=>{if(s.flags[k])t.push(`<span class="chip t">${k}</span>`);});if(s.flags.hwangol)t.push('<span class="chip t">환골탈태</span>');
   return t.length?`<div class="chips">${t.join('')}</div>${full?`<div class="muted small">${s.traits.map(k=>`<b>${TRAITS[k].n}</b> ${esc(TRAITS[k].d)} <span style="color:var(--seal)">제약: ${esc(TCON[k]||'없음')}</span>`).join('<br>')}</div>`:''}`:'';}
 function portrait(k,label,cls){const u=imgURL(k)||(k.startsWith('st:')?imgURL('npc:'+k.slice(3)):null);return `<button class="portrait ${u?'has':''} ${cls||''}" data-a="draw" data-k="${esc(k)}" aria-label="${esc(label)} 그림">${u?`<img src="${u}" alt="">`:BUSY.has(k)?'그리는 중':'그림'}</button>`;}
-function basePrompt(k){const [t,id]=k.split(/:(.+)/);if(t==='mob')return (MOB[id]?MOB[id].t:'1boy, solo')+', cowboy shot, standing, white background';if(t==='st'){const g=NPC_TAGS[id];return (typeof g==='function'?g(S):g)+', cowboy shot, standing, white background';}return t==='bg'?loveBgPrompt(id):t==='wp'?(WPN_IMG_TAGS[id]||'one chinese weapon'):t==='cg'?cgPrompt(id):t==='pc'?pcPrompt(S):t==='npc'?npcPrompt(id,S):t==='map'?MAP_TAG:t==='reg'?(REG_TAGS[id]||'ancient chinese landscape')+', scenery, wide shot, cinematic composition, no humans':evPrompt(id);}
+function basePrompt(k){const [t,id]=k.split(/:(.+)/);if(t==='mob'){const m=MOB[id];return (m?m.t:'1boy, solo')+(m&&m.face?'':', faceless, no facial features, blank face')+', cowboy shot, standing, white background';}if(t==='st'){const g=NPC_TAGS[id];return (typeof g==='function'?g(S):g)+', cowboy shot, standing, white background';}return t==='bg'?loveBgPrompt(id):t==='wp'?(WPN_IMG_TAGS[id]||'one chinese weapon'):t==='cg'?cgPrompt(id):t==='pc'?pcPrompt(S):t==='npc'?npcPrompt(id,S):t==='map'?MAP_TAG:t==='reg'?(REG_TAGS[id]||'ancient chinese landscape')+', scenery, wide shot, cinematic composition, no humans':evPrompt(id);}
 function slotPrompt(k){const p=ncfg().pr[k];return p&&p.trim()?p:basePrompt(k);}
 function modalHTML(){if(!modal)return '';if(modal.t==='story')return storyListHTML();if(modal.t==='storyEv')return storyEvHTML();
   if(modal.t==='nai'){const c=modal.c;return `<div class="modal" data-a="mbg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mt"><h3 id="mt">설정 <span class="muted small" style="font-weight:400">· 판 ${GAME_VER}</span></h3>${S.phase!=='birth'&&S.phase!=='end'?`<div class="row" style="justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:10px"><span class="small muted">이번 생을 접고 처음으로 돌아간다.</span><button class="ghost" data-a="quit">${modal.sure?'정말 포기한다':'처음으로'}</button></div>`:''}<p class="grp-t" style="margin:0">그림</p>
