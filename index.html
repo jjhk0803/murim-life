@@ -476,6 +476,7 @@ const WP_KO=Object.fromEntries(Object.entries(WP_EN).map(([k,v])=>[v,k]));
 const WP_LABEL={검:'검(劍) · 곧은 양날',도:'도(刀) · 휜 외날',권:'권갑(拳甲) · 주먹에 끼는',창:'창(槍) · 긴 자루',봉:'봉(棍) · 곤봉',암기:'암기(暗器) · 비도·비침',음공:'금(琴) · 소리로 싸운다',선:'철선(鐵扇) · 쇠 부채'};
 const WPN_IMG_TAGS={sword:'one chinese straight sword (jian), double-edged blade, simple crossguard, wrapped grip, round pommel, no scabbard',saber:'one chinese saber (dao), single curved broad blade, ring pommel, wrapped grip, no scabbard',gauntlet:'one iron martial arts gauntlet, single glove, knuckle plates, leather straps',spear:'one chinese spear (qiang), long wooden shaft, leaf-shaped steel spearhead, small red tassel',staff:'one long wooden fighting staff, iron caps on both ends',dart:'one throwing dagger (biao), small leaf-shaped blade, short handle with red cloth tail',zither:'one chinese guqin zither, seven strings, dark lacquered wood',fan:'one iron war fan, folded shut, steel ribs'};
 const WP_STYLE='single object, only one item, solo item, lying diagonally across the frame from bottom left to top right, entire object visible, flat lay, top-down view, plain dark grey textured stone surface, no humans, no hands, clean composition, sharp focus, highly detailed, realistic, product photography lighting';
+const CG_NEG='old, elderly, aged, old man, old woman, wrinkles, white hair, grey hair';
 const WP_NEG='multiple weapons, two, pair, set, many, duplicate, collection, rack, display stand, scabbard, person, hands, text, watermark';
 const WP_SVG={검:'<path d="M4 20 L17 7 M15 5 l4 4 M13 9 l2 2 M3 21 l2-2"/>',도:'<path d="M5 19 C9 15 14 8 19 4 C18 9 13 15 7 20 Z M4 20 l2-2"/>',권:'<path d="M7 11 v-3 a1.5 1.5 0 0 1 3 0 v2 v-3 a1.5 1.5 0 0 1 3 0 v3 v-2 a1.5 1.5 0 0 1 3 0 v6 c0 3-2 5-5 5 h-1 c-2 0-4-2-4-4 v-3 Z"/>',
  창:'<path d="M3 21 L18 6 M18 6 l3-3 l-1 4 l-3 1 Z M14 10 l-2-3 M14 10 l3 2"/>',봉:'<path d="M3 21 L21 3 M5 19 l2 2 M17 3 l4 4"/>',암기:'<path d="M5 5 l6 6 M5 5 l2 0 M5 5 l0 2 M12 3 v8 M12 3 l-1 2 M12 3 l1 2 M19 5 l-6 6 M19 5 l-2 0 M19 5 l0 2 M8 16 h8 M8 19 h8"/>',
@@ -3448,19 +3449,19 @@ const ENDINGS=[
  ['domMa','마도천하','魔',S=>S.titles.includes('마도천하의 주인'),S=>'십만의 함성이 산을 넘었다. “마도천하! 만마앙복!” 단상 위의 당신은 끝내 웃지 않았다. 웃을 일이 남아 있지 않았다.','dark lord on throne above kneeling multitude, black banners, ink storm'],
  ['domJeong','정도천하','正',S=>S.titles.includes('정도천하를 연 협객'),S=>'매화가 지는 광장에서 백도의 칼들이 하늘로 솟았다. 그 숲 가운데에 당신이 있었다. 그날의 강호는 그림처럼 아름다웠다.','righteous hero raising sword among hundreds of raised swords, plum blossom petals'],
  ['domSa','사도천하','邪',S=>S.titles.includes('사도천하의 련주'),S=>'장강에 배 천 척이 불을 밝혔다. 의리 하나로 묶인 얼굴들 사이에서 당신은 마지막 잔을 들었다.','outlaw leader raising wine cup on ship deck, thousand lantern boats on river at night'],
- ['harem','시끄러운 집','家',S=>S.harem&&S.harem.filter(id=>!S.dead_npc[id]).length>=2,S=>'마당이 넓은 집은 늘 시끄러웠다. 강호에서 가장 시끄럽고, 가장 따뜻한 집이었다. 마지막 날에도 그 집은 시끄러웠다. 다들 울고 있었으니까.','bustling courtyard house, several figures around old person on veranda, warm, falling leaves'],
+ ['harem','시끄러운 집','家',S=>S.harem&&S.harem.filter(id=>!S.dead_npc[id]).length>=2,S=>'마당이 넓은 집은 늘 시끄러웠다. 강호에서 가장 시끄럽고, 가장 따뜻한 집이었다. 마지막 날에도 그 집은 시끄러웠다. 다들 울고 있었으니까.','bustling courtyard house, several figures gathered on veranda, warm, falling leaves'],
  ['tragic','엇갈린 약속','淚',S=>Object.keys(S.flags).some(k=>/^rj_/.test(k)&&S.flags[k]==='tragedy'),S=>'관에서 깨어났을 때 곁에는 식은 손이 있었다. 그 뒤로 당신은 평생, 약속 시간보다 일찍 나갔다.','lone figure kneeling beside coffin, single candle, falling petals, sorrow'],
- ['elope','모든 것을 버리고','逃',S=>Object.keys(S.flags).some(k=>/^rj_/.test(k)&&['elope','feign'].includes(S.flags[k])),S=>'깃발도 이름도 버렸다. 남쪽 바닷가 작은 집에서 둘은 늙었다. 강호는 둘을 잊었고, 둘은 그게 좋았다.','two old figures on seaside cliff, small hut, fishing boat, sunset'],
+ ['elope','모든 것을 버리고','逃',S=>Object.keys(S.flags).some(k=>/^rj_/.test(k)&&['elope','feign'].includes(S.flags[k])),S=>'깃발도 이름도 버렸다. 남쪽 바닷가 작은 집에서 둘은 늙었다. 강호는 둘을 잊었고, 둘은 그게 좋았다.','two figures side by side on seaside cliff, small hut, fishing boat, sunset'],
  ['head','한 문파의 주인','宗',S=>S.rank>=4&&!!S.org,S=>S=>'',''],
  ['inn','객잔의 등불','燈',S=>S.job==='inn',S=>'객잔 등불은 밤새 꺼지지 않았다. 길 잃은 길손들이 그 불빛을 보고 길을 찾았다. 마지막 밤에도 당신은 등불을 갈았다.','lantern lit inn at night on mountain road, travelers arriving, snow'],
  ['smith','쇠의 노래','鐵',S=>S.job==='smith',S=>'풀무가 식은 아침, 대장간 벽에 걸린 칼들이 일제히 울었다. 당신이 벼린 쇠들이었다.','blacksmith forge, wall of swords, cold furnace, morning light, hammer on anvil'],
  ['doctor','인술','醫',S=>S.job==='doctor',S=>'약방 문 앞에 신발이 줄을 섰다. 당신이 살린 사람들이었다. 마지막 처방전에는 한 줄만 적혀 있었다. “아프지 마라.”','herbal clinic at dawn, line of people with lanterns at door, herbs drying'],
  ['villain','대마두','狂',S=>S.moral<=-60,S=>'세상이 마두라 불렀다. 끝내 변명하지 않았다. 당신의 무덤에는 아무도 오지 않았다. 바람만 왔다.','fearsome figure in tattered robes on battlefield, crows, broken swords, wind'],
  ['hero','대협','俠',S=>S.moral>=60,S=>'칼로 산을 넘고 정으로 사람을 건넜다. 장례 날, 이름 모를 사람들이 산길을 메웠다. 다들 당신에게 빚이 있다고 했다.','long procession of mourners on mountain path, white banners, hero tomb, mist'],
- ['hermit','은거','隱',S=>S.age>=60&&(S.cult>=90||!!S.flags.seondo),S=>'칼을 대들보에 올리고 차를 끓였다. 구름이 오가는 것을 보다가, 어느 날 구름과 함께 흩어졌다.','old hermit pouring tea in mountain hut, sword on roof beam, clouds drifting'],
+ ['hermit','은거','隱',S=>S.age>=60&&(S.cult>=90||!!S.flags.seondo),S=>'칼을 대들보에 올리고 차를 끓였다. 구름이 오가는 것을 보다가, 어느 날 구름과 함께 흩어졌다.','hermit pouring tea in mountain hut, sword on roof beam, clouds drifting'],
  ['early','요절','夭',S=>S.age<30&&S.dead!=='우화등선',S=>'너무 일찍 꺼진 불이었다. 그래도 그 짧은 불빛을 기억하는 사람이 있었다.','young figure fallen under cherry tree, petals covering, sword beside, quiet'],
  ['battle','칼끝의 최후','刃',S=>/싸움|주화입마|자객|살수/.test(S.dead||''),S=>'마지막 일 합에서 당신의 칼이 조금 늦었다. 쓰러지며 본 하늘이 맑았다. 나쁘지 않은 끝이었다.','warrior falling backwards in duel, swords crossing, ink splatter, rain'],
- ['ordinary','범부의 일생','凡',S=>S.realm<=2&&!S.job,S=>'이름 없는 풀도 봄을 안다. 당신은 제 몫의 봄을 다 살았다. 그것으로 충분했다.','village field in spring, old farmer resting under tree, children playing'],
+ ['ordinary','범부의 일생','凡',S=>S.realm<=2&&!S.job,S=>'이름 없는 풀도 봄을 안다. 당신은 제 몫의 봄을 다 살았다. 그것으로 충분했다.','village field in spring, farmer resting under tree, children playing'],
  ['wander','강호의 나그네','旅',S=>true,S=>'부평초처럼 떠돌았다. 머무는 곳마다 꽃이 피었다. 마지막 길도 혼자였지만, 외롭지 않았다.','lone wanderer with bamboo hat walking away on long road, distant mountains, wind']];
 ENDINGS.find(e=>e[0]==='head')[4]=S=>`${ORGS[S.org].n}의 ${ORGS[S.org].ranks[4]}. 마지막 날 제자들이 산문 앞에 줄지어 섰다. 당신은 그들의 얼굴을 하나하나 보았다. 다 당신을 닮아 있었다.`;
 ENDINGS.find(e=>e[0]==='head')[5]='sect master on mountain gate stairs, rows of disciples bowing, banners, morning mist';
@@ -3489,7 +3490,7 @@ function cgViewHTML(){const k=modal.k,id=k.slice(3),e=ENDINGS.find(x=>x[0]===id)
  return `<div class="modal" data-a="mbg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mt"><h3 id="mt" style="margin:0">${esc(cap)}</h3>${cgFrame(k,e?e[2]:'緣',cap)}<p class="cgt">${esc(txt)}</p><div class="row" style="justify-content:flex-end"><button class="ghost" data-a="mclose">← 목록으로</button></div></div></div>`;}
 const cgSlots=()=>[...ENDINGS.map(e=>'cg:'+e[0]),...[...new Set(Object.keys(LOVE).concat(LOVE_X.m,LOVE_X.f))].filter(id=>NPCS[id]).map(id=>'cg:love_'+id)];
 const cgName=id=>{const e=ENDINGS.find(x=>x[0]===id);return e?`결말 · ${e[1]}`:/^love_/.test(id)&&NPCS[id.slice(5)]?`함께 · ${NPCS[id.slice(5)].n}`:id;};
-const cgPrompt=id=>{const e=ENDINGS.find(x=>x[0]===id);return e?e[5]+', main figure seen from behind, face not visible':/^love_/.test(id)?cgLovePrompt(id.slice(5)):'';};
+const cgPrompt=id=>{const e=ENDINGS.find(x=>x[0]===id);return e?e[5]+', young adult, main figure seen from behind, face not visible':/^love_/.test(id)?cgLovePrompt(id.slice(5)):'';};
 
 /* ══ 일대기: 삶을 한 권의 책(○○록)으로 엮는다. AI가 엮을 수도 있다 ══ */
 function bookFallback(S){const syl=[];
@@ -3780,6 +3781,7 @@ function saveHall(h){try{localStorage.setItem(HKEY,JSON.stringify(h));}catch(e){
 const NAI_URL='https://image.novelai.net/ai/generate-image';
 const NAI_MODELS=[['nai-diffusion-4-5-full','V4.5 Full'],['nai-diffusion-4-5-curated','V4.5 Curated'],['nai-diffusion-5-full','V5 Full'],['nai-diffusion-5-curated','V5 Curated'],['nai-diffusion-4-full','V4 Full']];
 const NAI_Q={'nai-diffusion-5-full':'very aesthetic, masterpiece, best quality','nai-diffusion-5-curated':'very aesthetic, masterpiece, best quality','nai-diffusion-4-5-full':'very aesthetic, masterpiece, no text','nai-diffusion-4-5-curated':'location, masterpiece, no text','nai-diffusion-4-full':'no text, best quality, very aesthetic, absurdres'};
+const GAME_VER='2026.10.25-28';
 const NAI_NEG='nsfw, nude, lowres, bad anatomy, bad hands, missing fingers, extra digits, text, watermark, signature, logo, worst quality, low quality, blurry, modern clothes, jpeg artifacts';
 const NKEY='murim-nai';
 function ncfg(){let c={};try{c=JSON.parse(localStorage.getItem(NKEY)||'{}');}catch(e){}return Object.assign({key:'',relay:'',model:'nai-diffusion-4-5-full',style:'wuxia, ancient china, hanfu, detailed illustration, cinematic lighting',autoEv:false,autoPc:false,neg:NAI_NEG,tnpc:'',tev:'',tmap:'',q:true},c,{pr:Object.assign({},c.pr)});}
@@ -3788,6 +3790,11 @@ let _db=null;
 function idb(){if(!_db)_db=new Promise((res,rej)=>{try{const r=indexedDB.open('murim-img',1);r.onupgradeneeded=()=>r.result.createObjectStore('img');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);}catch(e){rej(e);}});return _db;}
 async function imgGet(k){try{const db=await idb();return await new Promise(res=>{const q=db.transaction('img').objectStore('img').get(k);q.onsuccess=()=>res(q.result||null);q.onerror=()=>res(null);});}catch(e){return null;}}
 async function imgPut(k,b){const db=await idb();await new Promise((res,rej)=>{const t=db.transaction('img','readwrite');t.objectStore('img').put(b,k);t.oncomplete=res;t.onerror=()=>rej(t.error);});}
+// 한 번만: 인연 이야기 장면을 사람마다 배경 하나로 바꾸면서 쓰지 않게 된 옛 그림과, 예전 CG·병기 프롬프트 고친 것을 정리한다
+async function cleanupV26(){try{if(localStorage.getItem('murim-clean26'))return;const db=await idb();const keys=await new Promise((res,rej)=>{const q=db.transaction('img').objectStore('img').getAllKeys();q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);});
+  for(const k of keys)if(typeof k==='string'&&/^((raw|wk):)?ev:lv_/.test(k))await imgDel(k);
+  const c=ncfg();let ch=0;for(const k in c.pr)if(/^(cg|wp):|^ev:lv_/.test(k)){delete c.pr[k];ch=1;}if(ch)nsave(c);localStorage.setItem('murim-clean26','1');}catch(e){}}
+setTimeout(cleanupV26,1500);
 async function imgDel(k){try{const db=await idb();await new Promise(res=>{const t=db.transaction('img','readwrite');t.objectStore('img').delete(k);t.oncomplete=res;t.onerror=res;});}catch(e){}}
 /* 그림 출처는 두 곳이다. 이 브라우저에서 그리거나 넣은 '내 그림'(IndexedDB)이 먼저이고, 없으면 저장소의 img 폴더를 본다.
    img/index.json이 있으면 그 목록을 따르고, 목록에 없는 칸은 이름 규칙(img/npc/seorin.png 등)대로 찾아본다. 주인공 초상(pc:)은 저장소에서 찾지 않는다. */
@@ -3799,7 +3806,7 @@ function repoPath(k,ext){ext=ext||'png';if(k==='map')return 'map.'+ext;const [t,
 function probe(k){if(!PROBE[k])PROBE[k]=new Promise(res=>{const u=IMG_BASE+repoPath(k),im=new Image();im.onload=()=>res(u);im.onerror=()=>res(null);im.src=u;}).then(u=>{RURL[k]=u;soon();return u;});return PROBE[k];}
 function repoURL(k){if(!REPO_ON||/^pc:/.test(k)||MAN===undefined)return null;if(MAN&&typeof MAN[k]==='string')return IMG_BASE+MAN[k];if(k in RURL)return RURL[k];probe(k);return null;}
 async function repoHas(k){if(!REPO_ON||/^pc:/.test(k))return false;await MANP;if(MAN&&typeof MAN[k]==='string')return true;return !!(await probe(k));}
-function imgSrc(k){const l=localURL(k);if(l)return {u:l,s:'local'};if(!LCHK[k])return null;const r=repoURL(k);return r?{u:r,s:'repo'}:null;}
+function imgSrc(k){if(/^ev:lv_/.test(k))return null;const l=localURL(k);if(l)return {u:l,s:'local'};if(!LCHK[k])return null;const r=repoURL(k);return r?{u:r,s:'repo'}:null;}
 function imgURL(k){const x=imgSrc(k);return x?x.u:null;}
 function setImg(k,b){if(URLS[k])URL.revokeObjectURL(URLS[k]);URLS[k]=b?URL.createObjectURL(b):null;LCHK[k]=1;}
 MANP=fetch(IMG_BASE+'index.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(j=>{MAN=j&&typeof j==='object'?(j.files||j):null;}).catch(()=>{MAN=null;}).then(()=>soon());
@@ -3973,7 +3980,7 @@ async function storeSlot(k,b){ // 스탠딩은 원본을 raw:로 남기고 배�
   await imgPut(k,b);setImg(k,b);}
 async function drawSlot(k,prompt,portrait,quiet){if(BUSY.has(k))return '이미 그리는 중';BUSY.add(k);if(modal&&modal.k===k){modal.err='';}render();
   try{let b;const tp=k.startsWith('st:')&&ncfg().v5tp!==false&&!NAI_TP_OFF;
-    const go=async t=>{try{return await naiDraw(fullPrompt(k,prompt),portrait,{tp:t,negAdd:/^wp:/.test(k)?WP_NEG:''});}catch(e){if(!/잦아요/.test(e.message))throw e;await new Promise(r=>setTimeout(r,8000));return await naiDraw(fullPrompt(k,prompt),portrait,{tp:t,negAdd:/^wp:/.test(k)?WP_NEG:''});}};
+    const go=async t=>{try{return await naiDraw(fullPrompt(k,prompt),portrait,{tp:t,negAdd:/^wp:/.test(k)?WP_NEG:/^cg:/.test(k)?CG_NEG:''});}catch(e){if(!/잦아요/.test(e.message))throw e;await new Promise(r=>setTimeout(r,8000));return await naiDraw(fullPrompt(k,prompt),portrait,{tp:t,negAdd:/^wp:/.test(k)?WP_NEG:/^cg:/.test(k)?CG_NEG:''});}};
     if(tp){try{b=await go(true);}catch(e){if(/토큰|Anlas|연결/.test(e.message))throw e;NAI_TP_OFF=true;toast('투명 배경으로 그리지 못해 흰 배경으로 그렸어요. 다시 켜기 전까지는 흰 배경으로 그려요.');b=await go(false);}}else b=await go(false);
     await storeSlot(k,b);if(modal&&modal.k===k)modal.err='';return true;}
   catch(e){if(modal&&modal.k===k)modal.err=e.message;else if(!quiet)toast(e.message);return e.message;}
@@ -4029,7 +4036,7 @@ function makeZip(files){const enc=new TextEncoder(),parts=[],cen=[];let off=0; /
   return new Blob([...parts,...cen,e.buffer],{type:'application/zip'});}
 async function exportPack(g){g.busy=1;g.msg='묶음을 만드는 중…';render();
   try{const db=await idb();const keys=await new Promise((res,rej)=>{const q=db.transaction('img').objectStore('img').getAllKeys();q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);});
-    const ks=keys.filter(k=>typeof k==='string'&&!k.startsWith('pc:')&&!k.startsWith('raw:')&&!k.startsWith('wk:'));if(!ks.length)throw new Error('내보낼 내 그림이 없어요. 먼저 그림을 그리거나 넣어 주세요.');
+    const ks=keys.filter(k=>typeof k==='string'&&!k.startsWith('pc:')&&!k.startsWith('raw:')&&!k.startsWith('wk:')&&!/^ev:lv_/.test(k));if(!ks.length)throw new Error('내보낼 내 그림이 없어요. 먼저 그림을 그리거나 넣어 주세요.');
     await MANP;const man=Object.assign({},MAN||{}),files=[];
     for(const k of ks){let b=await imgGet(k);if(!b)continue;if(g.webp!==false)b=await toWebp(b);const u8=new Uint8Array(await b.arrayBuffer()),ty=imgType(u8);const p=repoPath(k,ty==='image/webp'?'webp':ty==='image/jpeg'?'jpg':'png');man[k]=p;files.push(['img/'+p,u8]);}
     files.push(['img/index.json',new TextEncoder().encode(JSON.stringify({v:1,files:man},null,1))]);download(makeZip(files),'murim-img.zip');
@@ -4053,7 +4060,7 @@ async function ghPush(g){const c=ncfg(),repo=(c.ghRepo||ghDefault()).trim().repl
     let man={};const mf=await api(`/contents/img/index.json?ref=${encodeURIComponent(br)}`,{ok404:1});
     if(mf&&mf.content){try{const j=JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(mf.content.replace(/\s/g,'')),ch=>ch.charCodeAt(0))));man=Object.assign({},j.files||j);}catch(e){}}
     const old=JSON.stringify(man);
-    const db=await idb();const keys=(await new Promise((res,rej)=>{const q=db.transaction('img').objectStore('img').getAllKeys();q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);})).filter(k=>typeof k==='string'&&!/^(pc|raw|wk):/.test(k));
+    const db=await idb();const keys=(await new Promise((res,rej)=>{const q=db.transaction('img').objectStore('img').getAllKeys();q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);})).filter(k=>typeof k==='string'&&!/^(pc|raw|wk):/.test(k)&&!/^ev:lv_/.test(k));
     if(!keys.length)throw new Error('올릴 내 그림이 없어요. 먼저 그림을 그리거나 넣어 주세요.');
     const entries=[];let done=0,skip=0;
     const one=async k=>{let b=await imgGet(k);if(!b)return;if(g.webp!==false)b=await toWebp(b);
@@ -4146,7 +4153,7 @@ function portrait(k,label,cls){const u=imgURL(k)||(k.startsWith('st:')?imgURL('n
 function basePrompt(k){const [t,id]=k.split(/:(.+)/);if(t==='st'){const g=NPC_TAGS[id];return (typeof g==='function'?g(S):g)+', cowboy shot, standing, white background';}return t==='bg'?loveBgPrompt(id):t==='wp'?(WPN_IMG_TAGS[id]||'one chinese weapon'):t==='cg'?cgPrompt(id):t==='pc'?pcPrompt(S):t==='npc'?npcPrompt(id,S):t==='map'?MAP_TAG:t==='reg'?(REG_TAGS[id]||'ancient chinese landscape')+', scenery, wide shot, cinematic composition, no humans':evPrompt(id);}
 function slotPrompt(k){const p=ncfg().pr[k];return p&&p.trim()?p:basePrompt(k);}
 function modalHTML(){if(!modal)return '';
-  if(modal.t==='nai'){const c=modal.c;return `<div class="modal" data-a="mbg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mt"><h3 id="mt">설정</h3>${S.phase!=='birth'&&S.phase!=='end'?`<div class="row" style="justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:10px"><span class="small muted">이번 생을 접고 처음으로 돌아간다.</span><button class="ghost" data-a="quit">${modal.sure?'정말 포기한다':'처음으로'}</button></div>`:''}<p class="grp-t" style="margin:0">그림</p>
+  if(modal.t==='nai'){const c=modal.c;return `<div class="modal" data-a="mbg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mt"><h3 id="mt">설정 <span class="muted small" style="font-weight:400">· 판 ${GAME_VER}</span></h3>${S.phase!=='birth'&&S.phase!=='end'?`<div class="row" style="justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:10px"><span class="small muted">이번 생을 접고 처음으로 돌아간다.</span><button class="ghost" data-a="quit">${modal.sure?'정말 포기한다':'처음으로'}</button></div>`:''}<p class="grp-t" style="margin:0">그림</p>
    <label class="row"><input type="checkbox" id="n_repo" ${c.useRepo!==false?'checked':''}> 게임에 들어 있는 기본 그림을 쓴다</label>
    <p class="muted small" style="margin:0">끄면 내가 그린 그림만 쓴다. 내 그림체로 전부 새로 그리고 싶을 때 끈다. 켜 두어도 내가 그리거나 넣은 그림이 있는 칸은 내 그림이 먼저 나온다.</p>
    <button class="ghost" data-a="gal" style="padding:8px 10px">그림체 고르기 · 그림 관리 (지도·인물·사건) →</button>
