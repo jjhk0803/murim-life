@@ -340,6 +340,34 @@ defA('tyArt','열양신장','무','권',4,['양','중','강기'],[30,100]);defA(
 defA('oldA','파천신창','무','창',4,['중','강기']);defA('oldB','여의신봉','무','봉',4,['변','강']);defA('oldC','청풍선법','무','선',3,['유','경']);defA('oldD','청심보음','무','음공',3,['율','불']);
 defA('oldE','적염도법','무','도',4,['양','중','쾌'],[20,100]);defA('oldF','한월검','무','검',4,['음','쾌'],[-100,-20]);
 
+/* ══ 심법의 쓰임: 내공(rate)과 음양(push) 말고도, 주 심법으로 삼으면 저마다의 효과가 붙는다 ══
+   exp 수련 배율 · pm 전투력 배율 · dm 받는 피해 배율 · life 수명(년) · bt 벽을 깰 확률 · hpx 체력 */
+const ORG_HFX={namgung:{pm:1.04},tang:{dm:.94},paeng:{hpx:25},shaolin:{dm:.9,life:5},wudang:{life:8,bt:.04},huashan:{exp:1.08},emei:{life:5,exp:1.04},kunlun:{bt:.06},beggar:{hpx:30,dm:.95},
+ bandit:{hpx:35},haomun:{exp:1.1},gwiyeong:{pm:1.04},manhwa:{exp:1.06,life:4},binggung:{dm:.92},salmak:{pm:1.05},jangsu:{hpx:25,dm:.95},demon:{pm:1.05},blood:{pm:1.06,life:-6}};
+for(const o in ORG_HFX)if(ARTS[o+'_h'])Object.assign(ARTS[o+'_h'],ORG_HFX[o]);
+Object.assign(ARTS.breath,{life:3});Object.assign(ARTS.drunk_h,{hpx:20});Object.assign(ARTS.mado_h,{pm:1.05,life:-6});Object.assign(ARTS.cliffH,{bt:.08});Object.assign(ARTS.grHeart,{life:6});Object.assign(ARTS.seonHeart,{exp:1.1,life:6});
+const HEARTS_X=[ // [id, 이름, 성, 결, 한 해 내공, 음양, 효과, 내력]
+ ['hx_cheongmyeong','청명심공',2,['유'],.8,'bal',{life:5},'마음을 맑게 하는 입문 심법. 시골 서당 훈장도 안다.'],
+ ['hx_guiwon','귀원신공',3,['도','경'],1.0,'bal',{hpx:30},'흩어진 기를 근원으로 되돌린다. 오래 버틴다.'],
+ ['hx_soyo','소요유심공',3,['유','경'],1.0,'bal',{exp:1.15},'구름처럼 노닐며 익힌다. 무엇을 배우든 빠르다.'],
+ ['hx_wolha','월하심결',3,['음','율'],1.05,-1,{exp:1.1},'달빛 아래 거문고를 타며 다듬는 음공의 심결.'],
+ ['hx_jangsaeng','장생결',3,['도'],.9,'bal',{life:15},'도가 양생의 비결. 싸움보다 삶을 길게 한다.'],
+ ['hx_taecheong','태청강기',4,['도','호신'],1.2,0,{dm:.9},'몸 밖에 맑은 기의 막을 두른다.'],
+ ['hx_geumgang','금강부동심법',4,['불','호신'],1.1,0,{dm:.85,life:5},'흔들리지 않는 마음이 몸을 쇠처럼 만든다.'],
+ ['hx_pabyeok','파벽심결',4,['강','중'],1.2,1,{bt:.12},'벽을 만나면 부순다. 경지를 넘을 때 힘이 된다.'],
+ ['hx_noejeong','뇌정신공',4,['양','쾌'],1.3,2,{pm:1.06},'벼락의 기운을 단전에 담는다.'],
+ ['hx_musang','무상심법',4,['환','변'],1.2,'bal',{pm:1.04,exp:1.05},'정해진 형이 없어 읽히지 않는다.'],
+ ['hx_guyang','구양진경',5,['양','강기'],1.75,2,{hpx:20},'아홉 겹의 양기. 극양에 이르면 쇠를 녹인다.'],
+ ['hx_hyeonbing','현빙진경',5,['음','강기'],1.75,-2,{dm:.92},'만년 빙하 아래서 얻었다는 음한의 진경.'],
+ ['hx_manryu','만류귀종심법',5,['도','유','변'],1.5,'bal',{exp:1.1,bt:.08},'만 갈래 물이 바다로 돌아가듯, 모든 무공이 하나로 모인다.'],
+ ['hx_hyeolha','혈하마경',5,['혈','마'],1.9,-1,{pm:1.08,life:-10},'피의 강을 건너는 마경. 빠르고 강하지만 수명을 깎는다.']];
+HEARTS_X.forEach(([id,n,t,kw,rate,push,fx,d])=>defA(id,n,'심',null,t,kw,null,Object.assign({rate,push,d},fx)));
+const hfx=(S,k)=>{const h=heartArt(S);return h&&h[k]!=null&&usable(S,h)?h[k]:null;};
+function heartDesc(a){const L=[`한 해 내공 ${a.rate}년`];
+ if(a.push==='bal')L.push('음양을 조화로');else if(a.push>0)L.push('양기가 오른다');else if(a.push<0)L.push('음기가 오른다');
+ if(a.exp)L.push(`수련 +${Math.round((a.exp-1)*100)}%`);if(a.pm)L.push(`전투력 +${Math.round((a.pm-1)*100)}%`);if(a.dm)L.push(`받는 피해 −${Math.round((1-a.dm)*100)}%`);
+ if(a.life)L.push(`수명 ${a.life>0?'+':'−'}${Math.abs(a.life)}년`);if(a.bt)L.push(`벽을 깰 확률 +${Math.round(a.bt*100)}%p`);if(a.hpx)L.push(`체력 +${a.hpx}`);return L.join(' · ');}
+
 const ORIGINS=[
   {id:'farm',n:'산골 농부의 자식',d:'흙을 일구며 자랐다. 몸 하나는 튼튼하다.',w:1,fx:S=>{S.t.bone+=2;S.gold=10;}},
   {id:'orphan',n:'저잣거리 고아',d:'동냥으로 살아남았다. 눈치와 운이 남다르다.',w:1,fx:S=>{S.t.luck+=2;S.savvy=15;S.mind=12;S.gold=0;}},
@@ -433,7 +461,7 @@ let S=null;
 const has=(S,id)=>S.traits.includes(id);
 const sideOf=S=>S.org?ORGS[S.org].side:'무소속';
 const getArt=id=>ARTS[id]||(S&&S.custom[id]);
-const hpMax=S=>100+S.t.bone*4+S.realm*12+(has(S,'geumgang')?60:0)+(has(S,'sinryeok')?20:0);
+const hpMax=S=>100+S.t.bone*4+S.realm*12+(has(S,'geumgang')?60:0)+(has(S,'sinryeok')?20:0)+(hfx(S,'hpx')||0);
 const usable=(S,a)=>{if(has(S,'heaven'))return true;if(has(S,'taeyang')&&a.kw.includes('음'))return false;if(has(S,'taeeum')&&a.kw.includes('양'))return false;
   if(has(S,'seongol')&&a.kw.some(k=>k==='마'||k==='혈'))return false;return !a.yy||has(S,'eumyang')||(S.yy>=a.yy[0]&&S.yy<=a.yy[1]);};
 const artsOf=S=>S.arts.map(getArt).filter(Boolean);
@@ -451,20 +479,21 @@ function pow(S){const k=kwSet(S);
   if(has(S,'dokche')&&k.has('독'))m*=1.15; if(has(S,'sinryeok')&&k.has('중'))m*=1.1; if(S.flags.salsin)m*=1.2; if(S.flags.hyeolsin)m*=1.3; if(S.flags.hvPeak)m*=1.1;
   m*=1+(S.salgi||0)/(has(S,'slaughter')&&!S.flags.salTamed?400:600);
   m*=1+harmony(S)*.2;
+  m*=hfx(S,'pm')||1;
   return Math.round(base*m+venomPow(S));}
 // 음양 조화(0~1): 음과 양을 함께 쓰거나 조화형 심법·음양지체일 때, 음양이 가운데에 가까울수록 크다
 function harmony(S){const k=kwSet(S),h=heartArt(S);if(!((k.has('음')&&k.has('양'))||(h&&h.push==='bal')||has(S,'eumyang')))return 0;return Math.max(0,1-Math.abs(S.yy)/50);}
 // 독술: 독수를 익힌 의원은 의술과 항독이 그대로 싸움의 힘이 된다(경지 배율과 따로 더한다)
 const venomPow=S=>S.flags.venom?Math.round((S.med+S.rp)*2*(S.flags.dokmaPath?1.6:1)):0;
-function dmgMult(S){const k=kwSet(S);let d=1-Math.min(.2,S.qing/500);if(k.has('유'))d*=.85;if(k.has('호신'))d*=.75;if(k.has('경'))d*=.9;if(k.has('강'))d*=.92;if(has(S,'geumgang'))d*=.7;return Math.max(.35,d);}
+function dmgMult(S){const k=kwSet(S);let d=1-Math.min(.2,S.qing/500);if(k.has('유'))d*=.85;if(k.has('호신'))d*=.75;if(k.has('경'))d*=.9;if(k.has('강'))d*=.92;if(has(S,'geumgang'))d*=.7;d*=hfx(S,'dm')||1;return Math.max(.35,d);}
 const moodMult=S=>S.mood<-30?.75:S.mood>30?1.0:1.1;
 function tb(S){ // 한 해 수련으로 쌓이는 깨달음
   let v=(4+S.t.bone*.75+S.t.wit*.75)*(S.org?ORGS[S.org].mult:1)*(1+S.mu/250)*moodMult(S);
   if(has(S,'heaven'))v*=1.6; if(has(S,'slaughter'))v*=S.flags.salSealed?1.1:1.35; if(S.flags.lone)v*=1.1; if(!S.org&&!S.arts.length)v*=.5;
-  const h=heartArt(S);if(h&&h.kw.some(k=>k==='마'||k==='혈'))v*=1.15; return v;}
+  const h=heartArt(S);if(h&&h.kw.some(k=>k==='마'||k==='혈'))v*=1.15; v*=hfx(S,'exp')||1; return v;}
 function ngRate(S){const h=heartArt(S);let r=h?h.rate*(usable(S,h)?1:.5):0;if(S.flags.yinCured)r*=2;if(has(S,'gongryeong'))r*=.5;if(has(S,'eumyang'))r*=.85;return r;}
 const lifespan=S=>{const b=54+(has(S,'seongol')?30:0)-(has(S,'heaven')?5:0)+S.t.bone+REALMS[S.realm].life+Math.floor(S.ng/45)+Math.floor(S.cult/25)
-  +(S.flags.hwangol?10:0)+(S.flags.sinuiLife||0)+(S.job==='doctor'?Math.floor(S.med/20):0);
+  +(S.flags.hwangol?10:0)+(hfx(S,'life')||0)+(S.flags.sinuiLife||0)+(S.job==='doctor'?Math.floor(S.med/20):0);
   return S.flags.hwangolAt?Math.max(b,S.flags.hwangolAt+20):b;}; // 환골탈태하면 몸이 새로 짜이므로 적어도 스무 해는 더 산다
 function hurt(S,n,cause){S.hp-=n;if(S.hp<=0&&!S.dead){S.hp=0;S.dead=cause;}}
 const RANGE={moral:[-100,100],temper:[-100,100],mood:[-100,100],yy:[-100,100]};
@@ -2980,6 +3009,49 @@ function aiPrefetch(){const c=acfg();if(!aiReady(c)||!(c.freq>0)||AI_PF||!S||S.a
  AI_PF=1;const life=S.lifeId,age=S.age;
  aiGen(S,'').then(ev=>{if(S&&S.lifeId===life&&!S.aiNext){ev.age=age;S.aiNext=ev;save();}}).catch(e=>{if(!AI_WARN){AI_WARN=1;toast('AI 사건을 미리 짓지 못했어요: '+(e.message||e));}}).finally(()=>{AI_PF=0;});}
 
+
+/* 심법 창안: 결 두세 개와 '무엇을 바라는가'를 골라 나만의 심법을 만든다 */
+const HFOCUS=[['ng','내공','한 해 내공이 더 많이 쌓인다'],['exp','수련','수련이 15% 빨라진다'],['life','수명','수명 +12년'],['bt','벽','벽을 깰 확률 +10%p'],['dm','호신','받는 피해 −12%'],['pm','위력','전투력 +6%'],['hpx','체력','체력 +30']];
+const HFOCUS_V={exp:1.15,life:12,bt:.1,dm:.88,pm:1.06,hpx:30};
+const HSUF={3:'심법',4:'신공',5:'진경'};
+const craftHeartName=(sel,tier)=>(tier>=5?'무극':'')+sel.map(k=>KW[k].syl).join('')+HSUF[tier];
+const heartOdds=(S,n)=>clamp(craftOdds(S,n)-.05+Math.min(S.ng,300)/1500,.1,.9);
+function craftHeartSpec(S,c){const tier=craftTier(S),sel=c.sel,y=sel.includes('양'),u=sel.includes('음');
+ const o={k:'심',t:tier,kw:[...sel],yy:null,made:1,rate:Math.round(({3:1.1,4:1.35,5:1.6}[tier]+(c.fo==='ng'?.35:0))*100)/100,push:y&&u?'bal':y?1.5:u?-1.5:sel.some(k=>k==='도'||k==='유')?'bal':0};
+ if(c.fo!=='ng')o[c.fo]=HFOCUS_V[c.fo];return o;}
+const craftModeChips=c=>`<div class="chips"><button class="chip ${c.mode!=='heart'?'on':''}" data-a="cmode" data-m="art">무공</button><button class="chip ${c.mode==='heart'?'on':''}" data-a="cmode" data-m="heart">심법</button></div>`;
+function craftHeartHTML(S,c,ks){const tier=craftTier(S),auto=c.sel.length?craftHeartName(c.sel,tier):'',spec=craftHeartSpec(S,c);
+ return `<section class="scroll craft"><div class="yr">${S.age}세의 해</div><h2>심법 창안</h2>${craftModeChips(c)}<p>익힌 무공의 결을 두세 개 골라 단전에서 엮는다. 고른 결이 심법의 결이 되고, 무엇을 바라는지가 심법의 쓰임이 된다. 음과 양을 함께 고르면 조화형이 된다. 쌓인 내공이 많을수록 잘 엮인다.</p>
+  <div><label>결 (2~3개)</label><div class="chips">${ks.map(k=>`<button class="chip ${c.sel.includes(k)?'on':''}" data-a="ck" data-k="${k}" title="${esc(KW[k].d)}">${k}</button>`).join('')}</div></div>
+  <div><label>바라는 것</label><div class="chips">${HFOCUS.map(([f,l,d])=>`<button class="chip ${c.fo===f?'on':''}" data-a="cfo" data-f="${f}" title="${esc(d)}">${l}</button>`).join('')}</div><p class="muted small">${esc((HFOCUS.find(x=>x[0]===c.fo)||HFOCUS[0])[2])}</p></div>
+  ${c.sel.length?`<p class="muted small">${c.sel.map(k=>`${k}: ${KW[k].d}`).join('<br>')}</p><p class="small">미리 보기: ${'★'.repeat(tier)} · ${heartDesc(spec)}</p>`:''}
+  <div><label for="cname">이름 (비우면 ${auto?`'${esc(auto)}'`:'자동으로 짓는다'})</label><input id="cname" maxlength="12" value="${esc(c.name)}" placeholder="${esc(auto)}" autocomplete="off"></div>
+  <p class="muted small">${tier}성 심법 · 성공률 약 ${Math.round(heartOdds(S,Math.max(2,c.sel.length))*100)}% · 만들면 주 심법이 된다</p>
+  <div class="rowbtn"><button class="ghost" data-a="cback">그만둔다</button><button class="go" data-a="craft" ${c.sel.length<2?'disabled':''}>창안한다</button></div></section>`;}
+function doCraftHeart(c){const before=SNAP(S);S.last.craft=S.age;const tier=craftTier(S),nm=(c.name||'').trim()||craftHeartName(c.sel,tier);let text;
+ if(chance(heartOdds(S,c.sel.length))){const id='xh'+S.age+'_'+R(100,999);S.custom[id]=Object.assign({id,n:nm},craftHeartSpec(S,c));learn(S,id);S.heart=id;A(S,{mu:10,fame:tier*5,mood:20,ng:5});deed(S,`심법 ${jo(nm,'을','를')} 창안했다`);
+   text=`백 일 동안 운기만 했다. 마지막 밤, 단전의 기운이 처음 보는 길로 돌기 시작했다. ${nm}. ${c.sel.join('·')}의 결을 담은 ${tier}성 심법이다. (${heartDesc(S.custom[id])})`;}
+ else{A(S,{mu:5,mood:-12,ng:-Math.round(S.ng*.05)});hurt(S,10,'심법 창안 중의 기혈 역류');text='기운이 엮이지 않고 서로 부딪쳤다. 기혈이 뒤틀려 피를 토했다. 내공이 조금 흩어졌다. 다음엔 다른 결을 골라 봐야겠다.';}
+ finish(S,'심법 창안',`${nm} (${c.sel.join('·')})`,text,before,true);}
+
+/* 심법의 기연: 무너진 도관, 죽어 가는 노인, 고서점, 동굴의 백골… */
+const HFIND=[a=>`무너진 도관의 석벽에 글자가 빼곡하다. 이끼를 걷어 내자 ${a.n}의 구결이 드러났다.`,
+ a=>`객잔에서 죽어 가던 늙은 무인이 품에서 낡은 책 한 권을 꺼냈다. “버리기 아까워서… 네가 가져라.” 표지에 ${jo(a.n,'이라','라')} 적혀 있다.`,
+ a=>`고서점 구석, 먼지 쌓인 의서 사이에 엉뚱한 책이 끼어 있었다. ${a.n}. 주인은 그게 뭔지도 모르고 은자 세 냥을 불렀다.`,
+ a=>`절벽 아래 동굴, 백골 하나가 가부좌를 튼 채 앉아 있다. 앞의 바위에 손가락으로 새긴 글씨. ${a.n}.`,
+ a=>`경매장에 비급 한 권이 나왔다. ${a.n}. 값이 치솟기 전에 노인 하나가 당신 소매를 끌었다. “사부의 유물인데, 제대로 쓸 사람에게 넘기고 싶소.”`,
+ a=>`꿈에 백발의 도인이 나타나 구결을 읊었다. 깨어 보니 한 글자도 잊히지 않았다. ${jo(a.n,'이었다','였다')}.`,
+ a=>`쫓기던 사내를 숨겨 주었다. 떠나며 그가 기름종이에 싼 책을 두고 갔다. “목숨값이오.” ${a.n}.`];
+const heartPool=S=>HEARTS_X.map(x=>x[0]).filter(id=>!S.arts.includes(id));
+E({id:'heartFind',t:'심법의 기연',title:S=>S.tmp.h?`심법의 기연 · ${ARTS[S.tmp.h].n}`:'심법의 기연',a:[13,95],w:S=>heartPool(S).length&&!S.job?1.6:0,cd:4,
+ prep:S=>{const p=heartPool(S),ws=p.map(id=>{const t=ARTS[id].t;return t<=3?4:t===4?2+S.t.luck*.2:.5+S.t.luck*.25;});let r=Math.random()*ws.reduce((a,b)=>a+b,0);S.tmp.h=p[0];for(let i=0;i<p.length;i++){if((r-=ws[i])<0){S.tmp.h=p[i];break;}}S.tmp.how=R(0,HFIND.length-1);},
+ x:S=>{const a=ARTS[S.tmp.h];return HFIND[S.tmp.how](a)+`\n\n${a.n} · ${'★'.repeat(a.t)} · ${a.kw.join('·')}\n${heartDesc(a)}\n${a.d}`;},
+ ch:S=>{const id=S.tmp.h,a=ARTS[id],cur=heartArt(S),ok=usable(S,a);const lh=(S,main)=>{const prev=S.heart;learn(S,id);S.heart=main||!prev?id:prev;};return [
+  {t:'익혀 주 심법으로 삼는다',h:(cur?`지금 주 심법 ${cur.n}: ${heartDesc(cur)}`:'')+(ok?'':' · 지금 몸으로는 제 힘을 내지 못한다'),go:S=>{lh(S,true);A(S,{exp:tb(S)*.3});return `석 달 동안 구결을 따라 기를 돌렸다. 단전의 결이 바뀌었다. 이제 ${jo(a.n,'이','가')} 당신의 주 심법이다.`;}},
+  {t:'익혀 두기만 한다',h:'나 탭에서 언제든 주 심법으로 바꿀 수 있다',go:S=>{lh(S,false);A(S,{mu:2});return `구결을 머리에 새겼다. 언젠가 쓸 날이 올 것이다.`;}},
+  S.org?{t:'사문에 바친다',h:'공헌·명성',go:S=>{A(S,{contrib:20+a.t*5,fame:a.t*2});return `장로들이 비급을 받아 들고 한참 말이 없었다. 사문의 장경각에 책 한 권이 늘었다.`;}}
+   :{t:'팔아 버린다',h:`은자 ${a.t*30}`,go:S=>{A(S,{gold:a.t*30});return '비급은 은자가 되었다. 은자는 술이 되었다. 가끔 그 구결이 꿈에 나왔다.';}}];}});
+
 const EVM=Object.fromEntries(EV.map(e=>[e.id,e]));
 EVM.ai=AI_EV;
 
@@ -3023,7 +3095,7 @@ EVM.focus={id:'focus',t:'올해의 나날',
   if(S.heart)L.push({t:'운기조식한다',h:`내공 · 경지의 벽을 깰 힘 · 음양(${heartArt(S).n})`,go:S=>{A(S,{ng:ngRate(S)*2,exp:tb(S)*.5,cult:2});heartPush(S);S.bt=Math.min(.45,(S.bt||0)+.06);return pick(['단전의 기운을 일주천 돌렸다. 막혀 있던 혈 하나가 트였다.','기운이 임독양맥을 따라 흘렀다. 벽 너머가 조금 가까워졌다.','새벽 운기 끝에 단전이 따뜻하게 차올랐다.']);}});
   if(Math.abs(S.yy)>=15)L.push({t:'음양을 조율한다',h:'음양이 가운데로 · 음과 양을 함께 쓰는 무공이 강해진다',go:S=>{const d=Math.round(S.yy*.5);A(S,{yy:-d,cult:2,mood:-Math.round(S.mood*.2)});return S.yy>0?'뜨거운 기운을 달빛 아래 식혔다. 양이 가라앉고 음이 차올랐다.':'차가운 기운을 햇볕 아래 데웠다. 음이 풀리고 양이 깨어났다.';}});
   L.push({t:'경공을 단련한다',h:'경공 · 전투력과 몸놀림(받는 피해↓)',go:S=>{A(S,{qing:5*(1-S.qing/120),exp:tb(S)*.3});return '지붕과 나무 끝을 밟고 달렸다.';}});
-  if(craftOk(S))L.push({t:'새 무공을 창안한다',h:'익힌 무공의 결을 엮어 나만의 무공을 만든다.',craft:1});
+  if(craftOk(S))L.push({t:'새 무공·심법을 창안한다',h:'익힌 무공의 결을 엮어 나만의 무공이나 심법을 만든다.',craft:1});
   if(S.org)L.push({t:'사문의 일을 돕는다',h:'공헌·처세',go:S=>{A(S,{contrib:R(8,15),savvy:2,exp:tb(S)*.4,moral:ORGS[S.org].side==='백도'?2:-2});return pick(['사문의 표행을 지켰다.','후배들을 가르쳤다.','사문의 원수를 추적했다.']);}});
   else L.push({t:'품을 판다',h:'은자·처세',go:S=>{const g=R(20,60)+(S.flags.innOwner?60:0);A(S,{gold:g,savvy:2,exp:tb(S)*.3});return `${S.flags.innOwner?'객잔을 꾸려':'표국 호위로'} 은자 ${g}냥을 벌었다.`;}});
   if(S.flags.nickNo&&S.fame>=30&&bestNickRank(S)>=0)L.push({t:'강호가 부르는 별호를 받아들인다',h:'사양했던 별호를 이제 받는다',go:S=>{delete S.flags.nickNo;S.nickHold=0;S.nickTop=-1;S.chain='nick';return '주루에서 누군가 당신을 별호로 불렀다. 이번에는 웃어넘기지 않았다.';}});
@@ -3046,7 +3118,7 @@ EVM.focus={id:'focus',t:'올해의 나날',
   return [...L,...aiChoice(S)];}};
 
 /* 경지의 벽 */
-const btP=S=>clamp(.4+S.t.wit*.04+S.bt-(S.realm-2)*.05+S.cult/300-(S.mood<-30?.1:0),.08,.93);
+const btP=S=>clamp(.4+S.t.wit*.04+S.bt+(hfx(S,'bt')||0)-(S.realm-2)*.05+S.cult/300-(S.mood<-30?.1:0),.08,.93);
 EVM.bt={id:'bt',title:S=>`${REALMS[S.realm+1].n}의 벽`,
  x:S=>`몇 달째 같은 자리를 맴돈다. 기혈이 들끓고 꿈속에서도 초식이 흐른다. ${REALMS[S.realm+1].n}의 벽 너머가 보일 듯 말 듯하다.`,
  ch:S=>[{t:'지금 벽을 깬다',h:`성공률 약 ${Math.round(btP(S)*100)}%`,go:S=>{const n=REALMS[S.realm+1].n;
@@ -3149,11 +3221,11 @@ function choose(i){const e=EVM[S.cur];const c=evChoices(S,e)[i];if(!c)return;
   if(c.ai){modal={t:'ai',wish:''};render();return;}
   if(c.craft==='map'){view='map';mapSel=null;resetScroll=true;render();return;}
   if(c.craft==='forge'){const f={w:S.mainW,m:'정철',name:''};f.def=forgeDefault(S,f);S.tmp.forge=f;S.phase='forge';save();render();return;}
-  if(c.craft){const ws=craftWeapons(S);S.tmp.craft={sel:[],w:ws.includes(S.mainW)?S.mainW:ws[0],name:''};S.phase='craft';save();render();return;}
+  if(c.craft){const ws=craftWeapons(S);S.tmp.craft={sel:[],w:ws.includes(S.mainW)?S.mainW:ws[0],name:'',mode:'art',fo:'ng'};S.phase='craft';save();render();return;}
   const title=evTitle(S,e),before=SNAP(S),nid=safe(()=>sceneNpc(S,e));const text=c.go(S);
   if(nid&&S.met[nid]&&e.id!=='focus')npcMem(S,nid,`${title} — ${c.t}`);
   finish(S,title,c.t,text,before,e.id!=='bt'&&e.id!=='focus');}
-function doCraft(){const c=S.tmp.craft;if(!c||c.sel.length<2)return;const before=SNAP(S);S.last.craft=S.age;
+function doCraft(){const c=S.tmp.craft;if(!c||c.sel.length<2)return;if(c.mode==='heart')return doCraftHeart(c);const before=SNAP(S);S.last.craft=S.age;
   const tier=craftTier(S),nm=(c.name||'').trim()||craftName(c.sel,c.w,tier);let text;
   if(chance(craftOdds(S,c.sel.length))){const id='x'+S.age+'_'+R(100,999);S.custom[id]={id,n:nm,k:'무',w:c.w,t:tier,kw:[...c.sel],yy:null,made:1};learn(S,id);S.mainW=c.w;A(S,{mu:10,fame:tier*5,mood:20});deed(S,`${jo(nm,'을','를')} 창안했다`);
     text=`석 달 동안 같은 자리에 앉아 있었다. 마지막 날 손이 저절로 움직였다. ${nm}. ${c.sel.join('·')}의 결을 담은 ${tier}성 무공이다.`;}
@@ -3556,7 +3628,7 @@ const EV_TAGS={sectTest:'village square, many children lined up, martial sect en
  grand:'grand martial tournament, luoyang, huge crowd, imperial banners',headMission:'treasure vault, empty pedestal, elders',focus:'ancient chinese landscape, mountains, mist, seasons',bt:'meditation, breakthrough, qi explosion, light'};
 Object.assign(EV_TAGS,{pactRumor:'storyteller in teahouse, mount hua, legend',lostVillage:'empty village at night, bloody talisman in well',pactCouncil:'summit of mount hua, three factions meeting, banners',pact2:'red mist at night, assassins attacking meeting',bloodRite:'red lake, blood altar, crimson sky, cult ritual',bloodCalamity:'blood rain, burning villages',chuldo:'young martial artist on road, crossroads, city gate',chuldo2:'inn, two strangers sharing a table',chuldo3:'wanted posters on wall, inn',warBattle:'battlefield, clash of armies',warAfter:'prisoners kneeling, riverbank',cwFall:'one-armed swordsman in dark room',cwReturn:'one-armed swordsman, plum blossoms',dmKidnap:'purple poison mist, night road',dmOrder:'poison bottle, teacup',eyWudang:'taoist priest, wudang mountain, yin yang',eyTaiji:'sword drawing circle, yin yang, moon reflection',eyHunt:'demonic cult elder blocking road',hvContest:'three envoys visiting a child',hvEnvy:'masked man drawing sword at night',hvPeak:'master surrounded by many weapons, golden light',grKunlun:'snowy kunlun mountain, wind',grNature:'meditating on mountain peak, clouds flowing',tyVolcano:'volcano crater, lava, stone chamber',tyRage:'fire aura, rage',teBinggung:'ice palace envoy, white fur',ggArhat:'eighteen arhats formation, shaolin',srContest:'lifting huge bronze cauldron, crowd',caZhuge:'go board, strategist, feather fan',sgTomb:'sword tomb, thousands of swords in ground',sgCrane:'old immortal riding crane, clouds',mdTang:'sichuan mansion, marriage proposal',first:'mount hua summit, masters gathering',hwasan2:'two masters dueling above clouds, ancient carving',yb2:'tournament stage',yb3:'tournament final, dragon and phoenix banners',sectTest2:'child lifting boulder, examiner',sectTest3:'injured child on mountain path, sunset'});
 const evPrompt=id=>{const m=/^lv_(\w+?)_\d$/.exec(id);if(m&&NPC_TAGS[m[1]]){const t=NPC_TAGS[m[1]];return (typeof t==='function'?t(S):t)+', emotional scene, soft light, cinematic';}return (EV_TAGS[id]||'ancient chinese landscape, mountains, mist')+', scenery, wide shot, cinematic composition';};
-Object.assign(EV_TAGS,{pwWar:'martial sect army marching under banners, dust, generals',dom:'vast crowd raising swords before grand hall, banners filling sky',eraLife:'town street under faction banners, patrolling martial artists',enemyMeet:'two rival martial artists facing each other on mountain road, tense',confess:'two young lovers under moonlight, blushing, wuxia',date:'young couple at lantern festival, river of lanterns',wedding:'traditional chinese wedding, red silk, candles, guests',wedLife:'married couple in courtyard, morning tea, peaceful',romeo:'star-crossed lovers, moonlight, two swords, rival sects',harem:'tense tea table in inn, several beautiful people glaring',haremLife:'lively household courtyard, family breakfast',visit:'old friend visiting, doorway, warm light',rescue:'friend at bedside, medicine, candle',intro:'friend introducing stranger at inn table',feud:'two masters with drawn swords at riverbank, sunset',farewell:'old master on deathbed, two wine cups',sama:'four demonic masters drinking in dark tavern, candles',jpDescend:'mountain sect gate, master seeing off disciple, dawn',jpPurge:'noble villain in mansion, chained children, swordsman confronting',jpMercy:'martial alliance hall, kneeling young prisoner, elders',jpVillage:'fishing village in reeds, pirates, lone hero',jpSpring:'disciples sword dancing under blossoms, petals',sdDance:'drunken swordsman dancing with sword, riverside tavern, moon',sdLoyalty:'breaking prison gate at dawn, two outlaws on horse',sdRain:'duel on bridge in rain, straw hats',sdBetray:'underworld boss on large chair, wine, dim hall',sdRiver:'pirate ship feast on yangtze river at night, drums',mgScheme:'sinister man arranging chrysanthemums, dark palace garden',mgPlan:'strategist with go board, candle, scheming',mgMad:'mad old swordsman laughing in ruined shrine',mgTrial:'demonic cult arena, two young fighters',mgYoma:'seductive demonic woman with fan, red lanterns',mgFeast:'wedding feast, poisoned wine, maid with blue nails',talk:'two people talking, tea house, wuxia',talk2:'two people talking at night, lantern',docVenom:'doctor testing poison herb, dark hands',docDokma:'poison master, purple miasma, dark clinic',docSubdue:'doctor subduing thugs with poison mist',docAssassin:'rich man offering gold to doctor, candle',docMartialHeal:'old martial artist teaching doctor',docDisciple:'child at herbal shop door',docHerb:'cliff herb guarded by white snake',innName:'inn signboard being carved',innStory:'storyteller performing in inn, crowd',innTax:'magistrate clerk with ledger at inn',innFestival:'lantern festival, inn decorated with lanterns',innDrunk:'drunken old man walking in inn',smithApprentice:'child at forge door',smithContest:'smiths clashing swords, competition',smithCursed:'cursed red sword on anvil',lifePath:'crossroads, inn, smithy, herbal clinic, young person with bundle',jn_bandit:'mountain bandit fortress, wooden palisade, bandit chief',jn_jangsu:'river pirates boat, yangtze rapids',jn_beggar:'beggars under bridge, rain',jn_haomun:'inn back door, waiter whispering',jn_demon:'black mountains, demonic cult envoy on black horse',jn_blood:'crimson lake, blood cult priest',factionTop:'martial arts duel on great stage, elders watching',sadoMeet:'underworld meeting hall, many factions, banners',innBacker:'thugs in chinese inn, overturned table',innDish:'chinese kitchen, steaming noodles, chef',innInfo:'old woman drinking tea in inn corner',innBrawl:'martial artists fighting in inn',innWar:'refugees at inn gate, war',innFugitive:'wounded man hiding in inn storeroom',innRival:'two inns facing across street, cooking contest',innLegend:'old cook with cleaver, peeling radish',innLegend2:'old cook handing cleaver, sunset inn',innRich:'pouch of silver on inn table',innOld:'old innkeeper behind counter, lantern',smithOrg:'blacksmith forge, sect envoys',smithOre:'blacksmith holding meteorite ore',smithSeries:'swords on rack, carved names',smithTang:'hidden weapon blueprint, needles',smithDivine:'divine sword glowing in forge, lightning',smithFame:'hero with sword defending village',smithWar:'forge full of spears, war',smithBlade:'smith holding own sword, leaving forge',docPlague:'plague town, doctor with medicine',docWounded:'wounded martial artist at clinic door, dawn',docPoison:'poisoned boy, doctor with needles',docPalace:'imperial palace bedchamber, physician',docElixir:'glowing pill in alchemy furnace',docLife:'old doctor writing prescription, candle',docWar:'battlefield field hospital',docTurn:'herbal clinic, poison and medicine',retire:'old swordsman putting sword on beam',seekSinui:'snowy valley, hermit doctor hut',sage:'old master and young martial artist talking, tea, mist',momHands:'mother washing clothes, cracked hands, child',fatherBack:'father carrying child on back, dusk',homeLetter:'letter, brush writing, candle',momSilk:'silk robe, mother smiling, village house',parentDeath:'deathbed, holding hands, candle',orphanRoots:'two nameless graves on hill',kneel:'palace eunuch palanquin, crowd kneeling, one person standing',unbowedPoem:'scholars reading poem, academy',helpless:'child hiding behind well, burning village',vowEnd:'old one-armed man drinking alone in inn',lvWed:'married couple, morning, courtyard',lvOld:'old couple holding hands, plum blossoms',lvFate:'distant figure, letter, wind'});
+Object.assign(EV_TAGS,{heartFind:'ancient manuscript in ruined taoist temple, dust, candle light',pwWar:'martial sect army marching under banners, dust, generals',dom:'vast crowd raising swords before grand hall, banners filling sky',eraLife:'town street under faction banners, patrolling martial artists',enemyMeet:'two rival martial artists facing each other on mountain road, tense',confess:'two young lovers under moonlight, blushing, wuxia',date:'young couple at lantern festival, river of lanterns',wedding:'traditional chinese wedding, red silk, candles, guests',wedLife:'married couple in courtyard, morning tea, peaceful',romeo:'star-crossed lovers, moonlight, two swords, rival sects',harem:'tense tea table in inn, several beautiful people glaring',haremLife:'lively household courtyard, family breakfast',visit:'old friend visiting, doorway, warm light',rescue:'friend at bedside, medicine, candle',intro:'friend introducing stranger at inn table',feud:'two masters with drawn swords at riverbank, sunset',farewell:'old master on deathbed, two wine cups',sama:'four demonic masters drinking in dark tavern, candles',jpDescend:'mountain sect gate, master seeing off disciple, dawn',jpPurge:'noble villain in mansion, chained children, swordsman confronting',jpMercy:'martial alliance hall, kneeling young prisoner, elders',jpVillage:'fishing village in reeds, pirates, lone hero',jpSpring:'disciples sword dancing under blossoms, petals',sdDance:'drunken swordsman dancing with sword, riverside tavern, moon',sdLoyalty:'breaking prison gate at dawn, two outlaws on horse',sdRain:'duel on bridge in rain, straw hats',sdBetray:'underworld boss on large chair, wine, dim hall',sdRiver:'pirate ship feast on yangtze river at night, drums',mgScheme:'sinister man arranging chrysanthemums, dark palace garden',mgPlan:'strategist with go board, candle, scheming',mgMad:'mad old swordsman laughing in ruined shrine',mgTrial:'demonic cult arena, two young fighters',mgYoma:'seductive demonic woman with fan, red lanterns',mgFeast:'wedding feast, poisoned wine, maid with blue nails',talk:'two people talking, tea house, wuxia',talk2:'two people talking at night, lantern',docVenom:'doctor testing poison herb, dark hands',docDokma:'poison master, purple miasma, dark clinic',docSubdue:'doctor subduing thugs with poison mist',docAssassin:'rich man offering gold to doctor, candle',docMartialHeal:'old martial artist teaching doctor',docDisciple:'child at herbal shop door',docHerb:'cliff herb guarded by white snake',innName:'inn signboard being carved',innStory:'storyteller performing in inn, crowd',innTax:'magistrate clerk with ledger at inn',innFestival:'lantern festival, inn decorated with lanterns',innDrunk:'drunken old man walking in inn',smithApprentice:'child at forge door',smithContest:'smiths clashing swords, competition',smithCursed:'cursed red sword on anvil',lifePath:'crossroads, inn, smithy, herbal clinic, young person with bundle',jn_bandit:'mountain bandit fortress, wooden palisade, bandit chief',jn_jangsu:'river pirates boat, yangtze rapids',jn_beggar:'beggars under bridge, rain',jn_haomun:'inn back door, waiter whispering',jn_demon:'black mountains, demonic cult envoy on black horse',jn_blood:'crimson lake, blood cult priest',factionTop:'martial arts duel on great stage, elders watching',sadoMeet:'underworld meeting hall, many factions, banners',innBacker:'thugs in chinese inn, overturned table',innDish:'chinese kitchen, steaming noodles, chef',innInfo:'old woman drinking tea in inn corner',innBrawl:'martial artists fighting in inn',innWar:'refugees at inn gate, war',innFugitive:'wounded man hiding in inn storeroom',innRival:'two inns facing across street, cooking contest',innLegend:'old cook with cleaver, peeling radish',innLegend2:'old cook handing cleaver, sunset inn',innRich:'pouch of silver on inn table',innOld:'old innkeeper behind counter, lantern',smithOrg:'blacksmith forge, sect envoys',smithOre:'blacksmith holding meteorite ore',smithSeries:'swords on rack, carved names',smithTang:'hidden weapon blueprint, needles',smithDivine:'divine sword glowing in forge, lightning',smithFame:'hero with sword defending village',smithWar:'forge full of spears, war',smithBlade:'smith holding own sword, leaving forge',docPlague:'plague town, doctor with medicine',docWounded:'wounded martial artist at clinic door, dawn',docPoison:'poisoned boy, doctor with needles',docPalace:'imperial palace bedchamber, physician',docElixir:'glowing pill in alchemy furnace',docLife:'old doctor writing prescription, candle',docWar:'battlefield field hospital',docTurn:'herbal clinic, poison and medicine',retire:'old swordsman putting sword on beam',seekSinui:'snowy valley, hermit doctor hut',sage:'old master and young martial artist talking, tea, mist',momHands:'mother washing clothes, cracked hands, child',fatherBack:'father carrying child on back, dusk',homeLetter:'letter, brush writing, candle',momSilk:'silk robe, mother smiling, village house',parentDeath:'deathbed, holding hands, candle',orphanRoots:'two nameless graves on hill',kneel:'palace eunuch palanquin, crowd kneeling, one person standing',unbowedPoem:'scholars reading poem, academy',helpless:'child hiding behind well, burning village',vowEnd:'old one-armed man drinking alone in inn',lvWed:'married couple, morning, courtyard',lvOld:'old couple holding hands, plum blossoms',lvFate:'distant figure, letter, wind'});
 
 /* ══ 그리기 ════════════════════════════════════════ */
 const app=document.getElementById('app');
@@ -3647,9 +3719,9 @@ function tabHTML(t){const s=S;
    <div><p class="grp-t">상태와 심상</p><div class="grid2">${dv('심상',moodName(s.mood),s.mood,'var(--gold)')}${dv('음양',yyName(s.yy),s.yy,s.yy<0?'var(--yin)':'var(--yang)')}${kv('심계',Math.round(s.mind),s.mind)}${kv('운명(기연)',s.t.luck+'/10',s.t.luck*10)}${kv('살기',Math.round(s.salgi||0),s.salgi||0)}${kv('원한',s.enemies||0)}</div>${has(s,'slaughter')?`<p class="small" style="color:var(--seal)">천살성${s.flags.salTamed?' · 살기를 다스렸다':s.flags.salSealed?' · 봉인됨':s.flags.salsin?' · 살신':''}. 남의 고통에 무감하고, 해마다 살기가 쌓이며 도덕이 깎인다.</p>`:''}
    <p class="muted small">심상이 평온하면 수련이 1.1배, 우울하면 0.75배로 쌓인다. 성정·도덕·수양·음양은 심법과 무공의 결을 따라 해마다 조금씩 바뀐다.</p></div>`;
   if(t==='ar'){const as=artsOf(s);const h=heartArt(s);const ws=[...new Set(as.filter(a=>a.k==='무').map(a=>a.w))];const ks=[...kwSet(s)];
-   return `<div><p class="grp-t">주 심법</p>${h?`<div class="art"><span class="an">${esc(h.n)}</span><span class="am">한 해 내공 ${h.rate}년${h.push==='bal'?' · 음양을 조화로':h.push>0?' · 양기가 오른다':h.push<0?' · 음기가 오른다':''}</span>${kwChips(h.kw)}</div>`:'<p class="muted">없음</p>'}</div>
+   return `<div><p class="grp-t">주 심법</p>${h?`<div class="art"><span class="an">${esc(h.n)}</span><span class="am">${'★'.repeat(h.t)}${h.made?' · 창안':''} · ${heartDesc(h)}${usable(s,h)?'':' · 지금 몸으로는 제 힘을 내지 못한다'}</span>${kwChips(h.kw)}${h.d?`<span class="muted small">${esc(h.d)}</span>`:''}</div>`:'<p class="muted">없음</p>'}</div>
    <div><p class="grp-t">무공</p>${as.filter(a=>a.k!=='심').map(a=>`<div class="art ${usable(s,a)?'':'off'}"><span class="an">${esc(a.n)}</span><span class="am">${a.k==='신'?'신법':a.w} · ${'★'.repeat(a.t)}${a.made?' · 창안':''}${!usable(s,a)?` · ${a.yy[0]>0?'양기 '+a.yy[0]+' 이상':'음기 '+(-a.yy[1])+' 이상'} 필요`:''}</span>${kwChips(a.kw)}</div>`).join('')||'<p class="muted">없음</p>'}
-   ${as.filter(a=>a.k==='심'&&a.id!==s.heart).map(a=>`<div class="art"><span class="an">${esc(a.n)}</span><span class="am">보조 심법</span>${kwChips(a.kw)}</div>`).join('')}</div>
+   ${(hs=>hs.length?`<p class="grp-t">익힌 다른 심법</p>${hs.map(a=>`<div class="art ${usable(s,a)?'':'off'}"><span class="an">${esc(a.n)} <button class="chip" data-a="mainh" data-id="${a.id}">주 심법으로</button></span><span class="am">${'★'.repeat(a.t)}${a.made?' · 창안':''} · ${heartDesc(a)}</span>${kwChips(a.kw)}</div>`).join('')}<p class="muted small">주 심법을 바꾸면 쌓인 내공의 1할이 흩어진다.</p>`:'')(as.filter(a=>a.k==='심'&&a.id!==s.heart))}</div>
    <div><p class="grp-t">병기</p>${s.wpns.length?s.wpns.map((w,i)=>`<div class="wp"><span>${esc(w.n)} <span class="muted small">${w.w} · 등급 ${w.q}${w.kw?' · '+w.kw:''}${w.made?' · 손수 벼림':''}</span></span>${s.wpn&&s.wpn.n===w.n&&s.wpn.q===w.q?'<span class="chip t">장착</span>':`<button class="chip" data-a="equip" data-i="${i}">장착</button>`}</div>`).join(''):'<p class="muted">없음</p>'}
    ${Object.keys(s.mats).length?`<p class="muted small">재료: ${Object.entries(s.mats).map(([m,n])=>`${m} ${n}`).join(' · ')}</p>`:''}<p class="muted small">주무기와 같은 종류의 병기만 제 위력을 낸다.</p></div>
    ${ws.length>1?`<div><p class="grp-t">주무기</p><div class="chips">${ws.map(w=>`<button class="chip ${w===s.mainW?'on':''}" data-a="mainw" data-w="${w}">${w}</button>`).join('')}</div></div>`:''}
@@ -3668,7 +3740,8 @@ function foeBox(){const f=S.tmp.foe;if(!f)return '';const p=perceive(S,f);const 
   return `<div class="foe"><div class="fn">${f.nick?`<b>${esc(f.nick)}</b> `:''}${esc(f.n)}</div><div class="fv">경지 ${REALMS[p.realm].n}${p.real?'':'?'} · 전투력 <em>${num(p.v)}</em> · 당신 ${num(me)} — ${p.v>me*1.15?'불리':p.v<me*.87?'유리':'호각'}해 보인다</div>${p.cue?'<div class="cue">기세가 묘하다. 보이는 것이 전부가 아닐지도 모른다.</div>':''}</div>`;}
 function scrollCard(){const e=EVM[S.cur];
   if(S.phase==='craft'){const c=S.tmp.craft;const ks=[...allKw(S)];const ws=craftWeapons(S);const tier=craftTier(S);const auto=c.sel.length?craftName(c.sel,c.w,tier):'';
-    return `<section class="scroll craft"><div class="yr">${S.age}세의 해</div><h2>무공 창안</h2><p>익힌 무공의 결을 두세 개 골라 엮는다. 고른 결이 그대로 새 무공의 효과가 된다. 결이 많을수록 엮기 어렵다.</p>
+    if(c.mode==='heart')return craftHeartHTML(S,c,ks);
+    return `<section class="scroll craft"><div class="yr">${S.age}세의 해</div><h2>무공 창안</h2>${craftModeChips(c)}<p>익힌 무공의 결을 두세 개 골라 엮는다. 고른 결이 그대로 새 무공의 효과가 된다. 결이 많을수록 엮기 어렵다.</p>
      <div><label>결 (2~3개)</label><div class="chips">${ks.map(k=>`<button class="chip ${c.sel.includes(k)?'on':''}" data-a="ck" data-k="${k}" title="${esc(KW[k].d)}">${k}</button>`).join('')}</div></div>
      <div><label>병기</label><div class="chips">${ws.map(w=>`<button class="chip ${c.w===w?'on':''}" data-a="cw" data-w="${w}">${w}</button>`).join('')}</div></div>
      ${c.sel.length?`<p class="muted small">${c.sel.map(k=>`${k}: ${KW[k].d}`).join('<br>')}</p>`:''}
@@ -3820,8 +3893,11 @@ app.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b||b
   else if(a==='again'){S=newFate(null,null,{...ycNew()});tab='ab';view='ev';resetScroll=true;save();render();}
   else if(a==='tab'){tab=b.dataset.t;render();}
   else if(a==='mainw'){S.mainW=b.dataset.w;save();render();}
+  else if(a==='mainh'){const id=b.dataset.id,h=getArt(id);if(h&&h.k==='심'&&S.arts.includes(id)&&S.heart!==id){S.heart=id;S.ng=Math.round(S.ng*.9);addLog(S,`주 심법을 ${jo(h.n,'으로','로')} 바꿨다. 내공 1할이 흩어졌다.`,0);save();render();toast(`주 심법: ${h.n}`);}}
   else if(a==='ck'){const c=S.tmp.craft,k=b.dataset.k;c.sel=c.sel.includes(k)?c.sel.filter(x=>x!==k):c.sel.length<3?[...c.sel,k]:c.sel;render();}
   else if(a==='cw'){S.tmp.craft.w=b.dataset.w;render();}
+  else if(a==='cmode'){const c=S.tmp.craft,el=document.getElementById('cname');if(el)c.name=el.value;c.mode=b.dataset.m;render();}
+  else if(a==='cfo'){const el=document.getElementById('cname');if(el)S.tmp.craft.name=el.value;S.tmp.craft.fo=b.dataset.f;render();}
   else if(a==='cback'){S.phase='event';S.tmp.craft=null;render();}
   else if(a==='craft')doCraft();
   else if(a==='fm'){S.tmp.forge.m=b.dataset.m;S.tmp.forge.def=forgeDefault(S,S.tmp.forge);render();}
