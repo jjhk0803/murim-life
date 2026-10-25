@@ -235,6 +235,29 @@ button.chip.on{background:var(--jade);color:var(--card);border-color:var(--jade)
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:max(16px,env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--card);padding:8px 14px;border-radius:8px;font-family:var(--f-ui);font-size:.85rem;z-index:40;max-width:calc(100% - 32px)}
 .wp{display:flex;justify-content:space-between;align-items:center;gap:8px;padding-block:4px;border-bottom:1px dashed var(--line)}
 .pw{display:grid;gap:6px;margin:4px 0 12px}.pwr{display:grid;grid-template-columns:3.2em 1fr 3.4em;align-items:center;gap:8px;font-size:13px}.pwr .t{height:8px;background:var(--line);border-radius:4px;overflow:hidden}.pwr .t i{display:block;height:100%}.pwr .n{text-align:right;font-variant-numeric:tabular-nums}
+.ycs{display:grid;grid-template-columns:auto auto;justify-content:start;column-gap:10px;row-gap:4px;align-items:center;font-size:.9rem}
+.cgp{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.cgf{position:relative}
+.cgf img.ink,.cgtile img.ink{display:block;width:100%;aspect-ratio:3/2;object-fit:cover;border-radius:6px;filter:grayscale(1) contrast(1.15)}
+.inkph{aspect-ratio:3/2;border-radius:6px;background:radial-gradient(ellipse at 50% 45%,#fbfaf6 0 38%,#ebe9e2 70%,#d4d1c7);color:#151515;display:grid;place-items:center;position:relative;overflow:hidden}
+.inkph svg{position:absolute;left:15%;top:6%;width:70%;height:88%}
+.inkph span{font-family:var(--f-disp);font-size:3.2rem;color:#121212;position:relative}
+.cgd{position:absolute;right:8px;bottom:8px;padding:4px 10px;font-size:.8rem;background:rgba(255,255,255,.88);color:#111;border-color:#999}
+.cgcap{display:flex;align-items:center;gap:8px;font-family:var(--f-disp);font-size:1.15rem}
+.cgt{margin:0;line-height:1.75}
+.cgg{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.cgtile{display:flex;flex-direction:column;gap:4px;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);text-align:center;font:inherit}
+.cgtile .ch{aspect-ratio:3/2;display:grid;place-items:center;font-family:var(--f-disp);font-size:1.8rem;background:#efede6;color:#111;border-radius:4px}
+.cgtile.lock{opacity:.5}.cgtile .cn{font-size:.8rem}.cgtile .cs{font-size:.7rem;color:var(--ink2)}
+.book{display:grid;grid-template-columns:92px 1fr;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px}
+.bcover{background:#e8dcc2;color:#3a2916;border:1px solid #b49c74;border-radius:3px;box-shadow:inset -7px 0 0 #d6c6a2;display:flex;flex-direction:row-reverse;align-items:flex-start;justify-content:flex-start;gap:6px;padding:10px 14px 10px 6px;min-height:220px;align-self:start}
+.bcover>span{text-align:center;line-height:1.15}
+.bcover .bt{font-family:var(--f-disp);font-size:1.3rem;border:1px solid #8a6a3a;padding:8px 5px;background:#f5eddb}
+.bcover .bk{font-size:.78rem;padding-top:6px}.bcover .ba{font-size:.66rem;align-self:flex-end;opacity:.8}
+.bpages{display:flex;flex-direction:column;gap:8px;min-width:0}
+.bep{margin:0;line-height:1.6}.bch b{font-family:var(--f-disp)}.bch p{margin:2px 0 0;line-height:1.7}
+.brev{display:flex;gap:8px;align-items:flex-start;border-top:1px solid var(--line);padding-top:8px}.brev p{margin:0;line-height:1.7}
+@media (max-width:420px){.book{grid-template-columns:76px 1fr}.bcover .bt{font-size:1.15rem}}
 </style>
 </head><body>
 <div id="app"></div>
@@ -493,7 +516,7 @@ function tb(S){ // 한 해 수련으로 쌓이는 깨달음
   const h=heartArt(S);if(h&&h.kw.some(k=>k==='마'||k==='혈'))v*=1.15; v*=hfx(S,'exp')||1; return v;}
 function ngRate(S){const h=heartArt(S);let r=h?h.rate*(usable(S,h)?1:.5):0;if(S.flags.yinCured)r*=2;if(has(S,'gongryeong'))r*=.5;if(has(S,'eumyang'))r*=.85;return r;}
 const lifespan=S=>{const b=54+(has(S,'seongol')?30:0)-(has(S,'heaven')?5:0)+S.t.bone+REALMS[S.realm].life+Math.floor(S.ng/45)+Math.floor(S.cult/25)
-  +(S.flags.hwangol?10:0)+(hfx(S,'life')||0)+(S.flags.sinuiLife||0)+(S.job==='doctor'?Math.floor(S.med/20):0);
+  +(S.flags.hwangol?10:0)+(S.flags.ycLong?8:0)+(hfx(S,'life')||0)+(S.flags.sinuiLife||0)+(S.job==='doctor'?Math.floor(S.med/20):0);
   return S.flags.hwangolAt?Math.max(b,S.flags.hwangolAt+20):b;}; // 환골탈태하면 몸이 새로 짜이므로 적어도 스무 해는 더 산다
 function hurt(S,n,cause){S.hp-=n;if(S.hp<=0&&!S.dead){S.hp=0;S.dead=cause;}}
 const RANGE={moral:[-100,100],temper:[-100,100],mood:[-100,100],yy:[-100,100]};
@@ -583,8 +606,8 @@ const SUR=['진','백','한','위','도','연','설','하','곽','모용','제�
 const GIV_M=['소운','무결','청','태호','은성','류','휘','서강','건','운학','지혁','천우'];
 const GIV_F=['하린','설화','령','비연','소월','청아','서윤','예린','무향','은설','가람','초희'];
 const randName=sex=>pick(SUR)+pick(sex==='f'?GIV_F:GIV_M);
-const ycNew=()=>({t:{bone:0,wit:0,luck:0,looks:0},origin:null,trait:null,gold:0,mem:false,remove:[]});
-const ycCost=yc=>Object.values(yc.t).reduce((a,b)=>a+b,0)*3+(yc.origin?4:0)+(yc.trait?TCOST[yc.trait]:0)+yc.gold+(yc.mem?4:0)+yc.remove.length*3;
+const ycNew=()=>({t:{bone:0,wit:0,luck:0,looks:0},origin:null,trait:null,gold:0,mem:false,remove:[],stat:{},bond:null,long:false});
+const ycCost=yc=>Object.values(yc.t).reduce((a,b)=>a+b,0)*3+(yc.origin?4:0)+(yc.trait?TCOST[yc.trait]:0)+yc.gold+(yc.mem?4:0)+yc.remove.length*3+Object.values(yc.stat||{}).reduce((a,b)=>a+b,0)+(yc.bond?3:0)+(yc.long?3:0);
 const YKEY='murim-yeokcheon';
 function ycPts(){try{const v=JSON.parse(localStorage.getItem(YKEY)||'null');if(v&&typeof v.pts==='number')return v;}catch(e){}return {pts:6,total:0};}
 function ycSave(v){try{localStorage.setItem(YKEY,JSON.stringify(v));}catch(e){}}
@@ -613,6 +636,9 @@ function buildFate(b,yc){const o=ORIGINS.find(x=>x.id===(yc.origin||b.origin));
   if(has(s,'dokche'))s.rp+=30; if(has(s,'slaughter')){s.salgi=30;s.temper+=20;} if(has(s,'seongol'))s.cult+=10;
   for(const k in s.t)s.t[k]=clamp(s.t[k]+(yc.t[k]||0),1,10);
   s.gold+=yc.gold*100; if(yc.mem){s.mu+=15;s.lore+=10;}
+  for(const k in (yc.stat||{}))s[k]=(s[k]||0)+yc.stat[k]*10;
+  if(yc.bond&&NPCS[yc.bond]){s.met[yc.bond]=1;s.rel[yc.bond]=30;s.flags.pastBond=yc.bond;}
+  if(yc.long)s.flags.ycLong=1;
   s.hp=hpMax(s);return s;}
 function hist(S,t){S.hist.push({age:S.age,t});}
 function worldWatch(S){const w=S.w,h=w.h||(w.h={});const add=(k,t)=>{if(!h[k]){h[k]=1;hist(S,t);}};const nm=jo(S.name,'이','가');
@@ -3001,13 +3027,13 @@ effects의 k는 다음 중 하나만 쓴다: ${Object.keys(AI_FX).join(', ')}. �
 const JSON_STRICT='\n\n[중요] 앞 응답은 JSON으로 읽을 수 없었다. 응답 전체가 올바른 JSON 하나여야 한다. 문자열 안의 줄바꿈은 \\n으로 쓰고, 마지막 항목 뒤에 쉼표를 두지 않는다.';
 function aiLoose(t){const s=String(t||'').replace(/^﻿/,'').replace(/```(?:json|JSON)?/g,'').trim(),a=s.indexOf('{'),b=s.lastIndexOf('}');if(a<0||b<=a)throw new Error('no json');
  const x=s.slice(a,b+1);try{return JSON.parse(x);}catch(e){return JSON.parse(x.replace(/,\s*([}\]])/g,'$1'));}}
-async function aiCall(sys,user){const c=acfg();if(!aiReady(c))throw new Error('설정에서 쓸 AI의 키와 모델을 넣어 주세요.');
- if(c.prov==='anthropic')return claudeCall(c,sys,user);
- for(let i=0;i<2;i++){const tx=await (c.prov==='gemini'?gemCall:oaiCall)(c,sys,user+JSON_SHAPE+(i?JSON_STRICT:''));try{return aiLoose(tx);}catch(e){}}
+async function aiCall(sys,user,spec){spec=spec||{schema:AI_SCHEMA,shape:JSON_SHAPE};const c=acfg();if(!aiReady(c))throw new Error('설정에서 쓸 AI의 키와 모델을 넣어 주세요.');
+ if(c.prov==='anthropic')return claudeCall(c,sys,user,spec.schema);
+ for(let i=0;i<2;i++){const tx=await (c.prov==='gemini'?gemCall:oaiCall)(c,sys,user+spec.shape+(i?JSON_STRICT:''));try{return aiLoose(tx);}catch(e){}}
  throw new Error('AI 응답을 읽지 못했어요. 다시 해 보거나 다른 모델을 써 보세요.');}
-async function claudeCall(c,sys,user){const p=aiCur(c);
+async function claudeCall(c,sys,user,schema){const p=aiCur(c);
  const fb=/opus-5-5|sonnet-5-5/.test(p.model); // 안전 분류기가 거절하면 서버가 다른 모델로 이어 쓴다
- const body={model:p.model,max_tokens:8000,system:[{type:'text',text:sys,cache_control:{type:'ephemeral'}}],messages:[{role:'user',content:user}],output_config:{effort:'low',format:{type:'json_schema',schema:AI_SCHEMA}}};
+ const body={model:p.model,max_tokens:8000,system:[{type:'text',text:sys,cache_control:{type:'ephemeral'}}],messages:[{role:'user',content:user}],output_config:{effort:'low',format:{type:'json_schema',schema:schema||AI_SCHEMA}}};
  const h={'content-type':'application/json','x-api-key':p.key.trim(),'anthropic-version':'2026-10-21','anthropic-dangerous-direct-browser-access':'true'};
  if(fb){body.fallbacks='default';h['anthropic-beta']='server-side-fallback-2026-07-01';}
  const go=()=>aiFetch(c,'https://api.anthropic.com/v1/messages',{method:'POST',headers:h,body:JSON.stringify(body)},'Anthropic');
@@ -3353,6 +3379,114 @@ E({id:'yeomCase',tag:'talk',t:'포두의 부탁',a:[18,90],w:S=>S.met.yeomcs&&(S
   {t:'관부 일은 관부가 하시오',go:S=>{S.flags.yeomCase=1;TK(S,'yeomcs',-10);return '“…역시 칼 찬 놈들은 다 똑같군.” 포두가 돌아섰다.';}}]});
 Object.assign(SECT_FIRST,{gongmyeong:{x:'소림 산문 아래 만둣집, 나한당의 공명 사형이 문 앞에서 서성인다. 승복 소매에 만두 기름이 묻어 있다. 같은 소림 밥을 먹는 사이라 눈이 마주치자 그가 먼저 손짓했다.',l:'“사제, 아니 사매? 아무튼 마침 잘 왔소. 나 대신 고기만두 하나만 사 주시오. 계율은 내가 지키겠소. 사형제끼리 비밀이오.”'}});
 
+/* ══ 역천: 능력치·전생의 인연·장수 ══ */
+const YC_STAT=[['lore','학문'],['med','의술'],['forge','단조'],['tongue','구력'],['savvy','처세'],['mind','심계'],['cult','수양'],['qing','경공'],['ng','내공']];
+const ycBondList=S=>[...new Set([...romList(S),'geolwang','geomseon','muhwang','gwangma','guya','pyeon'])].filter(id=>NPCS[id]&&id!=='ha');
+E({id:'pastBond',tag:'love',t:'전생의 인연',title:S=>NPCS[S.flags.pastBond]?`전생의 인연 · ${NPCS[S.flags.pastBond].n}`:'전생의 인연',a:[14,30],w:S=>S.flags.pastBond&&NPCS[S.flags.pastBond]&&!S.dead_npc[S.flags.pastBond]?8:0,
+ x:S=>{const id=S.flags.pastBond,nm=nnm(id,S);return `낯선 거리에서 ${jo(nm,'과','와')} 마주쳤다. 처음 보는 얼굴이다. 그런데 이상하게 낯설지 않다. 상대도 걸음을 멈추고 당신을 오래 보았다.\n\n“…우리, 어디서 본 적 있던가요?”`;},
+ ch:S=>{const id=S.flags.pastBond;return [{t:'아주 오래전에',go:S=>{TK(S,id,15);npcMem(S,id,'처음 만났는데 오래 알던 사람 같았다');return '그 말에 상대가 웃었다. 처음 보는데 오래 본 웃음이었다. 그날 밤 같은 꿈을 꾸었다. 전생의 꿈이었다.'+dl(id);}},
+  {t:'아니오, 처음입니다',go:S=>{TK(S,id,8);return '“그렇겠지요.” 상대가 고개를 갸웃하며 지나갔다. 몇 걸음 가다 돌아보았다. 당신도 돌아보고 있었다.';}}];}});
+
+/* ══ 결말: 살아온 길에 따라 끝이 다르다. 결말마다 수묵 CG가 있다 ══ */
+const ENDINGS=[
+ ['ascend','우화등선','仙',S=>S.flags.ascend,S=>'구름이 발밑에서 열렸다. 돌아보니 강호가 손바닥만 했다. 당신은 웃으며 한 걸음 더 올랐다.','lone figure ascending into sea of clouds, back view, long hair and robes flowing, crane, sunrise'],
+ ['hyeolsin','혈신','血',S=>S.flags.hyeolsin,S=>'붉은 비가 열흘 동안 내렸다. 그 비가 그친 자리에 당신의 이름만 남았다. 아무도 그 이름을 소리 내어 부르지 않았다.','demonic figure standing on mountain of corpses, blood rain, crimson moon, back view'],
+ ['cheonha','천하제일인','天',S=>S.titles.includes('천하제일인'),S=>'화산 정상, 바람만 남았다. 더 이상 칼을 겨룰 사람이 없는 자리에서 당신은 처음으로 칼을 내려놓았다.','lone swordsman standing on summit of mount hua, sword planted in ground, sea of clouds, wind'],
+ ['domMa','마도천하','魔',S=>S.titles.includes('마도천하의 주인'),S=>'십만의 함성이 산을 넘었다. “마도천하! 만마앙복!” 단상 위의 당신은 끝내 웃지 않았다. 웃을 일이 남아 있지 않았다.','dark lord on throne above kneeling multitude, black banners, ink storm'],
+ ['domJeong','정도천하','正',S=>S.titles.includes('정도천하를 연 협객'),S=>'매화가 지는 광장에서 백도의 칼들이 하늘로 솟았다. 그 숲 가운데에 당신이 있었다. 그날의 강호는 그림처럼 아름다웠다.','righteous hero raising sword among hundreds of raised swords, plum blossom petals'],
+ ['domSa','사도천하','邪',S=>S.titles.includes('사도천하의 련주'),S=>'장강에 배 천 척이 불을 밝혔다. 의리 하나로 묶인 얼굴들 사이에서 당신은 마지막 잔을 들었다.','outlaw leader raising wine cup on ship deck, thousand lantern boats on river at night'],
+ ['harem','시끄러운 집','家',S=>S.harem&&S.harem.filter(id=>!S.dead_npc[id]).length>=2,S=>'마당이 넓은 집은 늘 시끄러웠다. 강호에서 가장 시끄럽고, 가장 따뜻한 집이었다. 마지막 날에도 그 집은 시끄러웠다. 다들 울고 있었으니까.','bustling courtyard house, several figures around old person on veranda, warm, falling leaves'],
+ ['tragic','엇갈린 약속','淚',S=>Object.keys(S.flags).some(k=>/^rj_/.test(k)&&S.flags[k]==='tragedy'),S=>'관에서 깨어났을 때 곁에는 식은 손이 있었다. 그 뒤로 당신은 평생, 약속 시간보다 일찍 나갔다.','lone figure kneeling beside coffin, single candle, falling petals, sorrow'],
+ ['elope','모든 것을 버리고','逃',S=>Object.keys(S.flags).some(k=>/^rj_/.test(k)&&['elope','feign'].includes(S.flags[k])),S=>'깃발도 이름도 버렸다. 남쪽 바닷가 작은 집에서 둘은 늙었다. 강호는 둘을 잊었고, 둘은 그게 좋았다.','two old figures on seaside cliff, small hut, fishing boat, sunset'],
+ ['head','한 문파의 주인','宗',S=>S.rank>=4&&!!S.org,S=>S=>'',''],
+ ['inn','객잔의 등불','燈',S=>S.job==='inn',S=>'객잔 등불은 밤새 꺼지지 않았다. 길 잃은 길손들이 그 불빛을 보고 길을 찾았다. 마지막 밤에도 당신은 등불을 갈았다.','lantern lit inn at night on mountain road, travelers arriving, snow'],
+ ['smith','쇠의 노래','鐵',S=>S.job==='smith',S=>'풀무가 식은 아침, 대장간 벽에 걸린 칼들이 일제히 울었다. 당신이 벼린 쇠들이었다.','blacksmith forge, wall of swords, cold furnace, morning light, hammer on anvil'],
+ ['doctor','인술','醫',S=>S.job==='doctor',S=>'약방 문 앞에 신발이 줄을 섰다. 당신이 살린 사람들이었다. 마지막 처방전에는 한 줄만 적혀 있었다. “아프지 마라.”','herbal clinic at dawn, line of people with lanterns at door, herbs drying'],
+ ['villain','대마두','狂',S=>S.moral<=-60,S=>'세상이 마두라 불렀다. 끝내 변명하지 않았다. 당신의 무덤에는 아무도 오지 않았다. 바람만 왔다.','fearsome figure in tattered robes on battlefield, crows, broken swords, wind'],
+ ['hero','대협','俠',S=>S.moral>=60,S=>'칼로 산을 넘고 정으로 사람을 건넜다. 장례 날, 이름 모를 사람들이 산길을 메웠다. 다들 당신에게 빚이 있다고 했다.','long procession of mourners on mountain path, white banners, hero tomb, mist'],
+ ['hermit','은거','隱',S=>S.age>=60&&(S.cult>=90||!!S.flags.seondo),S=>'칼을 대들보에 올리고 차를 끓였다. 구름이 오가는 것을 보다가, 어느 날 구름과 함께 흩어졌다.','old hermit pouring tea in mountain hut, sword on roof beam, clouds drifting'],
+ ['early','요절','夭',S=>S.age<30&&S.dead!=='우화등선',S=>'너무 일찍 꺼진 불이었다. 그래도 그 짧은 불빛을 기억하는 사람이 있었다.','young figure fallen under cherry tree, petals covering, sword beside, quiet'],
+ ['battle','칼끝의 최후','刃',S=>/싸움|주화입마|자객|살수/.test(S.dead||''),S=>'마지막 일 합에서 당신의 칼이 조금 늦었다. 쓰러지며 본 하늘이 맑았다. 나쁘지 않은 끝이었다.','warrior falling backwards in duel, swords crossing, ink splatter, rain'],
+ ['ordinary','범부의 일생','凡',S=>S.realm<=2&&!S.job,S=>'이름 없는 풀도 봄을 안다. 당신은 제 몫의 봄을 다 살았다. 그것으로 충분했다.','village field in spring, old farmer resting under tree, children playing'],
+ ['wander','강호의 나그네','旅',S=>true,S=>'부평초처럼 떠돌았다. 머무는 곳마다 꽃이 피었다. 마지막 길도 혼자였지만, 외롭지 않았다.','lone wanderer with bamboo hat walking away on long road, distant mountains, wind']];
+ENDINGS.find(e=>e[0]==='head')[4]=S=>`${ORGS[S.org].n}의 ${ORGS[S.org].ranks[4]}. 마지막 날 제자들이 산문 앞에 줄지어 섰다. 당신은 그들의 얼굴을 하나하나 보았다. 다 당신을 닮아 있었다.`;
+ENDINGS.find(e=>e[0]==='head')[5]='sect master on mountain gate stairs, rows of disciples bowing, banners, morning mist';
+const endingOf=S=>ENDINGS.find(e=>{try{return e[3](S);}catch(_){return false;}})||ENDINGS[ENDINGS.length-1];
+const CG_INK='ink wash painting, sumi-e, monochrome, black ink on white paper, bold brush strokes, ink splatter, dry brush, high contrast, negative space';
+const CGKEY='murim-cg';
+function cgLoad(){try{const v=JSON.parse(localStorage.getItem(CGKEY)||'null');if(v&&v.e)return v;}catch(e){}return {e:{},l:{}};}
+function cgSave(v){try{localStorage.setItem(CGKEY,JSON.stringify(v));}catch(e){}}
+function cgUnlock(S){const v=cgLoad(),e=endingOf(S);S.ending=e[0];v.e[e[0]]=v.e[e[0]]||{n:0,who:S.name};v.e[e[0]].n++;
+ const sp=S.spouse&&NPCS[S.spouse]?S.spouse:null;if(sp){v.l[sp]=v.l[sp]||{n:0,who:S.name};v.l[sp].n++;}cgSave(v);}
+const cgLoveText=(S,id)=>LOVE[id]&&LOVE[id].old?LOVE[id].old:`백발이 된 ${jo(NPCS[id].n,'과','와')} 툇마루에 나란히 앉았다. 말이 없어도 다 들렸다. ${WED_VOW[id]||''} 그 약속은 끝까지 지켜졌다.`;
+const cgLovePrompt=id=>{const g=NPC_TAGS[id];return String((typeof g==='function'?g(S):g)||'').replace(/\b1girl\b|\b1boy\b|\bsolo\b/g,'').replace(/^[,\s]+/,'')+', 1boy 1girl, couple, tender embrace, old age together, back view, willow branches, boat on lake';};
+function cgFrame(k,ch,cap){const u=imgURL(k);return `<div class="cgf">${u?`<img class="ink" src="${u}" alt="${esc(cap||'')}">`:`<div class="inkph" aria-hidden="true"><svg viewBox="0 0 200 120"><path d="M100 14c-36 0-64 22-64 48s27 46 63 46c30 0 55-15 61-38" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" opacity=".82"/><circle cx="168" cy="40" r="2.4" fill="currentColor"/><circle cx="176" cy="52" r="1.6" fill="currentColor"/></svg><span>${esc(ch)}</span></div>`}<button class="ghost cgd" data-a="cgdraw" data-k="${esc(k)}">${u?'CG 다시 그리기':'CG 그리기'}</button></div>`;}
+function endingHTML(s){const e=endingOf(s),sp=s.spouse&&NPCS[s.spouse]?s.spouse:null;
+ return `<section class="cgp fade">${cgFrame('cg:'+e[0],e[2],e[1])}<div class="cgcap"><span class="seal" aria-hidden="true">${e[2]}</span>결말 · ${esc(e[1])}</div><p class="cgt">${esc(e[4](s))}</p></section>
+  ${sp?`<section class="cgp">${cgFrame('cg:love_'+sp,'緣',NPCS[sp].n)}<div class="cgcap"><span class="seal" aria-hidden="true">緣</span>${esc(NPCS[sp].n)}${bat(NPCS[sp].n)?'과':'와'} 함께</div><p class="cgt">${esc(cgLoveText(s,sp))}</p></section>`:''}`;}
+function cgGalHTML(){const v=cgLoad(),m=modal,loves=[...new Set(Object.keys(LOVE).concat(LOVE_X.m,LOVE_X.f))].filter(id=>NPCS[id]);
+ const ne=ENDINGS.filter(e=>v.e[e[0]]).length,nl=loves.filter(id=>v.l[id]).length;
+ const tile=(k,ch,name,open,sub)=>`<button class="cgtile ${open?'':'lock'}" ${open?`data-a="cgview" data-k="${esc(k)}"`:'disabled'}>${open&&imgURL(k)?`<img class="ink" src="${imgURL(k)}" alt="" loading="lazy">`:`<span class="ch">${open?ch:'？'}</span>`}<span class="cn">${open?esc(name):'미발견'}</span>${open&&sub?`<span class="cs">${esc(sub)}</span>`:''}</button>`;
+ return `<div class="modal" data-a="mbg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mt"><div class="row" style="justify-content:space-between"><h3 id="mt" style="margin:0">결말과 CG</h3><button class="ghost" data-a="mclose">닫기</button></div>
+  <p class="muted small" style="margin:0">살아 본 결말과 함께한 사람의 CG가 모인다. 그림은 수묵으로 그린다. 그림이 없으면 설정의 NovelAI로 그리거나, 그림 관리 → CG 탭에서 넣는다.</p>
+  <p class="grp-t" style="margin:0">결말 ${ne}/${ENDINGS.length}</p><div class="cgg">${ENDINGS.map(e=>tile('cg:'+e[0],e[2],e[1],v.e[e[0]],v.e[e[0]]?`${v.e[e[0]].who} 외 ${v.e[e[0]].n}번`:'')).join('')}</div>
+  <p class="grp-t" style="margin:0">함께한 사람 ${nl}/${loves.length}</p><div class="cgg">${loves.map(id=>tile('cg:love_'+id,'緣',NPCS[id].n,v.l[id],v.l[id]?`${v.l[id].who} 외 ${v.l[id].n}번`:'')).join('')}</div></div></div>`;}
+function cgViewHTML(){const k=modal.k,id=k.slice(3),e=ENDINGS.find(x=>x[0]===id),lv=/^love_/.test(id)?id.slice(5):null;
+ const cap=e?e[1]:NPCS[lv]?NPCS[lv].n:'',txt=e?safe(()=>e[4](S))||'':lv?LOVE[lv]&&LOVE[lv].old||`${NPCS[lv].n}${bat(NPCS[lv].n)?'과':'와'} 함께 늙은 삶.`:'';
+ return `<div class="modal" data-a="mbg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mt"><h3 id="mt" style="margin:0">${esc(cap)}</h3>${cgFrame(k,e?e[2]:'緣',cap)}<p class="cgt">${esc(txt)}</p><div class="row" style="justify-content:flex-end"><button class="ghost" data-a="mclose">← 목록으로</button></div></div></div>`;}
+const cgSlots=()=>[...ENDINGS.map(e=>'cg:'+e[0]),...[...new Set(Object.keys(LOVE).concat(LOVE_X.m,LOVE_X.f))].filter(id=>NPCS[id]).map(id=>'cg:love_'+id)];
+const cgName=id=>{const e=ENDINGS.find(x=>x[0]===id);return e?`결말 · ${e[1]}`:/^love_/.test(id)&&NPCS[id.slice(5)]?`함께 · ${NPCS[id.slice(5)].n}`:id;};
+const cgPrompt=id=>{const e=ENDINGS.find(x=>x[0]===id);return e?e[5]:/^love_/.test(id)?cgLovePrompt(id.slice(5)):'';};
+
+/* ══ 일대기: 삶을 한 권의 책(○○록)으로 엮는다. AI가 엮을 수도 있다 ══ */
+function bookFallback(S){const syl=[];
+ if(S.flags.ascend)syl.push('등선');else if(S.qing>=60)syl.push('풍신');if(S.titles.includes('천하제일인'))syl.push('천하');
+ if(S.moral>=60)syl.push('협의');else if(S.moral<=-60)syl.push('혈풍');if(S.job==='inn')syl.push('객잔');else if(S.job==='smith')syl.push('철향');else if(S.job==='doctor')syl.push('인술');
+ if(S.spouse&&NPCS[S.spouse])syl.push('연정');if(S.lore>=70)syl.push('문향');if(!syl.length)syl.push(S.realm>=5?'강호':'평생');
+ const head=S.nick?S.nick.n:S.name;return {title:`${head}${syl.slice(0,2).join('')}록`,hanja:'',subtitle:`${S.name}의 일생`,epithet:epitaph(S),review:'',chapters:[],ai:false};}
+const BOOK_SCHEMA={type:'object',additionalProperties:false,required:['title','hanja','subtitle','epithet','review','chapters'],properties:{title:{type:'string'},hanja:{type:'string'},subtitle:{type:'string'},epithet:{type:'string'},review:{type:'string'},
+ chapters:{type:'array',items:{type:'object',additionalProperties:false,required:['h','t'],properties:{h:{type:'string'},t:{type:'string'}}}}}};
+const BOOK_SHAPE='\n\n[출력 형식] 아래 모양의 JSON 하나만 출력한다. 설명이나 코드 블록을 붙이지 않는다.\n{"title":"○○록","hanja":"○○錄","subtitle":"부제","epithet":"한 문장","review":"평가","chapters":[{"h":"제1장 ○○","t":"내용"}]}\n인물의 말은 “ ”로 감싸고, 문자열 안에 큰따옴표(")를 쓰지 않는다.';
+const BOOK_SYS=`너는 무협 인생 시뮬레이션 「무림인생」에서 한 사람의 일생을 한 권의 일대기로 엮는 사관(史官)이다.
+
+제목
+- 제목은 그 사람을 나타내는 2~6글자 뒤에 '록(錄)'을 붙인다. 별호, 두드러진 능력, 삶의 결을 합쳐 짓는다. 예를 들어 별호가 무신이고 경공이 뛰어났다면 '무신풍신록' 같은 식이다. 예시를 그대로 쓰지 말고 이 사람만의 제목을 짓는다.
+- hanja: 제목의 한자 표기(예: 武神風神錄). subtitle: 한 줄 부제.
+
+내용
+- epithet: 이 사람을 한 문장으로.
+- review: 3~5문장의 평가. 이 사람의 선택들을 돌아보며 빛났던 것과 아쉬운 것을 솔직하게 말한다. '당신'에게 말하듯 쓴다.
+- chapters: 4~6장. h는 '제1장 ○○' 꼴의 제목, t는 2~4문장. 이 사람을 '그' 또는 '그녀'로 부르며 과거형의 문학적인 문장으로 쓴다.
+- 일어난 일은 주어진 기록에서만 가져온다. 기록에 없는 큰 사건을 지어내지 않는다. 장면의 작은 묘사는 더해도 된다.
+- 무협 문학의 결로, 짧고 감각적으로. 실제 소설이나 게임의 문장을 베끼지 않는다.`;
+function bookState(S){const o=S.org&&ORGS[S.org],e=endingOf(S);
+ const big=['qing','lore','med','forge','tongue','savvy','mind','cult'].map(k=>[LBL[k],Math.round(S[k]||0)]).filter(x=>x[1]>=40).map(x=>`${x[0]} ${x[1]}`).join(', ');
+ return [`[이름] ${S.name} · ${S.sex==='m'?'남':'여'} · ${ORIGINS.find(x=>x.id===S.origin).n} · ${S.region} 출신`,`[끝] ${S.age}세 · ${S.dead||'천수를 다함'} · 결말: ${e[1]}`,
+  `[소속] ${o?`${o.n}(${o.side}) ${o.ranks[S.rank]}`:'없음'}${S.job?` · 직업 ${jobTitle(S)}`:''}`,`[경지] ${REALMS[S.realm].n} · 명성 ${Math.round(S.fame)} · 도덕 ${Math.round(S.moral)}(${moralName(S.moral)}) · 성정 ${temperName(S.temper)}`,
+  `[별호·칭호] ${S.nick?S.nick.n:'없음'} / ${S.titles.join(', ')||'없음'}`,`[두드러진 능력] ${big||'없음'} · 주무기 ${S.mainW}`,
+  `[무공] ${artsOf(S).sort((a,b)=>b.t-a.t).slice(0,6).map(a=>a.n+(a.made?'(창안)':'')).join(', ')||'없음'}`,
+  `[인연] 배우자 ${S.spouse?(NPCS[S.spouse]?nnm(S.spouse,S):'평범한 사람'):'없음'}${S.harem?` · 함께 산 사람 ${S.harem.map(id=>NPCS[id].n).join(', ')}`:''} · 자식 ${S.kids} · 제자 ${S.disciples}`,
+  `[가까웠던 사람] ${Object.keys(S.rel).filter(id=>NPCS[id]&&S.met[id]).sort((a,b)=>S.rel[b]-S.rel[a]).slice(0,6).map(id=>`${NPCS[id].n}(${npcStatus(S,id)})`).join(', ')||'없음'}`,
+  `[남긴 자취]\n${S.deeds.map(d=>`${d.age}세 ${d.t}`).join('\n')||'없음'}`,`[강호사]\n${S.hist.map(h=>`${h.age}세 ${h.t}`).join('\n')||'없음'}`,
+  `[가슴에 남은 말] ${(S.words||[]).map(w=>`${w.who}: ${w.t}`).join(' / ')||'없음'}`,
+  `[주요 연대기]\n${S.log.filter(l=>l.k).slice(-40).map(l=>`${l.age}세 ${l.t}`).join('\n')}`].join('\n');}
+function bookClean(j){const s=(v,n)=>String(v==null?'':v).trim().slice(0,n);if(!j||!s(j.title,30))throw new Error('AI가 책을 엮지 못했어요. 다시 해 보세요.');
+ const ch=(Array.isArray(j.chapters)?j.chapters:[]).slice(0,7).map(c=>({h:s(c.h,40),t:s(c.t,600)})).filter(c=>c.h&&c.t);
+ let t=s(j.title,20);if(!/록$/.test(t))t+='록';return {title:t,hanja:s(j.hanja,20),subtitle:s(j.subtitle,60),epithet:s(j.epithet,160),review:s(j.review,900),chapters:ch,ai:true};}
+let BOOK_RID=0;const BOOK_ST={busy:0,err:''};
+function bookGo(){if(BOOK_ST.busy||!S||S.phase!=='end')return;BOOK_ST.busy=1;BOOK_ST.err='';render();const rid=++BOOK_RID,life=S.lifeId;
+ aiCall(BOOK_SYS,bookState(S),{schema:BOOK_SCHEMA,shape:BOOK_SHAPE}).then(j=>{if(rid!==BOOK_RID||S.lifeId!==life)return;S.book=bookClean(j);
+   const h=loadHall(),r=h.find(x=>x.lifeId===life);if(r){r.book=S.book.title;saveHall(h);}save();})
+  .catch(e=>{if(rid===BOOK_RID)BOOK_ST.err=e.message||String(e);}).finally(()=>{if(rid===BOOK_RID){BOOK_ST.busy=0;render();}});}
+function bookHTML(s){const b=s.book||bookFallback(s),ready=aiReady(acfg());
+ const vt=t=>[...String(t)].map(c=>c===' '?'':esc(c)).join('<br>');
+ return `<section class="book fade"><div class="bcover"><span class="bt">${vt(b.hanja||b.title)}</span>${b.hanja?`<span class="bk">${vt(b.title)}</span>`:''}<span class="ba">${vt(s.name+' 著')}</span></div>
+  <div class="bpages"><p class="grp-t" style="margin:0">${esc(b.title)}</p>${b.subtitle?`<p class="muted small" style="margin:0">${esc(b.subtitle)}</p>`:''}<p class="bep">“${esc(b.epithet)}”</p>
+   ${b.chapters.map(c=>`<div class="bch"><b>${esc(c.h)}</b><p>${esc(c.t)}</p></div>`).join('')}
+   ${b.review?`<div class="brev"><span class="seal" aria-hidden="true">評</span><p>${esc(b.review)}</p></div>`:''}
+   ${BOOK_ST.err?`<p class="status">${esc(BOOK_ST.err)}</p>`:''}${BOOK_ST.busy?'<p class="status">사관이 일대기를 엮는 중… 보통 10~40초 걸린다.</p>':''}
+   ${ready?`<button class="ghost" data-a="bookai" ${BOOK_ST.busy?'disabled':''}>${b.ai?'AI에게 다시 엮게 한다':'AI 사관에게 일대기를 맡긴다'}</button>`:'<p class="muted small" style="margin:0">설정에서 AI 이야기꾼을 켜면, AI 사관이 이 삶을 돌아보고 제목을 짓고 평가해 장(章)을 나눠 엮는다.</p>'}</div></section>`;}
+
 const EVM=Object.fromEntries(EV.map(e=>[e.id,e]));
 EVM.ai=AI_EV;
 
@@ -3564,9 +3698,9 @@ function grade(S){
   if(S.realm>=4||S.fame>=60)return '강호의 고수';if(S.realm>=2||S.fame>=15)return '이름 있는 무인';
   if(S.forge>=70)return '이름난 장인';if(S.med>=70)return '이름난 의원';if(S.lore>=70)return '이름난 학자';return '평범한 범부';}
 const score=S=>Math.round((S.biz?S.biz.rep*2+S.biz.made*15+S.biz.cures*1.5+S.biz.lv*40:0)+(S.titles.some(t=>/^(정파|사파|마교)제일인$/.test(t))?150:0)+S.realm*120+S.fame*1.2+Math.min(S.age,100)+S.deeds.length*25+S.disciples*15+S.groups*80+(S.titles.includes('천하제일인')?400:0)+(S.flags.ascend?500:0));
-function endLife(){S.phase='end';
-  const rec={name:S.name,nick:S.nick?S.nick.n:'',age:S.age,realm:REALMS[S.realm].n,grade:grade(S),score:score(S),cause:S.dead,org:S.org?ORGS[S.org].n:'무소속'};
-  const h=loadHall();h.push(rec);h.sort((a,b)=>b.score-a.score);saveHall(h.slice(0,10));
+function endLife(){S.phase='end';if(!S.flags.cgDone){S.flags.cgDone=1;cgUnlock(S);}BOOK_ST.err='';BOOK_ST.busy=0;BOOK_RID++;
+  const rec={lifeId:S.lifeId,ending:endingOf(S)[1],name:S.name,nick:S.nick?S.nick.n:'',age:S.age,realm:REALMS[S.realm].n,grade:grade(S),score:score(S),cause:S.dead,org:S.org?ORGS[S.org].n:'무소속'};
+  const h=loadHall();if(!h.some(x=>x.lifeId&&x.lifeId===S.lifeId))h.push(rec);h.sort((a,b)=>b.score-a.score);saveHall(h.slice(0,10));
   if(!S.flags.ycPaid){S.flags.ycPaid=1;const g=Math.max(1,Math.floor(score(S)/120))+(S.flags.ascend?10:0)+(S.titles.includes('천하제일인')?10:0);S.ycGain=g;const v=ycPts();v.pts+=g;v.total=(v.total||0)+g;ycSave(v);}
   resetScroll=true;save();render();}
 
@@ -3802,7 +3936,7 @@ const STYLE_PRESETS=[['무협 일러스트','wuxia, ancient china, hanfu, detail
  ['무협 웹툰','korean webtoon style, murim, wuxia, sharp lineart, dramatic shading, dynamic composition'],
  ['반실사 유화','semi-realistic, oil painting, painterly, wuxia, ancient china, dramatic lighting, rich texture']];
 const isPort=k=>/^(pc|npc|st):/.test(k);
-function fullPrompt(k,p){const c=ncfg();if(p==null)p=slotPrompt(k);const kt=k==='map'?c.tmap:isPort(k)?c.tnpc:c.tev;return [p,kt,c.style,c.q?NAI_Q[c.model]:''].filter(x=>x&&String(x).trim()).join(', ');}
+function fullPrompt(k,p){const c=ncfg();if(p==null)p=slotPrompt(k);const cg=/^cg:/.test(k),kt=cg?'':k==='map'?c.tmap:isPort(k)?c.tnpc:c.tev;return [p,kt,cg?CG_INK:c.style,c.q?NAI_Q[c.model]:''].filter(x=>x&&String(x).trim()).join(', ');}
 const REG_EN={북해:'beihai',신강:'xinjiang',하북:'hebei',산동:'shandong',섬서:'shaanxi',하남:'henan',청해:'qinghai',안휘:'anhui',호북:'hubei',사천:'sichuan',강남:'jiangnan',호남:'hunan',귀주:'guizhou',운남:'yunnan',광동:'guangdong'};
 const REG_KO=Object.fromEntries(Object.entries(REG_EN).map(([a,b])=>[b,a]));
 const REG_TAGS={beihai:'frozen northern sea, ice palace, snowstorm, glaciers',xinjiang:'vast desert mountains, demonic cult fortress, dark clouds, red banners',hebei:'imperial capital, massive city walls, northern plains',shandong:'mount tai, bandit fortress on cliffs, pine trees',
@@ -3813,10 +3947,10 @@ const MAP_TAG='ancient map of china, ink wash painting, mountains, rivers, parch
 const safe=f=>{try{return f()||'';}catch(e){return '';}};
 function fileName(k){return (k==='map'?'map':k.replace(':','_'))+'.png';}
 function keyFromName(n){n=n.replace(/\.[^.]+$/,'').trim();const lo=n.toLowerCase();if(lo==='map'||n==='지도')return 'map';
-  const m=/^(npc|st|ev|reg)[_\-:](.+)$/i.exec(n);if(m){const t=m[1].toLowerCase(),id=m[2];if((t==='npc'||t==='st')&&NPCS[id])return 'st:'+id;if(t==='ev'&&EVM[id])return 'ev:'+id;if(t==='reg'&&(REG_KO[id.toLowerCase()]||REG_EN[id]))return 'reg:'+(REG_EN[id]||id.toLowerCase());return null;}
+  const m=/^(npc|st|ev|reg|cg)[_\-:](.+)$/i.exec(n);if(m){const t=m[1].toLowerCase(),id=m[2];if(t==='cg')return cgSlots().includes('cg:'+id)?'cg:'+id:null;if((t==='npc'||t==='st')&&NPCS[id])return 'st:'+id;if(t==='ev'&&EVM[id])return 'ev:'+id;if(t==='reg'&&(REG_KO[id.toLowerCase()]||REG_EN[id]))return 'reg:'+(REG_EN[id]||id.toLowerCase());return null;}
   if(NPCS[n])return 'st:'+n;if(EVM[n])return 'ev:'+n;if(REG_EN[n])return 'reg:'+REG_EN[n];if(REG_KO[lo])return 'reg:'+lo;return null;}
-function galKeys(t){if(t==='map')return ['map',...Object.keys(REG).map(r=>'reg:'+REG_EN[r])];if(t==='npc'||t==='st')return Object.keys(NPC_TAGS).filter(id=>NPCS[id]).map(id=>t+':'+id);return EV.filter(e=>e.id!=='focus'&&e.id!=='bt').map(e=>'ev:'+e.id);}
-function slotName(k){const [t,id]=k.split(/:(.+)/);if(t==='st')return NPCS[id].n;return t==='map'?'중원 지도':t==='reg'?REG_KO[id]||id:t==='npc'?NPCS[id].n:(safe(()=>evTitle(S,EVM[id]))||id);}
+function galKeys(t){if(t==='cg')return cgSlots();if(t==='map')return ['map',...Object.keys(REG).map(r=>'reg:'+REG_EN[r])];if(t==='npc'||t==='st')return Object.keys(NPC_TAGS).filter(id=>NPCS[id]).map(id=>t+':'+id);return EV.filter(e=>e.id!=='focus'&&e.id!=='bt').map(e=>'ev:'+e.id);}
+function slotName(k){const [t,id]=k.split(/:(.+)/);if(t==='st')return NPCS[id].n;if(t==='cg')return cgName(id);return t==='map'?'중원 지도':t==='reg'?REG_KO[id]||id:t==='npc'?NPCS[id].n:(safe(()=>evTitle(S,EVM[id]))||id);}
 function savePr(k,p){const c=ncfg();if(!p.trim()||p.trim()===basePrompt(k).trim())delete c.pr[k];else c.pr[k]=p;nsave(c);}
 function copyText(t){const fb=()=>{const a=document.createElement('textarea');a.value=t;a.setAttribute('readonly','');a.style.position='fixed';a.style.opacity='0';document.body.appendChild(a);a.select();let ok=false;try{ok=document.execCommand('copy');}catch(e){}a.remove();toast(ok?'복사했어요.':'복사하지 못했어요. 글자를 길게 눌러 복사해 주세요.');};
   if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(t).then(()=>toast('복사했어요.'),fb);else fb();}
@@ -3947,7 +4081,7 @@ function traitsHTML(s,full){const t=s.traits.map(k=>`<span class="chip t" title=
   ['극양지체','극음지체'].forEach(k=>{if(s.flags[k])t.push(`<span class="chip t">${k}</span>`);});if(s.flags.hwangol)t.push('<span class="chip t">환골탈태</span>');
   return t.length?`<div class="chips">${t.join('')}</div>${full?`<div class="muted small">${s.traits.map(k=>`<b>${TRAITS[k].n}</b> ${esc(TRAITS[k].d)} <span style="color:var(--seal)">제약: ${esc(TCON[k]||'없음')}</span>`).join('<br>')}</div>`:''}`:'';}
 function portrait(k,label,cls){const u=imgURL(k)||(k.startsWith('st:')?imgURL('npc:'+k.slice(3)):null);return `<button class="portrait ${u?'has':''} ${cls||''}" data-a="draw" data-k="${esc(k)}" aria-label="${esc(label)} 그림">${u?`<img src="${u}" alt="">`:BUSY.has(k)?'그리는 중':'그림'}</button>`;}
-function basePrompt(k){const [t,id]=k.split(/:(.+)/);if(t==='st'){const g=NPC_TAGS[id];return (typeof g==='function'?g(S):g)+', cowboy shot, standing, white background';}return t==='pc'?pcPrompt(S):t==='npc'?npcPrompt(id,S):t==='map'?MAP_TAG:t==='reg'?(REG_TAGS[id]||'ancient chinese landscape')+', scenery, wide shot, cinematic composition, no humans':evPrompt(id);}
+function basePrompt(k){const [t,id]=k.split(/:(.+)/);if(t==='st'){const g=NPC_TAGS[id];return (typeof g==='function'?g(S):g)+', cowboy shot, standing, white background';}return t==='cg'?cgPrompt(id):t==='pc'?pcPrompt(S):t==='npc'?npcPrompt(id,S):t==='map'?MAP_TAG:t==='reg'?(REG_TAGS[id]||'ancient chinese landscape')+', scenery, wide shot, cinematic composition, no humans':evPrompt(id);}
 function slotPrompt(k){const p=ncfg().pr[k];return p&&p.trim()?p:basePrompt(k);}
 function modalHTML(){if(!modal)return '';
   if(modal.t==='nai'){const c=modal.c;return `<div class="modal" data-a="mbg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mt"><h3 id="mt">설정</h3>${S.phase!=='birth'&&S.phase!=='end'?`<div class="row" style="justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:10px"><span class="small muted">이번 생을 접고 처음으로 돌아간다.</span><button class="ghost" data-a="quit">${modal.sure?'정말 포기한다':'처음으로'}</button></div>`:''}<p class="grp-t" style="margin:0">그림</p>
@@ -3965,6 +4099,8 @@ function modalHTML(){if(!modal)return '';
    ${aiCfgHTML(c.ai||acfg())}
    <div class="row" style="justify-content:space-between"><button class="ghost" data-a="mclose">닫기</button><button class="go" data-a="nsave">저장</button></div></div></div>`;}
   if(modal.t==='ai')return aiModalHTML();
+  if(modal.t==='cgal')return cgGalHTML();
+  if(modal.t==='cgv')return cgViewHTML();
   if(modal.t==='gal')return galHTML();
   if(modal.t==='npc')return npcModalHTML();
   if(modal.t==='edit')return editHTML();
@@ -3980,7 +4116,7 @@ function modalHTML(){if(!modal)return '';
    <div class="row wrap" style="justify-content:space-between"><span class="row wrap"><button class="ghost" data-a="mclose">${modal.back?'← 목록으로':'닫기'}</button><label class="ghost btnl" for="n_file">파일에서 넣기</label><input type="file" id="n_file" accept="image/*" hidden>${local?'<button class="ghost" data-a="nsavefile">파일로 저장</button><button class="ghost" data-a="ndel">내 그림 지우기</button>':''}</span>
    <button class="go" data-a="ngen" ${busy?'disabled':''}>${u?'NovelAI로 다시 그리기':'NovelAI로 그리기'}</button></div>
    <p class="muted small">${port?'세로 832×1216':'가로 1216×832'} · 다른 곳에서 그렸다면 프롬프트를 복사해 쓰고, 받은 그림을 '파일에서 넣기'로 넣는다.${k.startsWith('pc:')?'':` 여러 장 넣기용 파일 이름: <b>${fileName(k)}</b>`}${local?' · 내 그림을 지우면 저장소 그림이 있을 때 그것으로 돌아간다.':''}</p></div></div>`;}
-function galHTML(){const g=modal,c=ncfg(),T=[['style','그림체'],['map','지도'],['st','인물'],['ev','사건']];
+function galHTML(){const g=modal,c=ncfg(),T=[['style','그림체'],['map','지도'],['st','인물'],['ev','사건'],['cg','CG']];
   const head=`<div class="row" style="justify-content:space-between"><h3 id="mt" style="margin:0">그림 관리</h3><button class="ghost" data-a="mclose">닫기</button></div>
    <div class="chips" role="tablist">${T.map(([v,l])=>`<button class="chip ${g.tab===v?'on':''}" data-a="gtab" data-v="${v}" role="tab" aria-selected="${g.tab===v}">${l}</button>`).join('')}</div>`;
   let body;
@@ -4070,7 +4206,7 @@ function scrollCard(){const e=EVM[S.cur];
    ${dead&&S.phase==='result'?`<p class="muted">${esc(S.dead==='우화등선'?'당신의 이야기는 여기서 하늘로 이어진다.':`그리고 그것이 마지막이었다. (${S.dead})`)}</p>`:''}
    <button class="go ${dead?'seal-btn':''}" data-a="next">${dead?'생을 돌아본다':S.chain?'계속 →':'한 해를 보낸다'}</button></section>`;}
 function hallHTML(){const h=loadHall();if(!h.length)return '';
-  return `<section class="hall sec"><h3>역대의 삶</h3><ol>${h.map(r=>`<li>${r.nick?`<b>${esc(r.nick)}</b> `:''}${esc(r.name)} <span class="m">· ${esc(r.org||r.sect||'')} · ${esc(r.realm)} · 향년 ${r.age}세 · ${esc(r.grade)} · ${r.score}점</span></li>`).join('')}</ol></section>`;}
+  return `<section class="hall sec"><h3>역대의 삶</h3><ol>${h.map(r=>`<li>${r.book?`《${esc(r.book)}》 `:''}${r.nick?`<b>${esc(r.nick)}</b> `:''}${esc(r.name)} <span class="m">${r.ending?esc(r.ending)+' · ':''}· ${esc(r.org||r.sect||'')} · ${esc(r.realm)} · 향년 ${r.age}세 · ${esc(r.grade)} · ${r.score}점</span></li>`).join('')}</ol></section>`;}
 function birthHTML(){const s=S,o=ORIGINS.find(x=>x.id===s.origin),yc=s.yc,P=ycPts().pts,C=ycCost(yc),left=P-C;
   const tRow=(k,l)=>`<span>${l}</span>${dots(s.t[k])}<span class="yb"><button class="chip" data-a="yt" data-k="${k}" data-d="-1" ${yc.t[k]<=0?'disabled':''} aria-label="${l} 내리기">−</button><button class="chip" data-a="yt" data-k="${k}" data-d="1" ${left<3||s.t[k]>=10?'disabled':''} aria-label="${l} 올리기">+${yc.t[k]?yc.t[k]:''}</button></span>`;
   const trCost=k=>TCOST[k]-(yc.trait?TCOST[yc.trait]:0);
@@ -4088,12 +4224,16 @@ function birthHTML(){const s=S,o=ORIGINS.find(x=>x.id===s.origin),yc=s.yc,P=ycPt
    ${s.base.traits.length?`<div><div class="lab">타고난 체질 지우기 · 3점</div><div class="chips">${s.base.traits.map(k=>`<button class="chip ${yc.remove.includes(k)?'on':''}" data-a="yrm" data-v="${k}" ${!yc.remove.includes(k)&&left<3?'disabled':''}>${TRAITS[k].n} 지우기</button>`).join('')}</div></div>`:''}
    <div class="rowbtn"><span class="lab">노잣돈 +100냥 · 1점</span><span class="yb"><button class="chip" data-a="ygold" data-d="-1" ${yc.gold<=0?'disabled':''}>−</button><button class="chip" data-a="ygold" data-d="1" ${left<1||yc.gold>=5?'disabled':''}>+${yc.gold?yc.gold*100:''}</button></span></div>
    <div class="rowbtn"><span class="lab">전생의 기억 · 4점 <span class="small">무학 +15 · 학문 +10</span></span><button class="chip ${yc.mem?'on':''}" data-a="ymem" ${!yc.mem&&left<4?'disabled':''}>${yc.mem?'켬':'끔'}</button></div>
+   <div><div class="lab">능력치 · 1점마다 +10 <span class="small">(최대 +30, 내공은 +10년)</span></div><div class="ycs">${YC_STAT.map(([k,l])=>{const v=(yc.stat||{})[k]||0;return `<span>${l}</span><span class="yb"><button class="chip" data-a="ystat" data-k="${k}" data-d="-1" ${v<=0?'disabled':''} aria-label="${l} 내리기">−</button><button class="chip" data-a="ystat" data-k="${k}" data-d="1" ${left<1||v>=3?'disabled':''} aria-label="${l} 올리기">+${v?v*10:''}</button></span>`;}).join('')}</div></div>
+   <div><div class="lab">전생의 인연 · 3점 <span class="small">— 태어날 때부터 그 사람을 알고(호감 30), 자라서 다시 만난다</span></div><div class="chips">${ycBondList(s).map(id=>`<button class="chip ${yc.bond===id?'on':''}" data-a="ybond" data-v="${id}" ${yc.bond!==id&&(yc.bond?left<0:left<3)?'disabled':''}>${esc(NPCS[id].n)}</button>`).join('')}</div></div>
+   <div class="rowbtn"><span class="lab">장수 · 3점 <span class="small">수명 +8년</span></span><button class="chip ${yc.long?'on':''}" data-a="ylong" ${!yc.long&&left<3?'disabled':''}>${yc.long?'켬':'끔'}</button></div>
    ${left<0?'<p class="status">역천점이 모자라다. 고른 것을 줄여 주세요.</p>':''}</section>
+  <section class="plate"><div class="rowbtn"><span class="grp-t" style="margin:0">결말과 CG</span><button class="ghost" data-a="cgal">모아 보기</button></div><p class="muted small" style="margin:0">살아 본 결말과 함께한 사람의 수묵 CG가 모인다. 지금까지 ${Object.keys(cgLoad().e).length}/${ENDINGS.length}개의 결말을 보았다.</p></section>
   <section class="sec muted small"><div>백 년 전 화산에서 천마와 검성이 사라졌다. 정·사·마는 백년맹약을 맺었고, 그 백 년이 당신의 젊은 날에 끝난다. 백도(3대 세가·6대 문파), 흑도(방파·궁루·살막), 마교(천마신교·혈교), 세외(북해빙궁)가 강호를 나눈다.</div></section>
   ${hallHTML()}`;}
 function endHTML(){const s=S;const org=ORIGINS.find(o=>o.id===s.origin);const pe=persona(s);
   const pu=imgURL('pc:'+s.lifeId);
-  return `<section class="stele fade">${pu?`<img src="${pu}" alt="" style="width:120px;height:160px;object-fit:cover;object-position:top;border-radius:8px">`:''}${s.nick?`<div class="nick">${esc(s.nick.n)}</div>`:''}<div class="nm">${esc(s.name)}</div><div class="epi">${esc(epitaph(s))}</div>
+  return `${endingHTML(s)}${bookHTML(s)}<section class="stele fade">${pu?`<img src="${pu}" alt="" style="width:120px;height:160px;object-fit:cover;object-position:top;border-radius:8px">`:''}${s.nick?`<div class="nick">${esc(s.nick.n)}</div>`:''}<div class="nm">${esc(s.name)}</div><div class="epi">${esc(epitaph(s))}</div>
    <div class="life">${esc(org.n)}에서 나 ${s.age}세에 ${esc(s.dead==='천수를 다함'?'천수를 다하다':s.dead==='우화등선'?'하늘로 오르다':s.dead)}</div>
    <div class="grade"><span class="seal" aria-hidden="true">評</span>${esc(grade(s))}${pe?` · ${pe}`:''}</div>
    <div class="life">${score(s)}점 · ${s.org?esc(ORGS[s.org].n+' '+ORGS[s.org].ranks[s.rank]):'무소속'} · ${REALMS[s.realm].n} · 전투력 ${num(pow(s))} · 명성 ${num(s.fame)}${s.groups?` · ${GROUPS[s.groups-1].n}`:''}</div></section>
@@ -4102,7 +4242,7 @@ function endHTML(){const s=S;const org=ORIGINS.find(o=>o.id===s.origin);const pe
   <p class="small" style="text-align:center">역천점 <b>+${s.ycGain||0}</b> · 보유 ${ycPts().pts}점 — 다음 생에 운명을 거스를 수 있다.</p>
   <section class="sec"><h3>남긴 자취</h3>${s.deeds.length?`<ul>${s.deeds.map(d=>`<li><span class="muted">${d.age}세</span> ${esc(d.t)}</li>`).join('')}</ul>`:'<p class="muted">강호에 남긴 이름은 없다. 그래도 한 사람의 일생이었다.</p>'}</section>
   <section class="sec"><h3>익힌 무공</h3><p>${artsOf(s).map(a=>`${esc(a.n)}<span class="muted">(${'★'.repeat(Math.min(5,a.t))}${a.made?' 창안':''})</span>`).join(', ')||'없음'}</p></section>
-  <div class="rowbtn"><span></span><button class="go" data-a="again">다시 태어난다</button></div>
+  <div class="rowbtn"><button class="ghost" data-a="cgal">결말과 CG</button><button class="go" data-a="again">다시 태어난다</button></div>
   ${hallHTML()}
   ${s.hist.length?`<section class="sec"><h3>강호사</h3><ol class="tl">${s.hist.map(h=>`<li><span class="a">${h.age}세</span><span>${esc(h.t)}</span></li>`).join('')}</ol></section>`:''}
   <details class="chron"><summary class="muted small">연대기 전체 보기</summary><ol style="margin-top:8px">${s.log.map(l=>`<li class="${l.k?'k':''}"><span class="a">${l.age}세</span><span>${esc(l.t)}</span></li>`).join('')}</ol></details>`;}
@@ -4178,7 +4318,7 @@ function render(){
 function closeModal(){modal=modal&&modal.back||null;render();} // 하위 창은 부모 창으로 돌아간다
 function readNaiForm(){const c=modal.c;c.key=document.getElementById('n_key').value;c.model=document.getElementById('n_model').value;c.relay=document.getElementById('n_relay').value.trim();c.autoEv=document.getElementById('n_autoEv').checked;c.autoPc=document.getElementById('n_autoPc').checked;c.useRepo=document.getElementById('n_repo').checked;
   c.ai=readAiForm(c.ai||acfg());}
-function slotTitle(k){const [t,id]=k.split(/:(.+)/);if(t==='st')return `스탠딩 · ${safe(()=>npcNick(id,S))} ${NPCS[id].n}`;return t==='map'?'중원 지도':t==='reg'?`지역 · ${REG_KO[id]||id}`:t==='pc'?`${S.name}의 초상`:t==='npc'?`${safe(()=>npcNick(id,S))} ${NPCS[id].n}`:`장면 · ${safe(()=>evTitle(S,EVM[id]))||id}`;}
+function slotTitle(k){const [t,id]=k.split(/:(.+)/);if(t==='cg')return `CG · ${cgName(id)}`;if(t==='st')return `스탠딩 · ${safe(()=>npcNick(id,S))} ${NPCS[id].n}`;return t==='map'?'중원 지도':t==='reg'?`지역 · ${REG_KO[id]||id}`:t==='pc'?`${S.name}의 초상`:t==='npc'?`${safe(()=>npcNick(id,S))} ${NPCS[id].n}`:`장면 · ${safe(()=>evTitle(S,EVM[id]))||id}`;}
 app.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b||b.disabled)return;const a=b.dataset.a;
   if(a==='reroll'){S=newFate(document.getElementById('nm').value.trim(),S.sex,{...S.yc,remove:[]});render();}
   else if(a==='yt'){S.yc.t[b.dataset.k]+=+b.dataset.d;S=buildFate(S.base,S.yc);render();}
@@ -4187,6 +4327,13 @@ app.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b||b
   else if(a==='yrm'){const v=b.dataset.v;S.yc.remove=S.yc.remove.includes(v)?S.yc.remove.filter(x=>x!==v):[...S.yc.remove,v];S=buildFate(S.base,S.yc);render();}
   else if(a==='ygold'){S.yc.gold+=+b.dataset.d;S=buildFate(S.base,S.yc);render();}
   else if(a==='ymem'){S.yc.mem=!S.yc.mem;S=buildFate(S.base,S.yc);render();}
+  else if(a==='ystat'){const st=S.yc.stat||(S.yc.stat={}),k=b.dataset.k;st[k]=clamp((st[k]||0)+ +b.dataset.d,0,3);if(!st[k])delete st[k];S=buildFate(S.base,S.yc);render();}
+  else if(a==='ybond'){S.yc.bond=S.yc.bond===b.dataset.v?null:b.dataset.v;S=buildFate(S.base,S.yc);render();}
+  else if(a==='ylong'){S.yc.long=!S.yc.long;S=buildFate(S.base,S.yc);render();}
+  else if(a==='cgal'){modal={t:'cgal',back:modal&&modal.t==='cgal'?null:modal};render();}
+  else if(a==='cgview'){const sh=document.querySelector('.sheet');modal.sst=sh?sh.scrollTop:0;modal={t:'cgv',k:b.dataset.k,back:modal};render();}
+  else if(a==='cgdraw'){const k=b.dataset.k;modal={t:'draw',k,title:slotTitle(k),prompt:slotPrompt(k),err:'',back:modal};render();}
+  else if(a==='bookai')bookGo();
   else if(a==='view'){view=b.dataset.v;resetScroll=true;render();}
   else if(a==='msel'){mapSel=b.dataset.r;render();const pl=document.querySelector('.map + .plate');if(pl)pl.scrollIntoView({block:'nearest',behavior:'smooth'});}
   else if(a==='travel')travel(b.dataset.r);
