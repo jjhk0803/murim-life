@@ -201,6 +201,32 @@ button.chip.on{background:var(--jade);color:var(--card);border-color:var(--jade)
 .scene .sst{position:absolute;left:50%;top:6%;height:135%;max-width:none;transform:translateX(-50%);filter:drop-shadow(0 4px 10px rgba(0,0,0,.35));animation:stin .6s ease-out both}
 @keyframes stin{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translateX(-50%)}}
 .scene .snm{position:absolute;left:8px;bottom:8px;background:rgba(20,24,22,.74);color:#f3efe6;font-family:var(--f-ui);font-size:.8rem;padding:2px 10px;border-radius:4px}
+/* 대화 연출(미연시): 배경 위에 인물들이 서고, 말하는 사람만 밝다 */
+.vn{position:relative;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;border-radius:6px;outline-offset:3px}
+.vn.done{cursor:default}
+.vnst{position:relative;width:100%;aspect-ratio:3/2;border-radius:6px;overflow:hidden;background:linear-gradient(180deg,var(--paper),var(--line))}
+.vnst .sbg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:brightness(.9)}
+.vnsp{position:absolute;top:8%;height:135%;max-width:none;transform:translateX(-50%);filter:drop-shadow(0 4px 10px rgba(0,0,0,.35)) brightness(.5) saturate(.7);transition:filter .25s,transform .25s}
+.vnsp.on{filter:drop-shadow(0 4px 12px rgba(0,0,0,.4));transform:translateX(-50%) translateY(-2%);z-index:2}
+.vnsp.nar{filter:drop-shadow(0 4px 10px rgba(0,0,0,.35)) brightness(.85)}
+.vnsp.in{animation:vnin .5s ease-out both}
+@keyframes vnin{from{opacity:0;margin-top:10px}to{opacity:1;margin-top:0}}
+.vnbox{position:relative;margin-top:-18%;z-index:3;background:rgba(18,22,20,.86);color:#f3efe6;border:1px solid rgba(243,239,230,.18);border-radius:8px;padding:22px 16px 18px;min-height:5.6em;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.vnbox.solo{margin-top:0}
+.vnplate{position:absolute;left:12px;top:-14px;background:var(--seal,#9b2c2c);color:#fff;font-family:var(--f-ui);font-size:.95rem;font-weight:700;padding:3px 14px 4px;border-radius:4px;line-height:1.15;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.vnplate small{display:block;font-size:.68rem;font-weight:400;opacity:.85}
+.vnplate.me{background:#3d4f63}
+.vnt{white-space:pre-line;line-height:1.7;animation:vnt .25s ease-out}
+.vnt.nar{color:#d9d3c4;font-style:italic}
+@keyframes vnt{from{opacity:0}to{opacity:1}}
+.vnar{position:absolute;right:12px;bottom:6px;font-size:.75rem;opacity:.7;animation:vnbl 1s steps(2) infinite}
+@keyframes vnbl{50%{opacity:.15}}
+.vnbar{display:flex;align-items:center;gap:6px;justify-content:flex-end;margin-top:6px}
+.vnbar .muted{margin-right:auto}
+.vnbar .ghost{padding:4px 10px;font-size:.8rem}
+.vnlog summary{cursor:pointer;font-family:var(--f-ui);font-size:.85rem;color:var(--muted,#777)}
+.vnlog p{margin-top:6px}
+@media (prefers-reduced-motion:reduce){.vnsp,.vnsp.in,.vnt,.vnar{animation:none;transition:none}}
 .chk,.gth.chk{background:repeating-conic-gradient(#cfcfcf 0 25%,#fafafa 0 50%) 0 0/16px 16px}
 .edwrap{flex:none;max-height:56vh;overflow:auto;border-radius:8px;border:1px solid var(--line);overscroll-behavior:contain}
 .edwrap canvas{display:block;max-width:none;touch-action:none;cursor:crosshair}
@@ -3541,6 +3567,191 @@ function bookHTML(s){const b=s.book||bookFallback(s),ready=aiReady(acfg());
    ${BOOK_ST.err?`<p class="status">${esc(BOOK_ST.err)}</p>`:''}${BOOK_ST.busy?'<p class="status">사관이 일대기를 엮는 중… 보통 10~40초 걸린다.</p>':''}
    ${ready?`<button class="ghost" data-a="bookai" ${BOOK_ST.busy?'disabled':''}>${b.ai?'AI에게 다시 엮게 한다':'AI 사관에게 일대기를 맡긴다'}</button>`:'<p class="muted small" style="margin:0">설정에서 AI 이야기꾼을 켜면, AI 사관이 이 삶을 돌아보고 제목을 짓고 평가해 장(章)을 나눠 엮는다.</p>'}</div></section>`;}
 
+/* 인물끼리 — 둘이 만나 주고받는 장면(미연시 연출용, ‘이름: “대사”’ 줄) */
+const DUO_OK=(S,a,b)=>S.met[a]&&S.met[b]&&!S.dead_npc[a]&&!S.dead_npc[b]&&stance(S,a)!=='foe'&&stance(S,b)!=='foe'&&Math.max(S.rel[a]||0,S.rel[b]||0)>=20;
+const DUO=(id,a,b,t,ag,x,ch)=>E({id,tag:'talk',t,a:ag,w:S=>!S.flags[id]&&DUO_OK(S,a,b)?4:0,x,ch:ch.map(c=>({...c,go:S=>{S.flags[id]=1;return c.go(S);}}))});
+DUO('duoHwasan','cheongun','joyeon','백열세 번째 비무',[16,70],
+ `화산 연무장. 조 연이 또 목검을 들고 서 있고, 매 청운이 하품을 했다.
+청운: “사매, 오늘로 몇 번째지?”
+조 연: “백열세 번째요. 세지 마세요, 사형. 제가 셀게요.”
+청운: “…너 오늘 왼발이 반 치 늦어. 어제부터.”
+조 연: “봤으면서 말 안 해 준 거예요?”
+두 사람이 동시에 당신을 돌아봤다.
+청운: “네가 말해 봐. 이번엔 누가 이길 것 같아?”`,
+ [{t:'조 연에게 건다',go:S=>{TK(S,'joyeon',8);TK(S,'cheongun',2);return `조 연: “…들으셨죠, 사형.”
+청운: “들었다. 그래서 오늘은 진짜로 한다.”
+백열세 번째도 조 연이 졌다. 그런데 처음으로 청운의 소매가 베여 있었다. 조 연은 그 소매를 보며 한참 웃었다.`;}},
+  {t:'청운에게 건다',go:S=>{TK(S,'cheongun',6);TK(S,'joyeon',-2);return `청운: “당연하지.”
+조 연: “…두고 보세요.”
+청운이 이겼다. 다만 이긴 뒤에 조 연의 왼발을 슬쩍 짚어 주었다. 반 치. 조 연은 고맙다는 말 대신 목검을 더 세게 쥐었다.`;}},
+  {t:'“셋이서 하죠.”',go:S=>{TK(S,'cheongun',5);TK(S,'joyeon',5);A(S,{mood:8});return `청운: “셋이서? …재밌네.”
+조 연: “사형이 웃는 거 오랜만에 봐요.”
+해가 질 때까지 셋이 엉켜 굴렀다. 누가 이겼는지는 아무도 기억하지 못했다.`;}}]);
+DUO('duoEmei','soso','jaun','사저의 잔소리',[16,70],
+ `아미산 아래 찻집. 연 소소가 맞은편에 앉자마자 문이 열렸다. 자운 사태였다.
+자운 사태: “소소. 수련 시간이다.”
+연 소소: “사저, 오늘은 쉬는 날이에요. 사부님이 그러셨어요.”
+자운 사태: “사부님은 너를 너무 아끼신다. 나는 아니다.”
+연 소소: “…사저 미워.”
+자운 사태가 당신을 보았다. 눈빛이 칼보다 엄했다.
+자운 사태: “그대는 이 아이에게 무엇이오?”`,
+ [{t:'“벗입니다.”',go:S=>{TK(S,'soso',5);TK(S,'jaun',6);return `자운 사태: “…벗이라. 아미의 벗이면 나의 벗이기도 하오.”
+연 소소: “사저가 웃었어요! 방금 웃었죠?”
+자운 사태: “웃지 않았다.”
+자운 사태는 차 한 잔을 다 비우고서야 일어났다. 소소를 데려가지 않은 채였다.`;}},
+  {t:'“소중한 사람입니다.”',if:S=>(S.rel.soso||0)>=35&&romList(S).includes('soso'),go:S=>{TK(S,'soso',10);TK(S,'jaun',-2);return `연 소소의 귀가 빨개졌다.
+자운 사태: “…말은 쉽소. 지키는 것이 어렵지.”
+자운 사태: “지키지 못하면 내가 그대를 찾아가겠소.”
+그 말이 협박인지 허락인지, 소소는 한참을 웃으며 고민했다.`;}},
+  {t:'소소를 수련장까지 데려다준다',go:S=>{TK(S,'jaun',9);TK(S,'soso',2);return `연 소소: “배신자.”
+자운 사태: “…그대는 사람을 아끼는 법을 아는군.”
+수련장 문 앞에서 소소가 혀를 내밀었다. 그러고는 작게 말했다.
+연 소소: “끝나면 와요. 꼭.”`;}}]);
+DUO('duoNgSeorin','seorin','namgungho','숙부의 검',[16,80],
+ `남궁세가 뒤뜰. 남궁 서린이 검을 휘두르고, 남궁 호가 팔짱을 끼고 지켜본다.
+남궁 호: “어깨가 높다. 네 아비를 닮아서 그래.”
+남궁 서린: “숙부님은 늘 아버지 얘기만 하세요.”
+남궁 호: “…그런가.”
+남궁 서린: “저는 숙부님 검이 더 좋아요. 아버지 검은 너무 멀어요.”
+남궁 호가 대답하지 못했다. 서린이 당신을 돌아봤다.
+남궁 서린: “당신도 봤죠? 숙부님 검. 제 말이 맞다고 해 줘요.”`,
+ [{t:'“사람에게 닿는 검입니다.”',go:S=>{TK(S,'namgungho',10);TK(S,'seorin',4);return `남궁 호: “…허.”
+그가 고개를 돌렸다. 목소리가 조금 젖어 있었다.
+남궁 호: “어깨. 다시 낮춰라, 서린아. 내 검을 배우려면.”
+서린이 웃으며 검을 고쳐 잡았다.`;}},
+  {t:'“두 분의 검은 다를 뿐입니다.”',go:S=>{TK(S,'seorin',3);TK(S,'namgungho',3);TK(S,'gumwang',2);return `남궁 서린: “재미없어요.”
+남궁 호: “아니다. 그게 맞는 말이다.”
+남궁 호: “…형님이 들었으면 좋아했겠군.”`;}},
+  {t:'서린의 상대가 되어 준다',go:S=>{TK(S,'seorin',6);TK(S,'namgungho',3);A(S,{mood:5});return `남궁 서린: “좋아요! 숙부님, 잘 봐 주세요.”
+남궁 호: “둘 다 어깨가 높다.”
+두 사람이 동시에 어깨를 낮췄다. 남궁 호가 처음으로 크게 웃었다.`;}}]);
+DUO('duoNgSib','hyun','seorin','남매의 검',[16,70],
+ `남궁세가 연무장. 남궁 현과 남궁 서린이 검을 맞대고 있다.
+남궁 서린: “오라버니, 또 봐주시는 거죠?”
+남궁 현: “봐주는 게 아니라 다치게 하기 싫은 거다.”
+남궁 서린: “그게 봐주는 거예요!”
+남궁 현이 검을 내리고 당신을 보았다. 옥으로 깎은 듯한 얼굴에 난처함이 번졌다.
+남궁 현: “…대신 상대해 주겠소? 저 아이는 진짜 검을 원하오.”`,
+ [{t:'서린과 겨룬다',go:S=>{TK(S,'seorin',8);TK(S,'hyun',4);return `남궁 서린: “좋아요. 봐주면 화낼 거예요.”
+백 초를 겨뤘다. 서린은 졌지만 웃었다.
+남궁 서린: “거봐요, 오라버니. 이렇게 해야 늘어요.”
+남궁 현: “…그래. 다음엔 내가 하마.”`;}},
+  {t:'현에게 진짜로 하라고 권한다',go:S=>{TK(S,'hyun',8);TK(S,'seorin',4);return `남궁 현: “…알겠소.”
+이번엔 현이 봐주지 않았다. 서린은 세 번 넘어지고 네 번 일어났다.
+남궁 서린: “이제야 오라버니 검이네요.”
+남궁 현이 손을 내밀었다. 동생이 그 손을 잡았다.`;}},
+  {t:'“두 분 다 검보다 말이 많군요.”',go:S=>{TK(S,'hyun',3);TK(S,'seorin',3);A(S,{mood:5});return `두 남매가 동시에 당신을 노려봤다.
+남궁 서린: “…오라버니, 같이 해요.”
+남궁 현: “그러자.”
+그날 당신은 남매에게 실컷 두들겨 맞았다. 두 사람 사이는 이상하게 좋아졌다.`;}}]);
+DUO('duoJumo','geolwang','jumo','외상 삼백 냥',[18,90],
+ `산길 주막. 노취옹이 술독을 끌어안고 있고, 곽 주모가 장부를 펼쳐 들었다.
+곽 주모: “영감. 외상이 삼백 냥이 넘었어.”
+노취옹: “내가 개방 방주야. 방주가 외상을 갚으면 거지들이 뭘 보고 배우겠나.”
+곽 주모: “그럼 거지들한테 술값을 걷어 와.”
+노취옹: “…자네, 젊었을 때도 이렇게 독했지.”
+곽 주모: “젊었을 때 얘기는 하지 말랬지.”
+두 사람의 눈이 동시에 당신에게 꽂혔다.
+노취옹: “자네, 마침 잘 왔네.”`,
+ [{t:'외상값 일부를 대신 갚는다',h:'은자 30냥',if:S=>S.gold>=30,go:S=>{S.gold-=30;TK(S,'jumo',8);TK(S,'geolwang',8);return `곽 주모: “…이 영감한테 이런 친구가 있었나.”
+노취옹: “있지, 있고말고.”
+그날 밤 주모가 영감에게 장부에 적지 않는 술을 따라 주었다. 오래된 술이었다. 두 사람은 그 술의 이름을 말하지 않았다.`;}},
+  {t:'젊었을 때 이야기를 묻는다',go:S=>{TK(S,'jumo',-3);TK(S,'geolwang',5);return `곽 주모: “…….”
+노취옹: “이 사람이 말이야, 옛날엔 —”
+주모의 국자가 영감 머리에 떨어졌다. 맑은 소리가 났다.
+곽 주모: “손님도 마셔. 그리고 잊어.”
+그래도 당신은 들었다. 국자가 떨어지기 직전 영감이 한 말. 옛날엔 강호에서 제일 빨랐지.`;}},
+  {t:'슬그머니 자리를 피한다',go:S=>{A(S,{mood:3});return `노취옹: “이런 의리 없는!”
+곽 주모: “영감 친구답네.”
+문을 나서는 등 뒤로 두 사람의 웃음소리가 났다.`;}}]);
+DUO('duoManhwa','hwayeon','baekryeon','이름 없는 춤',[16,70],
+ `만화궁 연못가 정자. 백련이 춤을 추고 화 연이 부채로 장단을 맞춘다. 당신을 보자 화 연이 부채를 접었다.
+화 연: “마침 잘 왔어요. 백련이 새 춤을 지었는데, 이름을 못 정했대요.”
+백련: “…연아, 말하지 말랬잖아.”
+화 연: “얘는 칭찬을 들으면 숨는 버릇이 있어요. 그러니까 칭찬해 줘요. 크게.”
+백련이 소매로 얼굴을 반쯤 가렸다.
+백련: “한 번만 더 출게요. 보고… 이름을 지어 줘요.”`,
+ [{t:'“달을 건너는 춤.”',go:S=>{TK(S,'baekryeon',10);TK(S,'hwayeon',3);return `백련: “달을 건너는 춤….”
+화 연: “봐, 이 사람이면 될 거라 그랬지.”
+백련: “…연아는 이름 짓는 재주가 없잖아.”
+화 연: “그래서 이 사람을 부른 거잖아.”
+두 사람이 동시에 웃었다. 그 춤은 그해 가을 만화궁 연회에서 처음 세상에 나왔다.`;}},
+  {t:'화 연의 장단이 더 좋았다고 말한다',go:S=>{TK(S,'hwayeon',8);TK(S,'baekryeon',2);return `화 연: “어머.”
+부채가 활짝 펴지며 얼굴을 가렸다. 이번엔 화 연이 숨을 차례였다.
+백련: “봐요. 연아도 똑같아요.”`;}},
+  {t:'함께 춤춘다',go:S=>{TK(S,'hwayeon',5);TK(S,'baekryeon',5);A(S,{mood:8});return `백련: “발이 엉망이에요.”
+화 연: “그래도 즐거워 보여.”
+엉망인 춤은 해가 질 때까지 이어졌다.`;}}]);
+DUO('duoBing','eunha','hanbing','빙궁의 국',[16,80],
+ `빙궁 부엌. 김이 오르는 솥 앞에서 한빙 노파가 국을 젓고, 설 은하가 책을 든 채 서 있다.
+한빙 노파: “아가씨, 책 내려놓고 간 좀 보시우.”
+설 은하: “책에는 국 끓이는 법이 없어요, 유모.”
+한빙 노파: “그러니 책이 반쪽짜리지.”
+설 은하: “…바깥 사람들도 국을 끓여요?”
+한빙 노파가 국자를 당신에게 내밀었다.
+한빙 노파: “간 좀 봐 주시우. 아가씨한테 바깥 맛을 알려 줘야 하니.”`,
+ [{t:'“조금 싱겁습니다.”',go:S=>{TK(S,'hanbing',8);TK(S,'eunha',5);return `한빙 노파: “거봐. 바깥 사람은 짜게 먹는다니까.”
+설 은하: “싱겁다는 게… 어떤 맛이에요?”
+소금을 한 꼬집 넣어 주자 은하가 맛을 보고 눈을 크게 떴다.
+설 은하: “책에 써 둬야겠어요. 바깥은 한 꼬집 더 짜다.”`;}},
+  {t:'은하에게 국자를 건넨다',go:S=>{TK(S,'eunha',10);TK(S,'hanbing',4);return `설 은하: “제가요?”
+한빙 노파: “아이고, 드디어.”
+은하가 처음으로 국을 저었다. 서툴렀다. 노파는 그 서툰 손을 오래 바라보았다. 얼음궁에서 제일 따뜻한 눈이었다.`;}},
+  {t:'“최고입니다.”',go:S=>{TK(S,'hanbing',5);TK(S,'eunha',2);return `한빙 노파: “거짓말은 국맛을 버리우.”
+그래도 노파는 당신 그릇에 한 국자를 더 떠 주었다.
+설 은하: “유모가 웃는 거, 오랜만에 봐요.”`;}}]);
+DUO('duoHao','gilsu','eunsn','문고리 하나',[16,90],
+ `강남 객잔 뒷방. 은 삼낭이 장부를 넘기고 길수가 그 옆에서 동전을 센다.
+길수: “할매, 이번 달 소문값 다 모으면 객잔 하나 살 수 있어?”
+은 삼낭: “객잔 문고리 하나는 사겠다.”
+길수: “…문고리부터 사지 뭐.”
+은 삼낭: “녀석. 꿈은 큰데 셈이 작아.”
+은 삼낭이 당신을 보고 눈을 가늘게 떴다.
+은 삼낭: “마침 왔구먼. 이 녀석한테 강호 셈법 하나 가르쳐 주고 가.”`,
+ [{t:'사람 버는 법을 가르친다',go:S=>{TK(S,'gilsu',8);TK(S,'eunsn',5);return `길수: “사람을 어떻게 벌어?”
+지난 몇 해 동안 만난 사람들 이야기를 했다. 길수는 동전 세는 것도 잊고 들었다.
+은 삼낭: “…그게 하오문 장부 첫 장에 적힌 말이야. 녀석, 오늘 수업료는 공짜다.”`;}},
+  {t:'은자 한 냥을 보태 준다',h:'은자 1냥',if:S=>S.gold>=1,go:S=>{S.gold-=1;TK(S,'gilsu',10);return `길수: “와! 이걸로 문고리 두 개!”
+은 삼낭: “하나는 남겨. 셈을 배워야지.”
+길수가 은자 한 냥을 소중히 주머니에 넣었다. 언젠가 그 객잔 문고리에 당신 이름이 새겨질지도 모른다.`;}},
+  {t:'장난으로 동전 하나를 숨긴다',go:S=>{TK(S,'eunsn',6);TK(S,'gilsu',4);return `길수: “…하나 모자라.”
+길수가 당신 소매를 털었다. 동전이 굴러 나왔다.
+은 삼낭: “합격이다. 쥐는 쥐를 알아보는 법이지.”`;}}]);
+DUO('duoTang','sohye','tangmo','독장의 행방',[16,80],
+ `사천당가 안채. 당 소혜가 무릎을 꿇고 앉아 있고, 당 노태군이 찻잔을 든다.
+당 노태군: “소혜야. 지난달 독장에서 사라진 칠보단혼산은 어디 갔느냐.”
+당 소혜: “…연구 중이에요, 할머니.”
+당 노태군: “연구라. 객잔 주인 술독에 넣는 게 연구냐.”
+당 소혜: “그 주인이 먼저 바가지를 씌웠어요!”
+노태군의 눈이 당신에게 옮겨 왔다. 독보다 무서운 눈이었다.
+당 노태군: “손님. 이 아이 편이오, 내 편이오?”`,
+ [{t:'소혜 편을 든다',go:S=>{TK(S,'sohye',10);TK(S,'tangmo',-3);return `당 소혜가 당신 소매를 꼭 쥐었다.
+당 노태군: “…배짱은 있구먼.”
+당 노태군: “둘 다 벌로 독장 청소다. 손님도.”
+그날 밤 독장 청소는 생각보다 즐거웠다. 소혜가 독마다 이름을 붙여 놓고 하나하나 인사를 시켰다.`;}},
+  {t:'노태군 편을 든다',go:S=>{TK(S,'tangmo',10);TK(S,'sohye',-3);return `당 소혜: “배신자!”
+당 노태군: “당가에선 배신자를 오래 살려 두지 않는다만… 손님은 예외로 해 주지.”
+노태군이 처음으로 당신에게 차를 따랐다. 독은 없었다. 아마도.`;}},
+  {t:'“객잔 이야기부터 들어 보시지요.”',go:S=>{TK(S,'sohye',5);TK(S,'tangmo',5);return `당 소혜가 바가지 사연을 쏟아냈다. 노태군은 끝까지 들었다.
+당 노태군: “…그 객잔, 어디라 했지.”
+이튿날 그 객잔 주인이 당가에 사과 편지를 보냈다. 무슨 일이 있었는지는 아무도 묻지 않았다.`;}}]);
+DUO('duoNokrim','nokrim','hwangpo','녹림은 무엇인가',[18,90],
+ `녹림 총채 대청. 철패산이 고기를 뜯고, 황보 웅이 지도를 펼쳐 놓았다.
+황보 웅: “맹주, 채마다 군량을 모으고 깃발을 통일하면 관군도 못 건드립니다.”
+철패산: “깃발? 우리가 군대냐.”
+황보 웅: “군대가 되어야 오래 갑니다.”
+철패산: “오래 가려고 산에 올라온 놈은 하나도 없어. 배고파서 올라왔지.”
+황보 웅이 웃었다. 눈은 웃지 않았다. 둘 다 당신을 보았다.
+철패산: “객이 말해 봐. 녹림은 뭐냐.”`,
+ [{t:'“배고픈 사람들의 집입니다.”',go:S=>{TK(S,'nokrim',10);TK(S,'hwangpo',-4);return `철패산: “들었냐, 웅아.”
+황보 웅: “…예, 맹주.”
+황보 웅은 지도를 말아 넣었다. 그런데 대청을 나서며 당신을 한 번 돌아봤다. 셈하는 눈이었다.`;}},
+  {t:'“군대가 되어야 지킬 수 있겠지요.”',go:S=>{TK(S,'hwangpo',10);TK(S,'nokrim',-4);return `황보 웅: “객이 셈을 아는군.”
+철패산: “…쳇. 둘이 잘 맞겠다.”
+철패산이 고기 뼈를 던지고 일어났다. 황보 웅이 당신에게 술을 따랐다. 너무 친절했다.`;}},
+  {t:'“녹림은 녹림이지요.”',go:S=>{TK(S,'nokrim',4);TK(S,'hwangpo',3);A(S,{mood:4});return `철패산: “하하! 그거다!”
+황보 웅: “…맹주 앞에서 그 말을 하는 객은 처음이오.”
+그날 대청엔 웃음이 많았다. 지도는 끝내 펼쳐지지 않았다.`;}}]);
 const EVM=Object.fromEntries(EV.map(e=>[e.id,e]));
 EVM.ai=AI_EV;
 
@@ -3781,10 +3992,10 @@ function saveHall(h){try{localStorage.setItem(HKEY,JSON.stringify(h));}catch(e){
 const NAI_URL='https://image.novelai.net/ai/generate-image';
 const NAI_MODELS=[['nai-diffusion-4-5-full','V4.5 Full'],['nai-diffusion-4-5-curated','V4.5 Curated'],['nai-diffusion-5-full','V5 Full'],['nai-diffusion-5-curated','V5 Curated'],['nai-diffusion-4-full','V4 Full']];
 const NAI_Q={'nai-diffusion-5-full':'very aesthetic, masterpiece, best quality','nai-diffusion-5-curated':'very aesthetic, masterpiece, best quality','nai-diffusion-4-5-full':'very aesthetic, masterpiece, no text','nai-diffusion-4-5-curated':'location, masterpiece, no text','nai-diffusion-4-full':'no text, best quality, very aesthetic, absurdres'};
-const GAME_VER='2026.10.25-28';
+const GAME_VER='2026.10.25-29';
 const NAI_NEG='nsfw, nude, lowres, bad anatomy, bad hands, missing fingers, extra digits, text, watermark, signature, logo, worst quality, low quality, blurry, modern clothes, jpeg artifacts';
 const NKEY='murim-nai';
-function ncfg(){let c={};try{c=JSON.parse(localStorage.getItem(NKEY)||'{}');}catch(e){}return Object.assign({key:'',relay:'',model:'nai-diffusion-4-5-full',style:'wuxia, ancient china, hanfu, detailed illustration, cinematic lighting',autoEv:false,autoPc:false,neg:NAI_NEG,tnpc:'',tev:'',tmap:'',q:true},c,{pr:Object.assign({},c.pr)});}
+function ncfg(){let c={};try{c=JSON.parse(localStorage.getItem(NKEY)||'{}');}catch(e){}return Object.assign({key:'',relay:'',model:'nai-diffusion-4-5-full',style:'wuxia, ancient china, hanfu, detailed illustration, cinematic lighting',autoEv:false,autoPc:false,vn:true,neg:NAI_NEG,tnpc:'',tev:'',tmap:'',q:true},c,{pr:Object.assign({},c.pr)});}
 function nsave(c){try{localStorage.setItem(NKEY,JSON.stringify(c));}catch(e){}REPO_ON=c.useRepo!==false;soon();}
 let _db=null;
 function idb(){if(!_db)_db=new Promise((res,rej)=>{try{const r=indexedDB.open('murim-img',1);r.onupgradeneeded=()=>r.result.createObjectStore('img');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);}catch(e){rej(e);}});return _db;}
@@ -4157,6 +4368,7 @@ function modalHTML(){if(!modal)return '';
    <label class="row"><input type="checkbox" id="n_repo" ${c.useRepo!==false?'checked':''}> 게임에 들어 있는 기본 그림을 쓴다</label>
    <p class="muted small" style="margin:0">끄면 내가 그린 그림만 쓴다. 내 그림체로 전부 새로 그리고 싶을 때 끈다. 켜 두어도 내가 그리거나 넣은 그림이 있는 칸은 내 그림이 먼저 나온다.</p>
    <button class="ghost" data-a="gal" style="padding:8px 10px">그림체 고르기 · 그림 관리 (지도·인물·사건) →</button>
+   <label class="row"><input type="checkbox" id="n_vn" ${c.vn!==false?'checked':''}> 대화를 미연시처럼 한 줄씩 보여 준다 (화면을 누르면 다음 대사)</label>
    <p class="grp-t" style="margin:0">NovelAI로 직접 그리기 (선택)</p>
    <p class="muted small">인물 스탠딩과 사건 장면을 NovelAI로 그린다. 토큰은 이 브라우저에만 저장되고, 깃허브에 올리는 파일에는 들어가지 않는다. 그림 한 장마다 구독 등급에 따라 Anlas가 들 수 있다.</p>
    <label for="n_key">NovelAI 토큰 (novelai.net → 설정 → Account → Get Persistent API Token)</label><input type="password" id="n_key" value="${esc(c.key)}" autocomplete="off" placeholder="pst-...">
@@ -4248,6 +4460,50 @@ function tabHTML(t){const s=S;
   return '';}
 function foeBox(){const f=S.tmp.foe;if(!f)return '';const p=perceive(S,f);const me=pow(S);
   return `<div class="foe"><div class="fn">${f.nick?`<b>${esc(f.nick)}</b> `:''}${esc(f.n)}</div><div class="fv">경지 ${REALMS[p.realm].n}${p.real?'':'?'} · 전투력 <em>${num(p.v)}</em> · 당신 ${num(me)} — ${p.v>me*1.15?'불리':p.v<me*.87?'유리':'호각'}해 보인다</div>${p.cue?'<div class="cue">기세가 묘하다. 보이는 것이 전부가 아닐지도 모른다.</div>':''}</div>`;}
+/* 대화 연출(미연시) — 지문을 한 줄씩 끊어, 말하는 사람을 찾아 이름표를 단다.
+   “…” 앞뒤 문장에서 화자를 찾고, ‘이름: “대사”’ 줄은 그대로 그 사람의 대사가 된다. */
+let VN={k:'',i:0};
+const vnOn=()=>ncfg().vn!==false;
+function vnNames(S){const o=[];for(const id in NPCS){const p=NPCS[id];if(!p.n)continue;o.push([p.n,id]);const g=p.n.split(' ').pop();if(g!==p.n&&g.length>=2)o.push([g,id]);const k=safe(()=>npcNick(id,S));if(k&&k.length>=2)o.push([k,id]);}
+  const cnt={};o.forEach(([n])=>cnt[n]=(cnt[n]||0)+1);return o.filter(([n])=>cnt[n]===1).sort((a,b)=>b[0].length-a[0].length);}
+function vnWho(S,name,NM){name=name.trim();if(/^(당신|나)$/.test(name))return 'me';const f=NM.find(([n])=>n===name);return f?f[1]:null;}
+// 한 문장 안에서 가장 뒤(또는 앞)에 나오는 주어를 찾는다
+function vnSubj(S,t,NM,fromEnd,back){if(!t)return undefined;const hits=[];
+  for(const [n,id] of NM){let i=t.indexOf(n);while(i>=0){hits.push([i,id]);i=t.indexOf(n,i+n.length);}}
+  const pr=/(그녀|그)(가|는|의)(?![가-힣]*[을를])/g;let m;while((m=pr.exec(t)))if(!/[가-힣]$/.test(t.slice(0,m.index)))hits.push([m.index,back]);
+  const me=/당신(이|은|도)\s*(\S+\s*)?(말했|답했|물었|외쳤|중얼|대꾸|대답했|불렀|속삭)/g;while((m=me.exec(t)))hits.push([m.index,'me']);
+  if(!hits.length)return undefined;hits.sort((a,b)=>a[0]-b[0]);return (fromEnd?hits[hits.length-1]:hits[0])[1];}
+const vnSent=t=>String(t||'').split(/(?<=[.!?…。])\s+/).map(x=>x.trim()).filter(Boolean);
+function vnBeats(S,text,scene){const NM=vnNames(S),out=[];let last=scene||null;
+  const lastNpc=()=>last&&last!=='me'?last:scene||null;
+  const nar=t=>{let buf='';for(const x of vnSent(t)){if(buf&&(buf+' '+x).length>90){out.push({s:null,t:buf});buf=x;}else buf=buf?buf+' '+x:x;}if(buf)out.push({s:null,t:buf});};
+  for(const p of String(text||'').split(/\n+/).map(x=>x.trim()).filter(Boolean)){
+    const m=/^([^:“”"\s][^:“”"]{0,11})\s*[:：]\s*(.+)$/.exec(p);
+    if(m){const id=vnWho(S,m[1],NM);if(id){out.push({s:id,t:m[2].trim().replace(/^[“"]/,'').replace(/[”"]$/,'')});last=id;continue;}}
+    const parts=p.split(/(“[^”]*”)/).map(x=>x.trim()).filter(Boolean);
+    for(let k=0;k<parts.length;k++){const x=parts[k];
+      if(x[0]!=='“'){nar(x);continue;}
+      const nx=k+1<parts.length&&parts[k+1][0]!=='“'?vnSent(parts[k+1])[0]:'',pv=k>0&&parts[k-1][0]!=='“'?parts[k-1]:'';
+      // “…” 뒤 문장이 ‘누가 말했다·웃었다’면 그 사람, 아니면 앞 지문에서 마지막으로 나온 사람
+      let sp=nx&&/^[^.]{0,14}?(이|가|은|는)\s/.test(nx)&&/(말했|웃었|물었|답했|외쳤|중얼|속삭|대꾸|덧붙|소리쳤|투덜|대답했|불렀|웃으며|말을 이었)/.test(nx)?vnSubj(S,nx.slice(0,16),NM,false,lastNpc()):undefined;
+      if(sp===undefined)sp=vnSubj(S,pv,NM,true,lastNpc());
+      if(sp===undefined)sp=last||scene||null;
+      out.push({s:sp||'?',t:x.slice(1,-1)});if(sp)last=sp;}}
+  return out;}
+function vnCast(S,beats,scene){const c=[];if(scene&&NPCS[scene])c.push(scene);for(const b of beats)if(b.s&&NPCS[b.s]&&!c.includes(b.s))c.push(b.s);return c.slice(0,3);}
+const VN_POS={1:[50],2:[29,71],3:[19,50,81]};
+function vnStage(S,o){// o:{key,text,scene,bg}
+  const beats=vnBeats(S,o.text,o.scene);if(VN.k!==o.key)VN={k:o.key,i:0};
+  if(!vnOn()||beats.length<=1)return {vn:false,done:true};
+  const n=beats.length,i=Math.min(VN.i,n-1),b=beats[i],done=i>=n-1;
+  const cast=vnCast(S,beats,o.scene).filter(id=>imgURL('st:'+id)),pos=VN_POS[cast.length]||[];
+  const stage=o.bg||cast.length?`<div class="vnst">${o.bg?`<img class="sbg" src="${o.bg}" alt="">`:''}${cast.map((id,j)=>`<img class="vnsp ${b.s===id?'on':b.s?'':'nar'} ${i===0?'in':''}" style="left:${pos[j]}%" src="${imgURL('st:'+id)}" alt="${esc(NPCS[id].n)}">`).join('')}</div>`:'';
+  const who=b.s==='me'?{k:S.nick?S.nick.n:'',n:S.name,me:1}:b.s&&NPCS[b.s]?{k:safe(()=>npcNick(b.s,S))||'',n:NPCS[b.s].n}:b.s==='?'?{k:'',n:'???'}:null;
+  const plate=who?`<div class="vnplate ${who.me?'me':''}">${who.k?`<small>${esc(who.k)}</small>`:''}${esc(who.n)}</div>`:'';
+  const html=`<div class="vn ${done?'done':''}" ${done?'':'data-a="vnnext" role="button" tabindex="0" aria-label="다음 대사"'}>${stage}<div class="vnbox ${stage?'':'solo'}">${plate}<div class="vnt ${b.s?'':'nar'}">${b.s?'“'+esc(b.t)+'”':esc(b.t)}</div>${done?'':'<span class="vnar" aria-hidden="true">▼</span>'}</div></div>
+   <div class="vnbar"><span class="muted small">${i+1} / ${n}</span>${i>0?'<button class="ghost" data-a="vnprev" aria-label="이전 대사">◀</button>':''}${done?'':'<button class="ghost" data-a="vnskip">넘기기 ▶▶</button>'}</div>
+   ${done?`<details class="vnlog"><summary>지문 전체 보기</summary><p>${esc(o.text)}</p></details>`:''}`;
+  return {vn:true,done,html};}
 function scrollCard(){const e=EVM[S.cur];
   if(S.phase==='craft'){const c=S.tmp.craft;const ks=[...allKw(S)];const ws=craftWeapons(S);const tier=craftTier(S);const auto=c.sel.length?craftName(c.sel,c.w,tier):'';
     if(c.mode==='heart')return craftHeartHTML(S,c,ks);
@@ -4274,10 +4530,18 @@ function scrollCard(){const e=EVM[S.cur];
      <p class="muted small">단조 ${Math.round(S.forge)} · 예상 등급 ${lo===hi?lo:lo+'~'+hi}${S.flags.smith?' · 구야자의 제자 +1':''}</p>
      <div class="rowbtn"><button class="ghost" data-a="fback">그만둔다</button><button class="go" data-a="forge">벼린다</button></div></section>`;}
   if(S.phase==='event'){const ch=evChoices(S,e);const nid=sceneNpc(S,e),lvId=nid&&LOVE_BG[nid]&&(e.tag==='love'||/^lv_/.test(S.cur))?nid:null,ek=lvId?'bg:'+lvId:'ev:'+S.cur,eu=imgURL(ek)||(lvId&&!/^lv_/.test(S.cur)?imgURL('ev:'+S.cur):null),su=nid&&imgURL('st:'+nid),bgU=eu||(REG[S.loc]?imgURL('reg:'+REG_EN[S.loc]):null);
-    return `<section class="scroll fade" aria-live="polite">${su?`<div class="scene">${bgU?`<img class="sbg" src="${bgU}" alt="">`:''}<img class="sst" src="${su}" alt="${esc(NPCS[nid].n)}"><span class="snm">${esc(safe(()=>npcNick(nid,S)))} ${esc(NPCS[nid].n)}</span></div>`:eu?`<img class="evimg" src="${eu}" alt="">`:''}<div class="yrrow"><div class="yr">${S.age}세의 해${tagChips(e)}</div><button class="ghost" data-a="draw" data-k="${ek}">${BUSY.has(ek)?'그리는 중':eu?'장면':'장면 그리기'}</button></div><h2>${esc(evTitle(S,e))}</h2><p>${esc(evText(S,e))}</p>${e.inp?`<input id="evinp" class="evinp" maxlength="12" placeholder="${esc(typeof e.inp==='function'?e.inp(S):e.inp)}" value="${esc(S.tmp.inp||'')}" aria-label="이름">`:''}${foeBox()}
-    <div class="choices">${ch.map((c,i)=>`<button class="choice" data-a="ch" data-i="${i}"><span>${esc(c.t)}</span>${c.h?`<span class="h">${esc(c.h)}</span>`:''}</button>`).join('')}</div></section>`;}
+    const imgTop=su?`<div class="scene">${bgU?`<img class="sbg" src="${bgU}" alt="">`:''}<img class="sst" src="${su}" alt="${esc(NPCS[nid].n)}"><span class="snm">${esc(safe(()=>npcNick(nid,S)))} ${esc(NPCS[nid].n)}</span></div>`:eu?`<img class="evimg" src="${eu}" alt="">`:'';
+    const tx=evText(S,e),vs=vnStage(S,{key:`${S.lifeId}|${S.age}|e|${S.cur}|${tx.length}`,text:tx,scene:nid,bg:bgU});
+    const tail=`${e.inp?`<input id="evinp" class="evinp" maxlength="12" placeholder="${esc(typeof e.inp==='function'?e.inp(S):e.inp)}" value="${esc(S.tmp.inp||'')}" aria-label="이름">`:''}${foeBox()}
+    <div class="choices">${ch.map((c,i)=>`<button class="choice" data-a="ch" data-i="${i}"><span>${esc(c.t)}</span>${c.h?`<span class="h">${esc(c.h)}</span>`:''}</button>`).join('')}</div>`;
+    const head=`<div class="yrrow"><div class="yr">${S.age}세의 해${tagChips(e)}</div><button class="ghost" data-a="draw" data-k="${ek}">${BUSY.has(ek)?'그리는 중':eu?'장면':'장면 그리기'}</button></div>`;
+    if(vs.vn)return `<section class="scroll ${VN.i?'':'fade'}" aria-live="polite">${head}<h2>${esc(evTitle(S,e))}</h2>${vs.html}${vs.done?tail:''}</section>`;
+    return `<section class="scroll fade" aria-live="polite">${imgTop}${head}<h2>${esc(evTitle(S,e))}</h2><p>${esc(tx)}</p>${tail}</section>`;}
   const r=S.res;const dead=!!S.dead;
-  return `<section class="scroll fade" aria-live="polite"><div class="yr">${S.age}세의 해${S.cur&&EVM[S.cur]&&S.phase==='result'?tagChips(EVM[S.cur]):''}</div><h2>${esc(r.title)}</h2>${r.pick?`<div class="picked">${esc(r.pick)}</div>`:''}<p>${esc(r.text)}</p>
+  let rv=null;if(S.phase==='result'&&e){const nid=sceneNpc(S,e),lvId=nid&&LOVE_BG[nid]&&(e.tag==='love'||/^lv_/.test(S.cur))?nid:null,eu=imgURL(lvId?'bg:'+lvId:'ev:'+S.cur)||(lvId&&!/^lv_/.test(S.cur)?imgURL('ev:'+S.cur):null),bgU=eu||(REG[S.loc]?imgURL('reg:'+REG_EN[S.loc]):null);
+    rv=vnStage(S,{key:`${S.lifeId}|${S.age}|r|${S.cur}|${String(r.text).length}|${r.title}`,text:r.text,scene:nid,bg:bgU});if(!rv.vn)rv=null;}
+  if(rv&&!rv.done)return `<section class="scroll ${VN.i?'':'fade'}" aria-live="polite"><div class="yr">${S.age}세의 해${tagChips(e)}</div><h2>${esc(r.title)}</h2>${r.pick?`<div class="picked">${esc(r.pick)}</div>`:''}${rv.html}</section>`;
+  return `<section class="scroll ${rv&&VN.i?'':'fade'}" aria-live="polite"><div class="yr">${S.age}세의 해${S.cur&&EVM[S.cur]&&S.phase==='result'?tagChips(EVM[S.cur]):''}</div><h2>${esc(r.title)}</h2>${r.pick?`<div class="picked">${esc(r.pick)}</div>`:''}${rv?rv.html:`<p>${esc(r.text)}</p>`}
    ${r.chips.length?`<div class="delta">${r.chips.map(c=>`<span class="chip ${c.up?'up':'dn'}">${esc(c.t)}</span>`).join('')}</div>`:''}
    ${S.pendingWpn?`<div class="craft"><label for="wname">새 병기 · ${esc(WP_LABEL[S.pendingWpn.w]||S.pendingWpn.w)} · 등급 ${S.pendingWpn.q}${S.pendingWpn.kw?' · 결 '+S.pendingWpn.kw:''} — 이름을 새긴다</label><div class="field"><input id="wname" maxlength="10" placeholder="${esc(S.pendingWpn.def)}" autocomplete="off"><button class="ghost" data-a="wname">새긴다</button></div></div>`:''}
    ${dead&&S.phase==='result'?`<p class="muted">${esc(S.dead==='우화등선'?'당신의 이야기는 여기서 하늘로 이어진다.':`그리고 그것이 마지막이었다. (${S.dead})`)}</p>`:''}
@@ -4393,7 +4657,7 @@ function render(){
   const eh1=document.getElementById('edhost');if(eh1&&ED&&ED.cv){eh1.appendChild(ED.cv);eh1.scrollLeft=ED.sl||0;eh1.scrollTop=ED.st||0;}
   if(fid){const el=document.getElementById(fid);if(el){el.focus({preventScroll:true});if(sel)try{el.setSelectionRange(sel[0],sel[1]);}catch(e){}}}}
 function closeModal(){modal=modal&&modal.back||null;render();} // 하위 창은 부모 창으로 돌아간다
-function readNaiForm(){const c=modal.c;c.key=document.getElementById('n_key').value;c.model=document.getElementById('n_model').value;c.relay=document.getElementById('n_relay').value.trim();c.autoEv=document.getElementById('n_autoEv').checked;c.autoPc=document.getElementById('n_autoPc').checked;c.useRepo=document.getElementById('n_repo').checked;
+function readNaiForm(){const c=modal.c;c.key=document.getElementById('n_key').value;c.model=document.getElementById('n_model').value;c.relay=document.getElementById('n_relay').value.trim();c.autoEv=document.getElementById('n_autoEv').checked;c.autoPc=document.getElementById('n_autoPc').checked;c.vn=document.getElementById('n_vn').checked;c.useRepo=document.getElementById('n_repo').checked;
   c.ai=readAiForm(c.ai||acfg());}
 function slotTitle(k){const [t,id]=k.split(/:(.+)/);if(t==='bg')return `인연 배경 · ${NPCS[id]?NPCS[id].n:id}`;if(t==='cg')return `CG · ${cgName(id)}`;if(t==='wp')return `병기 · ${WP_LABEL[WP_KO[id]]||id}`;if(t==='st')return `스탠딩 · ${safe(()=>npcNick(id,S))} ${NPCS[id].n}`;return t==='map'?'중원 지도':t==='reg'?`지역 · ${REG_KO[id]||id}`:t==='pc'?`${S.name}의 초상`:t==='npc'?`${safe(()=>npcNick(id,S))} ${NPCS[id].n}`:`장면 · ${safe(()=>evTitle(S,EVM[id]))||id}`;}
 app.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b||b.disabled)return;const a=b.dataset.a;
@@ -4418,6 +4682,9 @@ app.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b||b
   else if(a==='sex'){S.base.sex=b.dataset.v;S=buildFate(S.base,S.yc);render();}
   else if(a==='start'){const c=ycCost(S.yc),v=ycPts();if(c>v.pts)return;v.pts-=c;ycSave(v);S.name=document.getElementById('nm').value.trim()||randName(S.sex);view='ev';resetScroll=true;addLog(S,`${ORIGINS.find(o=>o.id===S.origin).n}로 태어났다.`,1);openEvent(S,chooseEvent(S));save();render();if(ncfg().autoPc)autoDraw('pc:'+S.lifeId,pcPrompt(S),true);}
   else if(a==='ch')choose(+b.dataset.i);
+  else if(a==='vnnext'){VN.i++;render();}
+  else if(a==='vnprev'){VN.i=Math.max(0,VN.i-1);render();}
+  else if(a==='vnskip'){VN.i=1e9;render();}
   else if(a==='next'){if(S.pendingWpn){const el=document.getElementById('wname');commitWpn(S,el?el.value:'');}if(S.phase==='death'||S.dead)endLife();else if(S.chain){const c=S.chain;S.chain=null;openEvent(S,c);view='ev';resetScroll=true;save();render();}else nextYear();}
   else if(a==='again'){S=newFate(null,null,{...ycNew()});tab='ab';view='ev';resetScroll=true;save();render();}
   else if(a==='tab'){tab=b.dataset.t;render();}
@@ -4440,7 +4707,7 @@ app.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b||b
   else if(a==='wname'){commitWpn(S,document.getElementById('wname').value);S.res.chips.push({t:'병기 얻음',up:true});save();render();}
   else if(a==='equip'){S.wpn={...S.wpns[+b.dataset.i]};save();render();}
   else if(a==='nai'){modal={t:'nai',c:ncfg()};render();}
-  else if(a==='nsave'){readNaiForm();const c=ncfg();['key','model','relay','autoEv','autoPc','useRepo'].forEach(x=>c[x]=modal.c[x]);nsave(c);if(modal.c.ai)asave(modal.c.ai);modal=modal.back||null;render();toast('설정을 저장했어요.');}
+  else if(a==='nsave'){readNaiForm();const c=ncfg();['key','model','relay','autoEv','autoPc','useRepo','vn'].forEach(x=>c[x]=modal.c[x]);nsave(c);if(modal.c.ai)asave(modal.c.ai);modal=modal.back||null;render();toast('설정을 저장했어요.');}
   else if(a==='draw'){const k=b.dataset.k;modal={t:'draw',k,title:slotTitle(k),prompt:slotPrompt(k),err:''};render();}
   else if(a==='ngen'){modal.prompt=document.getElementById('n_prompt').value;savePr(modal.k,modal.prompt);drawSlot(modal.k,modal.prompt,isPort(modal.k));}
   else if(a==='gal'){modal={t:'gal',tab:'style',back:modal};render();}
@@ -4480,7 +4747,7 @@ app.addEventListener('input',ev=>{if(ev.target.id==='evinp'){S.tmp.inp=ev.target
   if(modal&&modal.t==='gal'&&/^g_(style|tnpc|tev|tmap|neg|q)$/.test(ev.target.id)){const c=ncfg(),v=id=>document.getElementById(id).value;c.style=v('g_style');c.tnpc=v('g_tnpc');c.tev=v('g_tev');c.tmap=v('g_tmap');c.neg=v('g_neg');c.q=document.getElementById('g_q').checked;nsave(c);const pv=document.getElementById('g_pv');if(pv)pv.textContent=fullPrompt('st:seorin');}if(modal&&modal.t==='nai'&&ev.target.id.startsWith('n_'))readNaiForm();});
 app.addEventListener('change',ev=>{if(modal&&modal.t==='nai'&&ev.target.id==='a_prov'){readNaiForm();render();return;}if(modal&&modal.t==='gal'){const id=ev.target.id;if(id==='g_miss'){modal.miss=ev.target.checked;render();return;}if(id==='g_webp'){modal.webp=ev.target.checked;return;}if(id==='g_q'){const c=ncfg();c.q=ev.target.checked;nsave(c);render();return;}if(id==='g_files'&&ev.target.files.length){importFiles(modal,[...ev.target.files]);return;}if(id==='g_autocut'){const c=ncfg();c.autoCut=ev.target.checked;nsave(c);return;}if(id==='g_v5tp'){const c=ncfg();c.v5tp=ev.target.checked;nsave(c);NAI_TP_OFF=false;return;}}
   if(modal&&modal.t==='edit'&&ED&&ev.target.id==='e_contig'){ED.contig=ev.target.checked;return;}if(modal&&modal.t==='nai'&&ev.target.id.startsWith('n_'))readNaiForm();if(ev.target.id==='n_file'&&modal&&ev.target.files[0]){const k=modal.k,f=ev.target.files[0];const m=modal;storeSlot(k,f).then(()=>render()).catch(e=>{m.err='그림을 저장하지 못했어요: '+e.message;render();});}});
-document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&modal){ev.preventDefault();closeModal();return;}const g=ev.target.closest&&ev.target.closest('.mn');if(g&&(ev.key==='Enter'||ev.key===' ')){ev.preventDefault();mapSel=g.dataset.r;render();}});
+document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&modal){ev.preventDefault();closeModal();return;}if(!modal&&(ev.key==='Enter'||ev.key===' ')&&ev.target.closest&&ev.target.closest('.vn[data-a]')){ev.preventDefault();VN.i++;render();const v=document.querySelector('.vn[data-a]');if(v)v.focus();return;}const g=ev.target.closest&&ev.target.closest('.mn');if(g&&(ev.key==='Enter'||ev.key===' ')){ev.preventDefault();mapSel=g.dataset.r;render();}});
 
 function start(data){
   let s=data&&data.S;
