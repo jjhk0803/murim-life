@@ -266,6 +266,7 @@ button.chip.on{background:var(--jade);color:var(--card);border-color:var(--jade)
 .cgf{position:relative}
 .cgf img.ink,.cgtile img.ink{display:block;width:100%;aspect-ratio:3/2;object-fit:cover;border-radius:6px;filter:grayscale(1) contrast(1.15)}
 .cgf img.ink.lv,.cgtile img.ink.lv{filter:none}
+.refbox{border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:6px}
 .inkph{aspect-ratio:3/2;border-radius:6px;background:radial-gradient(ellipse at 50% 45%,#fbfaf6 0 38%,#ebe9e2 70%,#d4d1c7);color:#151515;display:grid;place-items:center;position:relative;overflow:hidden}
 .inkph svg{position:absolute;left:15%;top:6%;width:70%;height:88%}
 .inkph span{font-family:var(--f-disp);font-size:3.2rem;color:#121212;position:relative}
@@ -3997,7 +3998,7 @@ function saveHall(h){try{localStorage.setItem(HKEY,JSON.stringify(h));}catch(e){
 const NAI_URL='https://image.novelai.net/ai/generate-image';
 const NAI_MODELS=[['nai-diffusion-4-5-full','V4.5 Full'],['nai-diffusion-4-5-curated','V4.5 Curated'],['nai-diffusion-5-full','V5 Full'],['nai-diffusion-5-curated','V5 Curated'],['nai-diffusion-4-full','V4 Full']];
 const NAI_Q={'nai-diffusion-5-full':'very aesthetic, masterpiece, best quality','nai-diffusion-5-curated':'very aesthetic, masterpiece, best quality','nai-diffusion-4-5-full':'very aesthetic, masterpiece, no text','nai-diffusion-4-5-curated':'location, masterpiece, no text','nai-diffusion-4-full':'no text, best quality, very aesthetic, absurdres'};
-const GAME_VER='2026.10.25-31';
+const GAME_VER='2026.10.25-32';
 const NAI_NEG='nsfw, nude, lowres, bad anatomy, bad hands, missing fingers, extra digits, text, watermark, signature, logo, worst quality, low quality, blurry, modern clothes, jpeg artifacts';
 const NKEY='murim-nai';
 function ncfg(){let c={};try{c=JSON.parse(localStorage.getItem(NKEY)||'{}');}catch(e){}return Object.assign({key:'',relay:'',model:'nai-diffusion-4-5-full',style:'wuxia, ancient china, hanfu, detailed illustration, cinematic lighting',autoEv:false,autoPc:false,vn:true,neg:NAI_NEG,tnpc:'',tev:'',tmap:'',q:true},c,{pr:Object.assign({},c.pr)});}
@@ -4202,7 +4203,7 @@ async function refImage(u){const bm=await createImageBitmap(await (await fetch(u
   const [W,H]=[[1024,1536],[1536,1024],[1472,1472]].sort((a,b)=>Math.abs(r-a[0]/a[1])-Math.abs(r-b[0]/b[1]))[0];
   const cv=document.createElement('canvas');cv.width=W;cv.height=H;const x=cv.getContext('2d');x.fillStyle='#000';x.fillRect(0,0,W,H);const z=Math.min(W/bm.width,H/bm.height),dw=bm.width*z,dh=bm.height*z;x.drawImage(bm,(W-dw)/2,(H-dh)/2,dw,dh);
   return cv.toDataURL('image/png').split(',')[1];}
-const cgRefId=k=>isLoveCg(k)&&ncfg().cgRef!==false?k.slice(8):null;
+const cgRefId=k=>isLoveCg(k)&&ncfg().cgRef!==false?k.slice(8):null; // 켜고 끄기: 설정, 또는 인연 CG 그리기 창의 버튼
 async function cgRefs(k){const id=cgRefId(k),src=id&&imgSrc('st:'+id);if(!src)return null;try{return [{image:await refImage(src.u),strength:1,fidelity:1}];}catch(e){toast('스탠딩을 레퍼런스로 읽지 못해 레퍼런스 없이 그려요.');return null;}}
 async function drawSlot(k,prompt,portrait,quiet){if(BUSY.has(k))return '이미 그리는 중';BUSY.add(k);if(modal&&modal.k===k){modal.err='';}render();
   try{let b;const tp=k.startsWith('st:')&&ncfg().v5tp!==false&&!NAI_TP_OFF;
@@ -4392,8 +4393,10 @@ function modalHTML(){if(!modal)return '';
    <label for="n_relay">중계 서버 주소 (선택)</label><input type="text" id="n_relay" value="${esc(c.relay)}" placeholder="https://내-워커.workers.dev" autocomplete="off">
    <p class="muted small">브라우저가 NovelAI에 바로 연결하지 못하면 중계 서버가 필요하다. 저장소의 proxy/worker.js를 Cloudflare Workers에 올리고 그 주소를 넣는다(README 참고).</p>
    <label class="row"><input type="checkbox" id="n_autoEv" ${c.autoEv?'checked':''}> 새 사건 장면을 자동으로 그린다 (사건마다 한 번)</label>
-   <label class="row"><input type="checkbox" id="n_cgRef" ${c.cgRef!==false?'checked':''}> 인연 CG는 그 사람의 스탠딩을 캐릭터 레퍼런스로 넣는다 (V4.5로 그림, Anlas가 더 들 수 있음)</label>
    <label class="row"><input type="checkbox" id="n_autoPc" ${c.autoPc?'checked':''}> 태어날 때 주인공 초상을 자동으로 그린다</label>
+   <p class="grp-t" style="margin:0">캐릭터 레퍼런스</p>
+   <label class="row"><input type="checkbox" id="n_cgRef" ${c.cgRef!==false?'checked':''}> 인연 CG는 그 사람의 스탠딩을 캐릭터 레퍼런스로 넣는다 (V4.5로 그림, Anlas가 더 들 수 있음)</label>
+   <p class="muted small">CG란의 ‘함께’ CG를 그릴 때 그 사람의 스탠딩을 NovelAI 캐릭터 레퍼런스로 넣는다. 인연 CG 그리기 창에서도 켜고 끌 수 있다.</p>
    ${aiCfgHTML(c.ai||acfg())}
    <div class="row" style="justify-content:space-between"><button class="ghost" data-a="mclose">닫기</button><button class="go" data-a="nsave">저장</button></div></div></div>`;}
   if(modal.t==='ai')return aiModalHTML();
@@ -4408,7 +4411,7 @@ function modalHTML(){if(!modal)return '';
    ${src?`<p class="small muted" style="margin:0">${local?'내 그림 · 이 브라우저에 저장됨':'저장소 그림 · img 폴더'}</p>`:''}
    <label for="n_prompt">그릴 대상 (영어 태그)</label><textarea id="n_prompt">${esc(modal.prompt)}</textarea>
    ${custom?'<div><button class="ghost" data-a="nreset">기본 프롬프트로 되돌리기</button></div>':''}
-   ${cgRefId(k)?`<p class="small muted" style="margin:0">${imgURL('st:'+cgRefId(k))?`<img src="${imgURL('st:'+cgRefId(k))}" alt="" style="height:48px;vertical-align:middle;margin-right:6px">${esc(NPCS[cgRefId(k)].n)}의 스탠딩을 캐릭터 레퍼런스로 넣어 그린다 (V4.5 모델로 그림)`:`${esc(NPCS[cgRefId(k)].n)}의 스탠딩이 없어 레퍼런스 없이 그린다. 스탠딩을 먼저 그리면 얼굴이 맞춰진다.`}</p>`:''}
+   ${isLoveCg(k)?(()=>{const id=k.slice(8),on=ncfg().cgRef!==false,su=imgURL('st:'+id);return `<div class="refbox"><p class="grp-t" style="margin:0">캐릭터 레퍼런스</p><div class="row" style="align-items:center;gap:8px">${su?`<img src="${su}" alt="" style="height:56px">`:''}<button class="chip ${on?'on':''}" data-a="cgref" aria-pressed="${on}">스탠딩 레퍼런스 ${on?'켜짐':'꺼짐'}</button></div><p class="small muted" style="margin:0">${!on?'끄면 프롬프트만으로 그린다.':su?`${esc(NPCS[id].n)}의 스탠딩을 넣어 얼굴·머리·옷을 맞춘다. V4.5로 그리고 Anlas가 더 들 수 있다.`:`${esc(NPCS[id].n)}의 스탠딩이 아직 없어 레퍼런스 없이 그린다. 인물 스탠딩을 먼저 그리면 얼굴이 맞춰진다.`}</p></div>`;})():''}
    <p class="grp-t" style="margin:0">실제로 쓰는 프롬프트 (그림체 포함)</p><p class="ppv" id="n_full">${esc(fullPrompt(k,modal.prompt))}</p>
    <div class="row wrap"><button class="ghost" data-a="gcopy" data-w="full">프롬프트 복사</button><button class="ghost" data-a="gcopy" data-w="neg">네거티브 복사</button>${u&&port&&!k.startsWith('pc:')?'<button class="ghost" data-a="ncut">배경 지우기</button>':''}</div>
    ${modal.err?`<p class="status">${esc(modal.err)}</p>`:''}${busy?'<p class="status">그리는 중… 창을 닫아도 계속 그린다.</p>':''}
@@ -4700,6 +4703,7 @@ app.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b||b
   else if(a==='sex'){S.base.sex=b.dataset.v;S=buildFate(S.base,S.yc);render();}
   else if(a==='start'){const c=ycCost(S.yc),v=ycPts();if(c>v.pts)return;v.pts-=c;ycSave(v);S.name=document.getElementById('nm').value.trim()||randName(S.sex);view='ev';resetScroll=true;addLog(S,`${ORIGINS.find(o=>o.id===S.origin).n}로 태어났다.`,1);openEvent(S,chooseEvent(S));save();render();if(ncfg().autoPc)autoDraw('pc:'+S.lifeId,pcPrompt(S),true);}
   else if(a==='ch')choose(+b.dataset.i);
+  else if(a==='cgref'){const c=ncfg();c.cgRef=c.cgRef===false;nsave(c);render();}
   else if(a==='vnnext'){VN.i++;render();}
   else if(a==='vnprev'){VN.i=Math.max(0,VN.i-1);render();}
   else if(a==='vnskip'){VN.i=1e9;render();}
