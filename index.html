@@ -12497,7 +12497,7 @@ ${NN('maehyang')}: “그런데 당신 곁이라면… 둘째 자리라도 처�
 const hurtS=(S,n,c)=>hurt(S,Math.min(n,Math.max(0,S.hp-8)),c);
 /* ══ 천마신교: 강자존(強者尊) ══════════════════════════
    교에 들면 첫 마공을 고른다(소수마공·적사마수·역혈심법). ‘천마’가 붙은 무공은 천마가 되어야 얻는다.
-   길: 입문 혈투 → 특별 수련(혈지·마령동·현철마골공·천갈마조·탐원대법)과 영약 → 천마의 탄생(마교 핏줄이면 당신의 피의 비밀) →
+   길: 입문 혈투 → 특별 수련(혈지·마령동·현철마골공·천갈마조·흡성대법)과 영약 → 천마의 탄생(마교 핏줄이면 당신의 피의 비밀) →
        사마 넷을 하나씩 꺾어 규합 → 장로원 숙청 → 혁련 하와 손잡기 → 천마결(천마를 쓰러뜨린다) → 천마의 출정, 마교천하. */
 defA('mkSoso','소수마공','무','권',3,['마','음','유']);defA('mkYeok','역혈심법','심',null,3,['마','혈'],null,{rate:1.35,push:-1});defA('mkGuhwa','적사마수','무','권',3,['마','양','중']);
 defA('cmGeom','천마검공','무','검',5,['마','강기','쾌']);defA('cmSingeom','천마신검','무','검',5,['마','강기','변']);
@@ -12773,9 +12773,9 @@ ${NN('hongui')}: “…나 때문이지.”
   {t:'그녀의 문양을 사술로 지운다',if:S=>S.arts.includes('hkSa'),h:'혈영사술',go:S=>{S.flags.hkChaseDone=1;TK(S,'hongui',18);A(S,{cult:5});hurtS(S,15,'역사술');return '혈영사술을 거꾸로 돌렸다. 그녀 팔의 글자가 하나씩 당신 팔로 옮겨 왔다. 마지막 글자가 옮겨 오자 추격대의 나침반이 방향을 잃었다. 그릇이 사라졌으니까. 그녀가 당신 팔의 붉은 글자를 손가락으로 쓸었다. “…이제 네가 그릇이야?” “그릇 말고 지게쯤 해 두지.”';}}]});
 ['hkGate','hkSorcery','hkGangsi','hkVamp','hkOffer','hkFeast','hkElixir','hkPit','hkGuard','hkSecret','hkNight','hkCalam','hkUsurp','hkReign','hkChase'].forEach(id=>JOB_OK.add(id));
 /* ══ 마공의 계보 (무림인생 고유 설정) ══
-   누란사경(樓蘭沙經) → 소림이 봉인한 백납심법(百衲心法) → 화사문(火沙門)의 열사신공(熱沙神功) → 마교의 탐원대법(貪元大法) → 천마신공의 한 갈래.
+   누란사경(樓蘭沙經) → 소림이 봉인한 백납심법(百衲心法) → 화사문(火沙門)의 열사신공(熱沙神功) → 마교의 흡성대법(吸星大法) → 천마신공의 한 갈래.
    갈라져 나간 것: 구천회(九天會)의 천뢰경(天雷經). 구천회는 하룻밤 사이에 사라졌다.
-   마교: 현철마골공(호신) · 천갈마조 · 탐원대법(빨아들인 공력에 죽은 자의 잔념이 묻어 온다) · 흑운단천검/혈월참마도/흑부장/허영마권 · 적뢰마공(천마 혈통의 마공, 층이 오른다)
+   마교: 현철마골공(호신) · 천갈마조 · 흡성대법(빨아들인 공력에 죽은 자의 잔념이 묻어 온다) · 흑운단천검/혈월참마도/흑부장/허영마권 · 적뢰마공(천마 혈통의 마공, 층이 오른다)
    혈교: 홍상장 → 홍상조 · 혈관불사법(불사지체)
    누구나: 누란사경의 목간 세 조각, 이종진기와 백납심법 */
 defA('mkHeuksi','천갈마조','무','권',4,['마','독','쾌']);
@@ -12804,18 +12804,18 @@ E({id:'mkHeuksi2',t:'천갈마조 · 전갈왕',a:[18,70],w:S=>inMk(S)&&S.flags.
 노마: “놈의 꼬리를 잘라 독낭을 꺼내라. 그걸 손톱 밑에 심으면 천갈마조다. 놈에게 한 번이라도 제대로 쏘이면, 이태 동안 기른 몸으로도 못 버틴다.”`,
  ch:[{t:'전갈왕의 꼬리를 자른다',h:'천갈마조 · 항독 · 위험',go:S=>{if(chance(.55+S.rp/200+S.t.bone*.03)){const r=learn(S,'mkHeuksi');A(S,{rp:15,salgi:8});S.t.looks=Math.max(-3,(S.t.looks||0)-1);deed(S,'전갈왕의 독으로 천갈마조를 이루었다');return `꼬리를 베고 독낭을 손톱 밑에 짓눌러 넣었다. 사흘 밤을 앓았다. 나흘째 아침, 손톱이 검붉게 휘어 있었다. 바위를 긁자 긁힌 자리가 거품을 내며 삭았다. 노마가 그 손을 쥐어 보았다. “이 손톱에 긁힌 놈은 해가 지기 전에 숨이 멎는다.” ${r}`;}hurtS(S,40,'전갈왕의 독');A(S,{rp:6});return '꼬리에 어깨를 찔렸다. 노마가 독을 빨아내 뱉었다. 석 달을 앓았다. 손톱은 반쯤만 붉어졌다.';}},
   {t:'항아리의 독으로 만족한다',go:S=>{A(S,{rp:6});return '언덕에서 돌아섰다. 노마가 말했다. “반쪽짜리다. 그래도 그 손은 이제 독을 안다.”';}}]});
-/* 탐원대법: 이긴 상대의 공력을 빨아들이되, 죽은 자의 잔념이 묻어 온다 */
-E({id:'mkHeupseong',tag:'key',t:'탐원대법',a:[20,75],w:S=>inMk(S)&&S.rank>=2&&!S.seen.mkHeupseong?4:0,
+/* 흡성대법: 이긴 상대의 공력을 빨아들이되, 죽은 자의 잔념이 묻어 온다 */
+E({id:'mkHeupseong',tag:'key',t:'흡성대법',a:[20,75],w:S=>inMk(S)&&S.rank>=2&&!S.seen.mkHeupseong?4:0,
  x:S=>`장로원 서고 맨 안쪽, 모래가 가득 찬 함. 장로가 손을 넣어 모래 속에서 검은 목간 묶음을 꺼냈다.
 장로: “계보를 알고 익혀라. 처음은 누란사경이다. 모래에 묻힌 서역 왕국 누란의 목간. 모래바람의 숨을 들이마셔 공력을 빌리는 법이었다. 소림이 그 일부를 가져다 백납심법을 지었다. 누더기를 백 조각 기워 가사 한 벌을 짓듯, 여러 진기를 꿰매어 하나로 만드는 법. 그것이 남의 진기도 꿰맬 수 있다는 걸 알고 소림은 스스로 봉인했지.”
-장로: “사막의 화사문이 그 둘을 훔쳐 열사신공을 지었다. 달군 모래가 물을 빨아들이듯 남의 공력을 빨아 녹이는 법. 교가 화사문을 삼키고 그것을 다듬었다. 이것이 탐원대법이다.”
+장로: “사막의 화사문이 그 둘을 훔쳐 열사신공을 지었다. 달군 모래가 물을 빨아들이듯 남의 공력을 빨아 녹이는 법. 교가 화사문을 삼키고 그것을 다듬었다. 이것이 흡성대법이다.”
 장로: “경고는 하나다. 공력에는 주인의 마음이 묻어 있다. 빨아들일수록 죽은 자들의 잔념이 네 안에 쌓인다. 처음엔 꿈이고, 다음엔 목소리고, 그다음엔 네가 누구였는지 헷갈린다. 쌓인 것을 폐관해 씻어 내지 않으면 언젠가 남의 목소리가 네 입을 쓴다.”`,
- ch:[{t:'익힌다',h:'이긴 상대의 공력을 빨아들인다 · 잔념이 쌓인다',go:S=>{S.flags.hsd=1;S.flags.hsOver=0;A(S,{salgi:5});deed(S,'마교의 탐원대법을 익혔다');return '목간을 읽는 데 이레가 걸렸다. 초식은 없었다. 숨 쉬는 법과, 숨 대신 남을 들이마시는 법뿐이었다. 마지막 목간 뒷면에 누군가 손톱으로 새겨 놓았다. “내 이름을 잊지 마라.” 누구의 이름인지는 적혀 있지 않았다.';}},
+ ch:[{t:'익힌다',h:'이긴 상대의 공력을 빨아들인다 · 잔념이 쌓인다',go:S=>{S.flags.hsd=1;S.flags.hsOver=0;A(S,{salgi:5});deed(S,'마교의 흡성대법을 익혔다');return '목간을 읽는 데 이레가 걸렸다. 초식은 없었다. 숨 쉬는 법과, 숨 대신 남을 들이마시는 법뿐이었다. 마지막 목간 뒷면에 누군가 손톱으로 새겨 놓았다. “내 이름을 잊지 마라.” 누구의 이름인지는 적혀 있지 않았다.';}},
   {t:'함을 닫는다',go:S=>{A(S,{cult:4});return '“남의 것으로 채운 그릇은 남의 것이 되겠지요.” 장로가 모래 속에 목간을 다시 묻었다. “교에 그 말을 한 놈이 하나 있었다. 그놈은 천마가 되었다.”';}}]});
 E({id:'mkHsOver',tag:'key',t:'남의 목소리들',a:[18,99],w:S=>S.flags.hsd&&(S.flags.hsOver||0)>=45?9:0,cd:1,
  x:S=>`밤마다 꿈에 낯선 마당이 나왔다. 처음 보는 아이가 당신을 아버지라 불렀다. 당신이 쓰러뜨린 누군가의 기억이었다.
 ${S.flags.hsOver>=90?'요즘은 깨어 있을 때도 목소리가 들렸다. 셋, 넷, 다섯. 싸울 때면 그 목소리들이 한꺼번에 소리를 질렀고, 그때 당신은 가장 강했다.':'빨아들인 공력은 온전히 당신 것이 아니었다. 단전 한구석에서 남의 마음이 웅크리고 있었다.'}
-탐원대법의 장로가 했던 말이 떠올랐다. 언젠가 남의 목소리가 네 입을 쓴다.`,
+흡성대법의 장로가 했던 말이 떠올랐다. 언젠가 남의 목소리가 네 입을 쓴다.`,
  ch:S=>[{t:'폐관해 잔념을 씻어 낸다',h:'안전하게 공력만 남긴다',go:S=>{const g=Math.round(S.flags.hsOver/3);S.flags.hsOver=0;A(S,{ng:g,cult:4,exp:tb(S)});return `석 달 동안 동굴에 앉아 목소리 하나하나에 이름을 물었다. 대답한 이름은 불러 주고 보냈다. 마지막 목소리가 떠난 밤, 단전이 조용해졌다. ${ngText(g)}의 공력만 남았다.`;}},
   ...(S.flags.ghFuse?[{t:'백납심법으로 꿰맨다',h:'봉인된 심법 · 더 많이 남는다',go:S=>{const g=Math.round(S.flags.hsOver/2);S.flags.hsOver=0;A(S,{ng:g,mood:-4});return `잔념째로 공력을 꿰매 버렸다. 누더기처럼. 목소리들은 조용해졌지만 떠나지는 않았다. 가끔 당신의 웃음이 남의 웃음처럼 들렸다. ${ngText(g)}의 공력이 들어찼다.`;}}]:[]),
   {t:'목소리들을 품은 채 싸운다',h:'더 강하다 · 실성할 수 있다',go:S=>{if(chance(S.flags.hsOver>=90?.45:.2)){if(S.flags.hsOver>=110&&chance(.4)){hurt(S,hpMax(S),'주화입마');return '싸움 한가운데서 목소리들이 한꺼번에 당신 입을 빌렸다. 열 사람이 동시에 비명을 질렀다. 그 가운데 어느 것이 당신 목소리였는지, 끝내 알 수 없었다.';}hurtS(S,45,'잔념');A(S,{mood:-10});S.flags.hsOver=Math.round(S.flags.hsOver/2);return '사흘 동안 남의 이름으로 불러야 대답했다. 깨어나 보니 목소리 절반이 떠나 있었다. 그들이 공력도 함께 가져갔다.';}A(S,{salgi:4});return '목소리들을 눌러 앉혔다. 아직은 당신이 주인이었다. 싸울 때면 그들이 당신 대신 분노해 주었다.';}}]});
@@ -12866,7 +12866,7 @@ ${(S.flags.bmN||0)===0?'누란사경. 모래에 삼켜진 서역 왕국 누란�
  ch:[{t:'글귀를 붙들고 오래 앉아 있는다',h:'오성',go:S=>{const k=(S.flags.bmN||0)+1;S.flags.bmN=k;const ok=chance(.3+S.t.wit*.07);if(ok){A(S,{cult:5,exp:tb(S)});(S.wu||(S.wu={})).word=1;}else A(S,{cult:2});if(S.org==='demon')S.flags.bmMk=1;return (ok?'사흘째 되던 새벽, 바람이 바뀌는 순간 글귀 하나가 숨처럼 들어왔다. 무엇인가를 깨친 듯했다.':'아무리 읽어도 뜻이 잡히지 않았다. 목간을 모은 자들이 대개 그랬다고 했다.')+` (목간 ${k}/3)`;}}]});
 E({id:'bmWhole',tag:'key',t:'누란사경',a:[20,99],w:S=>(S.flags.bmN||0)>=3&&!S.seen.bmWhole?7:0,
  x:S=>`세 묶음의 목간을 나란히 놓았다. 그래도 절반이 비었다. 초식은 거의 없었다. 대신 바람과 모래의 숨을 들이마셔 공력을 빌리는 법, 수련할 때 마음을 두는 자리, 서두르면 생기는 병, 공부의 순서 같은 것이 적혀 있었다. 무공서라기보다 무공을 배우는 법을 적은 수행서였다.
-그리고 빈자리 바로 앞에 남은 문장들. 누군가는 여기서 남의 공력을 빨아들이는 법을 읽어 냈고, 누군가는 여기서 벼락 같은 파괴력을 읽어 냈다. 열사신공과 탐원대법이, 사라진 구천회의 천뢰경이 다 이 빈자리에서 나왔다.`,
+그리고 빈자리 바로 앞에 남은 문장들. 누군가는 여기서 남의 공력을 빨아들이는 법을 읽어 냈고, 누군가는 여기서 벼락 같은 파괴력을 읽어 냈다. 열사신공과 흡성대법이, 사라진 구천회의 천뢰경이 다 이 빈자리에서 나왔다.`,
  ch:S=>[{t:'빈자리를 메우지 않고 남은 것만 익힌다',h:'오성이 높아야 득을 본다',go:S=>{if(S.t.wit>=3||chance(.25+S.t.wit*.05)){const r=learn(S,'bmBuk');S.flags.bmDone=1;deed(S,'흩어진 누란사경을 익혔다');return `빈자리는 빈자리로 두었다. 바람이 불면 바람을, 볕이 들면 볕을 마셨다. 한 해가 지나자 숨 쉴 때마다 공력이 조금씩 고였다. ${r}`;}A(S,{cult:6});return '익히려 했으나 체계가 없었다. 한 해를 매달려 얻은 것은 숨 고르는 법 몇 줄뿐이었다. 그래도 그 몇 줄이 나쁘지 않았다.';}},
   {t:'파괴력만 뽑아 초식을 붙인다',h:'천뢰경을 다시 짓는다',go:S=>{if(S.t.wit+S.realm+R(0,6)>=8){const r=learn(S,'bmNoe');deed(S,'누란사경에서 천뢰경을 다시 지었다');hist(S,'구천회와 함께 사라졌던 천뢰경이 다시 나타났다.');return `빈자리 앞의 문장에 초식을 하나씩 붙였다. 백 일째, 손을 내지르자 하늘에서가 아니라 손바닥에서 벼락이 쳤다. 하룻밤에 사라진 구천회가 무엇을 쥐고 있었는지, 당신 손이 먼저 알았다. ${r}`;}A(S,{cult:3});return '초식을 붙일수록 힘이 흩어졌다. 구천회가 무엇을 했는지 끝내 알 수 없었다.';}},
   ...(S.flags.ghFuse?[{t:'백납심법과 엮는다',h:'열사신공을 다시 짓는다',go:S=>{const r=learn(S,'hwYeom');S.flags.hsd=1;S.flags.hsOver=S.flags.hsOver||0;deed(S,'누란사경과 백납심법을 엮어 열사신공을 다시 지었다');return `누란의 숨이 빨아들이고 백납이 꿰맸다. 꿰맨 진기가 한낮의 모래처럼 달아올랐다. 손바닥에 열기가 고였다. 쇠가 녹았다. 화사문의 열사신공이었다. ${r} 남의 공력을 빨아들이는 법도 함께 따라왔다.`;}}]:[])]});
@@ -13301,7 +13301,7 @@ function saveHall(h){try{localStorage.setItem(HKEY,JSON.stringify(h));}catch(e){
 const NAI_URL='https://image.novelai.net/ai/generate-image';
 const NAI_MODELS=[['nai-diffusion-4-5-full','V4.5 Full'],['nai-diffusion-4-5-curated','V4.5 Curated'],['nai-diffusion-5-full','V5 Full'],['nai-diffusion-5-curated','V5 Curated'],['nai-diffusion-4-full','V4 Full']];
 const NAI_Q={'nai-diffusion-5-full':'very aesthetic, masterpiece, best quality','nai-diffusion-5-curated':'very aesthetic, masterpiece, best quality','nai-diffusion-4-5-full':'very aesthetic, masterpiece, no text','nai-diffusion-4-5-curated':'location, masterpiece, no text','nai-diffusion-4-full':'no text, best quality, very aesthetic, absurdres'};
-const GAME_VER='2026.10.25-52';
+const GAME_VER='2026.10.25-53';
 const NAI_NEG='nsfw, nude, lowres, bad anatomy, bad hands, missing fingers, extra digits, text, watermark, signature, logo, worst quality, low quality, blurry, modern clothes, glasses, eyewear, jpeg artifacts';
 const NKEY='murim-nai';
 function ncfg(){let c={};try{c=JSON.parse(localStorage.getItem(NKEY)||'{}');}catch(e){}return Object.assign({key:'',relay:'',model:'nai-diffusion-4-5-full',style:'wuxia, ancient china, hanfu, detailed illustration, cinematic lighting',autoEv:false,autoPc:false,vn:true,neg:NAI_NEG,tnpc:'',tev:'',tmap:'',q:true},c,{pr:Object.assign({},c.pr)});}
