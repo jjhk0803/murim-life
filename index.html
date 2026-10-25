@@ -682,10 +682,10 @@ function battle(S,f,o){o=o||{};const k=kwSet(S);const fk=f.kw||[];
   let my=pow(S)*(.85+Math.random()*.3),fo=f.pow*(.85+Math.random()*.3);
   if(k.has('쾌')&&fk.includes('중'))my*=1.05; if((k.has('불')||k.has('도'))&&fk.some(x=>x==='마'||x==='혈'))my*=1.1;
   if(k.has('환'))fo*=.96; if(k.has('암'))my*=1.03; if(S.flags.venom&&!fk.includes('독')&&!(f.id&&NPCS[f.id]&&NPCS[f.id].kw.includes('독')))fo*=1-Math.min(.2,S.med/500); if(k.has('율')&&f.group)my*=1.1;
-  if(o.ally)my*=o.ally; if(o.weaken)fo*=o.weaken;
+  if(o.ally)my*=o.ally; if(o.weaken)fo*=o.weaken; if(S.flags.hkGangsi&&!o.spar)my*=1.06;
   const r=my/fo;let fr=r>=1?.35/(r*r):.35+.5*(1-r);
   if(fk.includes('독')){if(has(S,'dokche')){A(S,{ng:2});fr-=.05;}else fr+=.12*(1-S.rp/100);} if(fk.includes('마')&&S.rm<50)A(S,{mood:-6});
-  fr*=dmgMult(S); if(r<.6&&f.lethal)fr=Math.max(fr,1.1); if(o.spar)fr=Math.min(fr,.3);
+  fr*=dmgMult(S); if(r<.6&&f.lethal)fr=Math.max(fr,1.1); if(o.spar)fr=Math.min(fr,.3); if(o.safe)fr=Math.min(fr,Math.max(0,(S.hp-5)/hpMax(S)));
   hurt(S,Math.round(hpMax(S)*fr),o.cause||`${f.nick?f.nick+' ':''}${jo(f.n,'과','와')}의 싸움`);
   if(r>=1&&k.has('혈'))A(S,{hp:Math.round(hpMax(S)*.1),moral:-1});
   if(k.has('마')||k.has('혈'))A(S,{moral:-1,temper:1});
@@ -703,6 +703,7 @@ function nickCands(S){const r=S.realm,f=S.fame,W=WCH[S.mainW]||'검',A_=adjPool(
   const evil=S.moral<=-30||styleOf(S)==='마';const add=(n,rk)=>{if(!out.some(o=>o.n===n))out.push({n,r:rk});};
   if(r>=8){add(W+'신',8);add('무신',8);}
   if(S.org==='demon'&&S.rank===4&&r>=7)add('천마',8);
+  if(S.flags.cmMe)add('천마',9);if(S.flags.mkSamaAll)add('사마의 주인',4);if(S.flags.hkHeir)add('혈마',9);if(S.flags.hkReborn&&!S.flags.hkHeir)add('혈마의 오른팔',5);if(S.flags.hkGangsi&&S.org==='blood')add('시왕',2);
   if(r>=7&&f>=300){if(k.has('불')||S.org==='shaolin')add('불존',7);if(k.has('도')&&W==='검')add('검선',7);add(evil?'마존':'무존',7);add(W+'존',7);}
   if((r>=6&&f>=350)||r>=7){add('무황',6);add('패황',6);if(!evil)add(W+'황',6);if(S.org==='beggar'||S.org==='bandit')add('군황',6);if(evil)add('마황',6);}
   if(r>=6&&f>=250){add(W+'제',5);add('무제',5);}
@@ -12490,6 +12491,293 @@ ${NN('maehyang')}: “기녀는 둘째, 셋째 자리에 익숙해요. 그래서
 ${NN('maehyang')}: “그런데 당신 곁이라면… 둘째 자리라도 처음으로 웃음을 안 팔아도 될 것 같아요.”`});
 ['nrJoin','nrToll','nrConvoy','nrGranary','nrHeuk','nrSiege','nrBetray','nrFeast','nrSis','nrKing','srJoin','srToll','srSalt','srStorm','srWar','srKing','hmJoin','hmThief','hmGisaeng','hmStrike','hmFeast','hmTorture'].forEach(id=>JOB_OK.add(id));
 
+const hurtS=(S,n,c)=>hurt(S,Math.min(n,Math.max(0,S.hp-8)),c);
+/* ══ 천마신교: 강자존(強者尊) ══════════════════════════
+   교에 들면 첫 마공을 고른다(소수마공·역혈심법·구화마공). ‘천마’가 붙은 무공은 천마가 되어야 얻는다.
+   길: 입문 혈투 → 특별 수련(혈지·마령동·구화의 불)과 영약 → 천마의 탄생(마교 핏줄이면 당신의 피의 비밀) →
+       사마 넷을 하나씩 꺾어 규합 → 장로원 숙청 → 혁련 하와 손잡기 → 천마결(천마를 쓰러뜨린다) → 천마의 출정, 마교천하. */
+defA('mkSoso','소수마공','무','권',3,['마','유']);defA('mkYeok','역혈심법','심',null,3,['마','혈'],null,{rate:1.35,push:-1});defA('mkGuhwa','구화마공','무','권',4,['마','양','강기'],[10,100]);
+defA('cmGeom','천마검공','무','검',5,['마','강기','쾌']);defA('cmSingeom','천마신검','무','검',5,['마','강기','변']);
+defA('cmSura','천마수라도','무','도',5,['마','강기','중']);defA('cmPacheon','천마파천도','무','도',5,['마','강기','쾌']);
+defA('cmChang','천마신창','무','창',5,['마','강기','중']);defA('cmGwon','천마멸겁수','무','권',5,['마','강기','유']);defA('cmHeart','천마대법','심',null,5,['마','양','강기'],null,{rate:1.9,push:1});
+const inMk=S=>S.org==='demon';
+const mkSama=S=>Object.keys(S.flags.mkSama||{}).length;
+E({id:'mkGate',tag:'arc',t:'십만대산의 문',a:[10,40],w:S=>inMk(S)&&!S.seen.mkGate?9:0,
+ x:S=>`신강 십만대산. 붉은 바위 협곡 끝에 검은 문이 서 있었다. 문 위에 네 글자가 새겨져 있었다. 강자존(強者尊).
+문 앞 공터에 새로 끌려온 자, 스스로 걸어온 자, 팔려 온 자가 백 명쯤 모여 있었다. 마교의 대주가 채찍으로 땅을 쳤다.
+대주: “천마신교의 법은 하나다. 강한 자가 옳다. 해가 질 때 이 공터에 서 있는 놈만 문을 넘는다. 나머지는 사막에 묻는다.”
+옆에서 덩치 큰 소년이 당신을 노려보았다. 반대편에서는 칼을 숨긴 소녀가 당신 등 뒤로 돌았다.
+대주: “시작.”
+피가 모래를 적시기 시작했다. 해가 질 무렵, 공터에 선 자는 열둘이었다. 당신은 그 열둘 중 하나였다.
+대주가 열둘에게 비급 세 권을 던졌다.
+대주: “첫 마공을 골라라. 소수마공은 맨손으로 칼을 꺾는다. 역혈심법은 피를 거꾸로 돌려 빨리 강해진다. 구화마공은 몸 안에 불 아홉 개를 피운다. 무엇을 고르든, 천마가 붙은 무공은 천마만 익힌다.”`,
+ ch:[{t:'소수마공(素手魔功)',h:'맨손으로 칼을 꺾는다',go:S=>{const r=learn(S,'mkSoso');A(S,{salgi:6,mu:4});S.flags.mkFirst='soso';return '비급을 펼치자 첫 장에 손바닥 그림 하나가 있었다. 손금이 칼날처럼 그려져 있었다. “맨손은 무기가 아니다. 그래서 막을 수 없다.” '+r;}},
+  {t:'역혈심법(逆血心法)',h:'내공이 빨리 쌓이지만 음기에 치우친다',go:S=>{const r=learn(S,'mkYeok');A(S,{ng:8,salgi:5});S.flags.mkFirst='yeok';return '피를 거꾸로 돌렸다. 첫날 밤 코피가 멎지 않았다. 사흘째, 단전이 뒤집히듯 뜨거워졌다. 남들의 열 배 속도로 내공이 고였다. 그 대가로 잠이 줄었다. '+r;}},
+  {t:'구화마공(九火魔功)',h:'몸 안에 불 아홉. 양기에 치우친다',go:S=>{const r=learn(S,'mkGuhwa');A(S,{hp:20,yy:15,temper:4});S.flags.mkFirst='guhwa';return '단전에 불 하나를 피웠다. 아홉까지 피우면 손이 닿는 것이 다 탄다고 했다. 첫 불이 붙던 밤, 당신이 누운 자리의 모래가 유리가 되었다. '+r;}}]});
+E({id:'mkPool',t:'혈지',a:[13,40],w:S=>inMk(S)&&S.seen.mkGate&&!S.seen.mkPool?5:0,
+ x:S=>`교의 깊은 곳에 혈지(血池)가 있다. 붉은 물이 부글부글 끓는 연못. 천 년 묵은 혈망(血蟒)의 피가 섞였다고 했다. 이 물에 이레를 버티면 경맥이 넓어지고, 버티지 못하면 경맥이 터진다.
+늙은 호법 하나가 연못가에서 당신을 기다렸다. 눈 하나가 하얗게 멀어 있었다.
+늙은 호법: “나는 엿새를 버텼다. 이레째 눈 하나를 잃었지. 너는?”
+연못에 발을 담그자 살갗이 타는 듯했다. 그런데 그 뜨거움 아래로 무언가 차가운 것이 경맥을 따라 기어올랐다.`,
+ ch:[{t:'이레를 버틴다',h:'내공·근골 · 위험',go:S=>{if(chance(.35+S.t.bone*.04+S.cult/200)){A(S,{ng:20,hp:20,salgi:5});if(chance(.5))T(S,'bone',1);(S.wu||(S.wu={})).elixir=1;deed(S,'마교의 혈지에서 이레를 버텼다');return '이레째 새벽, 연못에서 걸어 나왔다. 몸의 모든 핏줄이 붉게 비쳐 보였다. 그리고 천천히 사라졌다. 늙은 호법이 남은 눈 하나로 당신을 오래 보았다. “…천마도 이레였다.”';}hurtS(S,40,'혈지');A(S,{ng:6});return '닷새째 밤 경맥 하나가 터졌다. 끌려 나와 석 달을 앓았다. 그래도 내공은 조금 늘었다.';}},
+  {t:'사흘만 버티고 나온다',h:'안전하게',go:S=>{A(S,{ng:8,hp:8});return '사흘째 나왔다. 늙은 호법이 비웃지 않았다. “사흘을 알고 나오는 놈이 이레를 버티다 죽는 놈보다 오래 산다. 교에서는 드문 재주다.”';}}]});
+E({id:'mkCave',t:'마령동 폐관',a:[15,50],w:S=>inMk(S)&&S.seen.mkPool&&!S.seen.mkCave?4:0,
+ x:S=>`마령동(魔靈洞). 교의 고수들이 마공의 벽을 넘을 때 들어가는 동굴이다. 안에는 빛이 없다. 대신 목소리가 있다고 했다. 자기 안의 마(魔)가 하는 목소리.
+문이 닫혔다. 어둠 속에서 사흘이 지났다. 나흘째, 목소리가 들렸다. ${S.flags.cf?`${cfN(S)}의 목소리였다. “${S.name}, 집에 가자.”`:`${parentOf(S)}의 목소리였다. “얘야, 밥 먹어라.”`}
+목소리가 다정할수록 심장이 떨렸다. 마령동의 마는 가장 약한 곳을 골라 말을 건다.
+목소리: “여기서 나가자. 칼 같은 거 버리고.”`,
+ ch:[{t:'목소리를 베어 낸다',h:'살기↑ · 마공이 깊어진다',go:S=>{A(S,{salgi:12,exp:tb(S)*2,mood:-15});(S.wu||(S.wu={}))['gaze'+(S.realm+1)]=1;deed(S,'마령동에서 마음의 목소리를 베었다');return '목소리를 향해 손을 휘둘렀다. 어둠이 갈라졌다. 목소리가 끊겼다. 그 뒤로 아무것도 들리지 않았다. 이레째 동굴에서 나왔다. 사람들이 당신 눈을 피했다. 눈빛이 달라졌다고 했다.';}},
+  {t:'목소리와 이야기한다',h:'수양·심상 · 마기를 다스린다',go:S=>{A(S,{cult:10,exp:tb(S),mood:5});S.flags.mkTame=1;(S.wu||(S.wu={})).word=1;return '목소리에 대답했다. “집에는 못 가. 그래도 너는 잊지 않을게.” 목소리가 오래 침묵하다 말했다. “…그럼 됐어.” 이레째 나왔다. 마기가 몸 안에서 순하게 돌았다. 마령동의 마를 베지 않고 길들인 자는 백 년에 하나라 했다.';}}]});
+E({id:'mkFire',t:'구화의 불',a:[18,60],w:S=>inMk(S)&&S.realm>=3&&!S.seen.mkFire?3:0,
+ x:S=>`천산 북쪽 화염산. 땅이 갈라진 틈에서 불이 솟는다. 구화마공의 아홉 번째 불은 이곳에서만 붙는다고 했다.
+${S.flags.mkFirst==='guhwa'?'당신 단전의 여덟 불이 화염산의 열기에 응답하듯 일렁였다.':'구화마공을 익히지 않은 몸으로 들어서자 숨이 막혔다. 그래도 불은 누구에게나 공평하다고 했다.'}
+갈라진 틈 앞에 흑의를 입은 사내가 앉아 있었다. 천마의 호법이었다.
+호법: “아홉 번째 불을 피우면 손이 닿는 것이 탄다. 칼도, 적도, 안아 줄 사람도.”`,
+ ch:[{t:'아홉 번째 불을 피운다',h:'구화마공 대성',go:S=>{const r=learn(S,'mkGuhwa');A(S,{yy:20,hp:30,fame:10,temper:6});sTitle(S,'구화');deed(S,'화염산에서 구화마공의 아홉 번째 불을 피웠다');return `불이 단전에서 솟아 팔을 타고 손끝으로 나왔다. 손을 펴자 바위가 녹았다. 호법이 일어나 머리를 숙였다. ${r||'구화마공이 대성에 이르렀다.'}`;}},
+  {t:'여덟에서 멈춘다',h:'수양',go:S=>{A(S,{cult:6,yy:8});return '여덟 번째 불에서 멈췄다. 호법이 처음으로 웃었다. “아홉을 피우고 사람을 안지 못하게 된 놈을 셋 안다. 여덟이면 아직 사람을 안을 수 있지.”';}}]});
+const MK_ELIX=[['천년혈삼','사막 한가운데 붉은 모래 언덕. 사람 모양의 뿌리가 모래 아래서 맥박처럼 뛴다.',30],['흑린망의 내단','천산 빙하 아래 동굴. 열 길이 넘는 검은 이무기가 똬리를 틀고 있다.',45],['마령단','교의 단방(丹房)에서 장로가 내미는 검은 환. 먹으면 교에 한 가지를 빚진다.',25]];
+E({id:'mkElixir',t:'마교의 영약',title:S=>S.tmp.ex?`영약 · ${S.tmp.ex[0]}`:'마교의 영약',a:[15,70],w:S=>inMk(S)&&S.seen.mkGate?2.5:0,cd:4,
+ prep:S=>{S.tmp.ex=pick(MK_ELIX);if(S.tmp.ex[0]==='흑린망의 내단')S.tmp.foe=mkFoe({n:'흑린망',realm:clamp(S.realm+1,3,7),q:1.1,kw:['독','중']});},
+ x:S=>`${S.tmp.ex[1]}${S.tmp.ex[0]==='마령단'?'\n장로: “먹어라. 대신 언젠가 내가 부르면 누구든 베어야 한다. 그게 마교의 영약 값이다.”':''}`,
+ ch:S=>{const [nm,,ng]=S.tmp.ex;return nm==='흑린망의 내단'?[{t:'이무기와 싸운다',h:'싸움',go:S=>{const b=battle(S,S.tmp.foe);if(b.win){A(S,{ng,hp:20});(S.wu||(S.wu={})).elixir=1;return fightText(b,`사흘 밤낮을 싸웠다. 이무기의 배를 가르자 주먹만 한 검은 구슬이 나왔다. 삼키자 차가운 기운이 온몸을 돌았다. ${ngText(ng)}의 내공이 들어찼다.`,'');}hurtS(S,35,'흑린망');return fightText(b,'','이무기의 꼬리에 맞아 빙하 아래로 굴렀다.');}},{t:'물러선다',go:S=>'이무기가 눈을 떴다가 다시 감았다. 아직 때가 아니었다.'}]
+  :nm==='마령단'?[{t:'먹는다',h:'장로에게 빚을 진다',go:S=>{A(S,{ng,salgi:4});S.flags.mkDebt=1;return '쓰고 검은 맛이 혀를 덮었다. 내공이 늘었다. 그리고 장로의 장부에 당신 이름이 올라갔다.';}},{t:'거절한다',go:S=>{A(S,{contrib:-5});return '“빚은 지지 않습니다.” 장로가 웃었다. “강자존에 맞는 대답이로구나. 그런데 약한 놈이 하는 대답은 아니지.”';}}]
+  :[{t:'캐서 먹는다',go:S=>{A(S,{ng,hp:15});(S.wu||(S.wu={})).elixir=1;return `모래를 맨손으로 파헤쳤다. 뿌리가 손 안에서 꿈틀댔다. 삼키자 피가 끓었다. ${ngText(ng)}의 내공이 들어찼다.`;}},{t:'교에 바친다',go:S=>{A(S,{contrib:30});return '혈삼을 교의 단방에 바쳤다. 장로가 장부에 당신의 공을 적었다.';}}];}});
+E({id:'mkBirth',tag:'key',t:'천마의 탄생',a:[18,60],w:S=>inMk(S)&&S.rank>=1&&!S.seen.mkBirth?4:0,
+ x:S=>`교의 가장 늙은 장로가 당신을 서고로 불렀다. 백 살이 넘었다는 장로. 그가 먼지 쌓인 족자 하나를 펼쳤다. 피로 그린 그림이었다.
+늙은 장로: “지금의 천마, 혁련 무악이 어떻게 태어났는지 아느냐.”
+늙은 장로: “사십 년 전, 정파가 십만대산 아래 마을 하나를 불태웠다. 마교도의 마을이라는 이유로. 불타는 집에서 아이 하나가 기어 나왔지. 일곱 살. 제 어미의 시체 아래서.”
+늙은 장로: “그 아이가 열일곱에 전대 천마의 목을 베었다. 강자존. 천마는 태어나는 게 아니라 빼앗는 것이다.”
+장로가 족자를 말았다. 그리고 당신을 오래 보았다.
+${S.flags.demonBlood?`늙은 장로: “그리고 그때 목이 베인 전대 천마의 핏줄이… 하나 살아남았다. 중원으로 도망친 딸이 하나 있었지. 그 딸이 낳은 아이가, 지금 내 앞에 앉아 있구나.”\n당신의 피가 유난히 뜨거웠던 이유를, 그때 알았다.`:'늙은 장로: “너도 빼앗을 수 있다. 다만 빼앗는 자는 언젠가 빼앗긴다. 그걸 알고도 원하느냐.”'}`,
+ ch:S=>[{t:S.flags.demonBlood?'“그 자리는 원래 내 것이다”':'“원합니다”',h:'천마의 자리를 노린다',go:S=>{S.flags.mkAmbition=1;A(S,{temper:5,salgi:4,fame:5});if(S.flags.demonBlood)S.flags.mkClaim=1;return S.flags.demonBlood?'장로가 웃었다. 이가 다 빠진 입이었다. “그 말을 사십 년 기다렸다.” 그날부터 교 안의 늙은 장로 몇이 당신을 ‘소주(少主)’라 불렀다. 아주 작은 목소리로.':'장로가 고개를 끄덕였다. “그럼 사마부터 꺾어라. 사마가 따르지 않는 천마는 하루도 못 간다.”';}},
+  {t:'“빼앗기지 않는 길을 찾겠습니다”',h:'수양',go:S=>{A(S,{cult:6,mind:4});S.flags.mkAmbition=1;return '장로가 오래 웃었다. “천마의 자리에 그런 길은 없다. 그런데 그걸 찾겠다는 놈이 천마가 되면… 마교가 조금 달라지겠지.”';}}]});
+/* 사마 규합: 넷을 하나씩 꺾는다 */
+const MK_SAMA={
+ gwangma:['광마','미쳐서 강한 자. 무엇을 베든 웃는다.',S=>`광마 단 광천은 사막의 무너진 성채 위에서 혼자 춤을 추고 있었다. 칼이 없는 춤이었다.\n${NN('gwangma')}: “천마가 되겠다고? 하하! 천마는 미친놈이 되는 거야. 너는 아직 너무 멀쩡해.”`],
+ dokma:['독마','독으로 마가 된 자. 그의 숨에도 독이 있다.',S=>`독마 당 무진의 처소에는 풀 한 포기 살아 있지 않았다.\n${NN('dokma')}: “나를 꺾겠다고? 나를 꺾으려면 먼저 내 독을 견뎌야지. 마셔라. 이 잔을 마시고 서 있으면 나는 네 사람이다.”`],
+ geomma:['검마','검으로 마가 된 자. 천마 다음가는 검.',S=>`검마 사마 율은 절벽 끝에 서 있었다. 그의 검집에서 검이 반 치 나와 있었다. 반 치만으로 바람이 갈라졌다.\n${NN('geomma')}: “말은 필요 없다. 검을 뽑아라. 이기면 따르겠다. 지면 죽어라.”`],
+ yohr:['요마','사람 마음을 홀리는 자. 웃음이 독보다 독하다.',S=>`요마 요 화령은 붉은 등불 아래서 웃고 있었다.\n${NN('yohr')}: “나를 칼로 꺾을 수 있을까? 나는 칼을 들지 않아. 대신 네 마음을 하나 가져가지. 버티면 내가 따를게.”`]};
+E({id:'mkSamaOne',tag:'side',t:'사마를 꺾다',title:S=>S.tmp.sm?`사마를 꺾다 · ${MK_SAMA[S.tmp.sm][0]}`:'사마를 꺾다',a:[22,80],w:S=>inMk(S)&&S.flags.mkAmbition&&S.realm>=3&&SAMA.some(id=>!(S.flags.mkSama||{})[id]&&!S.dead_npc[id])?4:0,cd:2,
+ prep:S=>{S.flags.mkSamaTry=(S.flags.mkSamaTry||0)+1;S.tmp.sm=pick(SAMA.filter(id=>!(S.flags.mkSama||{})[id]&&!S.dead_npc[id]));S.met[S.tmp.sm]=1;},
+ x:S=>MK_SAMA[S.tmp.sm][2](S),
+ ch:S=>{const id=S.tmp.sm,[nm]=MK_SAMA[id];const won=t=>{(S.flags.mkSama||(S.flags.mkSama={}))[id]=1;TK(S,id,15);A(S,{fame:15});deed(S,`사마의 ${nm}${bat(nm)?'을':'를'} 꺾어 따르게 했다`);return t+`\n(사마 ${mkSama(S)}/4)`;};
+  const L=[{t:'강자존: 무공으로 꺾는다',h:'비무',go:S=>{const b=battle(S,npcFoe(S,id),{safe:1,spar:1,weaken:.85});if(b.win)return won(fightText(b,`${nm}${bat(nm)?'이':'가'} 무릎을 꿇었다. 마교에서 무릎은 목숨보다 무겁다. “…따르마. 네가 약해지는 날까지는.”`,''));hurtS(S,25,nm);return fightText(b,'',`${nm}${bat(nm)?'이':'가'} 당신을 내려다보았다. “아직이다. 다시 와라.”`);}}];
+  if(id==='gwangma')L.push({t:'같이 미친 듯이 춤을 춘다',h:'성정·심상',go:S=>{if(chance(.3+S.temper/200+(S.mood>30?.2:0)))return won('칼 없이 춤을 추었다. 사막의 해가 질 때까지. 광마가 배를 잡고 웃었다. “좋아! 너도 미쳤구나! 미친놈은 미친놈을 따르는 법이지!”');return '춤이 어색했다. 광마가 혀를 찼다. “멀쩡한 놈은 춤도 멀쩡하게 추는군.”';}});
+  if(id==='dokma')L.push({t:'독잔을 마신다',h:'항독',go:S=>{if(S.rp>=50||has(S,'dokche')||has(S,'manduk')||chance(.2)){A(S,{rp:8});return won('잔을 비웠다. 서 있었다. 무릎이 떨렸지만 서 있었다. 독마가 처음으로 웃었다. “당가 놈들보다 독하구나.”');}hurtS(S,40,'독마의 잔');return '세 걸음 만에 쓰러졌다. 독마가 해독제를 던져 주었다. “죽이기엔 아깝다. 다음엔 더 독해져서 와라.”';}});
+  if(id==='yohr')L.push({t:'요마의 눈을 끝까지 본다',h:'심계·수양',go:S=>{if(chance(.25+S.mind/150+S.cult/200))return won('웃음이 마음을 파고들었다. 어린 날의 개울, 부모의 등, 잃은 것들이 하나씩 떠올랐다. 그래도 눈을 피하지 않았다. 요마가 웃음을 거뒀다. “…재미없네. 아무것도 못 가져가겠어. 따를게.”');A(S,{mood:-12});return '눈을 피했다. 요마가 웃었다. “하나 가져갈게.” 그날 밤 무엇을 잃었는지 기억나지 않았다. 그게 더 무서웠다.';}});
+  return L;}});
+E({id:'mkSamaUnite',tag:'key',t:'사마의 주인',a:[24,90],w:S=>inMk(S)&&mkSama(S)>=4&&!S.seen.mkSamaUnite?8:0,
+ x:S=>`사마가 한자리에 모였다. 일 년에 한 번 술을 마시던 그 이름 없는 주루에서. 그런데 이번에는 상석이 비어 있었다. 넷이 당신을 보았다.
+${NN('gwangma')}: “웃기는군. 우리 넷이 한 놈 밑에 앉게 될 줄이야.”
+${NN('geomma')}: “강자존이다. 이 녀석이 강했다. 그뿐이다.”
+${NN('yohr')}: “난 좋아. 이 사람 곁이 제일 재밌거든.”
+${NN('dokma')}: “…술잔에 독은 안 탔다. 오늘만.”
+당신이 상석에 앉았다. 넷이 동시에 잔을 들었다. 강호가 그 소식을 듣고 떨었다. 사마가 한 사람의 이름 아래 모였다고.`,
+ ch:[{t:'잔을 든다',go:S=>{S.flags.mkSamaAll=1;A(S,{fame:40});sTitle(S,'사마의 주인');deed(S,'사마를 규합했다');hist(S,'사마가 한 사람의 이름 아래 모였다.');repAdd(S,'demon',15);return '넷의 잔과 당신의 잔이 부딪쳤다. 그날 밤 주루가 불탔다. 광마가 기분이 좋아서 불을 질렀다. 다섯이 불타는 주루를 등지고 웃으며 걸어 나왔다.';}}]});
+E({id:'mkPurge',tag:'key',t:'장로원의 밤',a:[24,90],w:S=>inMk(S)&&S.rank>=2&&S.flags.mkAmbition&&!S.seen.mkPurge?4:0,
+ prep:S=>{S.tmp.foe=S.dead_npc.eumsg?mkFoe({n:'반역 장로들',realm:clamp(S.realm,4,6),q:1.05,group:1}):npcFoe(S,'eumsg',{});},
+ x:S=>`장로원에서 밀서가 새어 나왔다. 부교주 음 사구가 장로 일곱을 모아 정파와 손잡으려 한다. 천마의 목과 교의 절반을 넘기는 조건으로. 그리고 그 명단의 첫 번째 제거 대상이 당신이었다.
+${S.flags.demonBlood?'늙은 장로가 당신 귀에 속삭였다. “소주. 오늘 밤이 아니면 내일 밤은 없습니다.”':''}
+장로원의 문틈으로 불빛이 새어 나왔다. 일곱 장로가 둘러앉아 있었다.
+${NN('eumsg')}: “…그 녀석만 치우면 천마도 손발이 잘린다.”`,
+ ch:[{t:'문을 박차고 들어가 처단한다',h:'강자존',go:S=>{const b=battle(S,S.tmp.foe,{safe:1});if(b.win){S.flags.mkPurged=1;S.dead_npc.eumsg=1;A(S,{fame:30,salgi:10,contrib:60});S.rank=Math.max(S.rank,3);deed(S,'마교 장로원의 반역을 처단했다');return fightText(b,'일곱 장로가 쓰러졌다. 음 사구의 웃는 얼굴이 마지막까지 웃고 있었다. 이튿날 천마가 당신을 불렀다. 칭찬하지 않았다. 다만 오래 보았다. 장로 자리가 하나 비었고, 그 자리에 당신 이름이 올라갔다.','');}hurtS(S,40,'장로원');return fightText(b,'','일곱은 많았다. 피투성이로 빠져나왔다.');}},
+  {t:'밀서를 천마에게 바친다',h:'처세·공헌',go:S=>{S.flags.mkPurged=1;A(S,{contrib:40,savvy:5});S.rank=Math.max(S.rank,3);return '천마가 밀서를 읽고 웃었다. 그날 밤 장로원에서 비명이 일곱 번 들렸다. 천마가 직접 했다. 당신은 손에 피를 묻히지 않고 장로가 되었다. 대신 천마가 당신을 더 경계하게 되었다.';}},
+  {t:'음 사구와 거래한다',h:'심계·위험',go:S=>{if(chance(.35+S.mind/120)){S.flags.mkPurged=1;S.flags.mkEumsg=1;A(S,{mind:6,contrib:20});return '음 사구 앞에 앉아 말했다. “천마를 치는 건 나도 원하오. 그런데 정파와 손잡는 건 아니오. 순서를 바꿉시다.” 음 사구가 웃었다. 세 번 배신한 웃음이었다. 네 번째가 누구일지, 둘 다 알고 있었다.';}hurtS(S,30,'음 사구의 함정');return '거래 자리에 독이 있었다. 음 사구는 역시 음 사구였다.';}}]});
+E({id:'mkHa',tag:'love',t:'혁련 하의 손',a:[20,70],w:S=>inMk(S)&&!S.dead_npc.ha&&S.flags.mkAmbition&&S.rank>=2&&!S.seen.mkHa&&S.w.cheonma==='alive'?5:0,prep:S=>{S.met.ha=1;},
+ x:S=>`천마의 하나뿐인 자식, 혁련 하가 당신을 지붕 위로 불렀다. 술병 두 개를 놓고.
+${NN('ha')}: “아버지를 치려고 한다며. 다들 알아. 아버지도 알고.”
+당신: “…막으러 왔나.”
+${NN('ha')}: “아니. 말리러 온 것도 아니고.”
+하가 술을 마셨다. 손이 떨리지 않았다.
+${NN('ha')}: “아버지는 나한테 천하를 주고 싶어 했어. 나는 아침밥을 같이 먹을 사람이 필요했고. 그 둘이 같이 갈 수 있을까?”
+${NN('ha')}: “네가 천마가 된다면… 그 옆에 내가 있을 자리가 있어?”`,
+ ch:[{t:'“천마의 옆자리는 네 것이다”',h:'하와 함께 천마결에 오른다',go:S=>{S.flags.mkHaAlly='together';TK(S,'ha',15);npcMem(S,'ha','천마의 옆자리를 약속받았다');return `${NN('ha')}${bat(NN('ha'))?'이':'가'} 웃었다. 사막의 바람 같은 웃음이었다.\n${NN('ha')}: “그럼 아버지 앞에 같이 서자. 혼자 서면 넌 죽어. 둘이 서면… 아버지는 웃을 거야. 그 사람 웃는 거 한 번 보고 싶어.”`;}},
+  {t:'“네가 천마가 되어라. 내가 칼이 되겠다”',h:'하를 천마로 세운다',go:S=>{S.flags.mkHaAlly='her';TK(S,'ha',12);return `${NN('ha')}: “…나보고 천마를 하라고?”\n${NN('ha')}${bat(NN('ha'))?'은':'는'} 한참 말이 없었다. 그러다 술병을 들어 당신 술병에 부딪쳤다.\n${NN('ha')}: “좋아. 대신 아침밥은 네가 해.”`;}},
+  {t:'“이건 나 혼자의 싸움이다”',go:S=>{S.flags.mkHaAlly='alone';TK(S,'ha',-5);return `${NN('ha')}: “…그래. 강자존이니까.”\n하가 지붕에서 내려갔다. 등이 쓸쓸해 보였다. 그날 밤 천마의 처소에서 부녀가 오래 이야기를 나눴다고 한다.`;}}]});
+function mkBecome(S){S.rank=4;S.flags.cmMe=1;S.w.cheonma='dead';S.dead_npc.cheonma=1;const w=S.mainW;const ids=w==='검'?['cmGeom','cmSingeom']:w==='도'?['cmSura','cmPacheon']:w==='창'?['cmChang']:['cmGwon'];
+  const got=[...ids,'cmHeart'].map(id=>learn(S,id)).filter(Boolean).join(' ');S.heart='cmHeart';sTitle(S,'천마');A(S,{fame:120,contrib:200,mood:20});deed(S,'천마가 되었다');hist(S,'천마신교에 새 천마가 섰다.');repAdd(S,'demon',30);return got;}
+E({id:'mkThrone',tag:'key',t:'천마결',a:[28,95],w:S=>inMk(S)&&S.rank>=3&&S.realm>=5&&S.w.cheonma==='alive'&&!S.dead_npc.cheonma&&(S.flags.mkSamaAll||mkSama(S)>=2||S.flags.mkPurged)&&!S.flags.cmMe?6:0,cd:3,
+ prep:S=>{const wk=(S.flags.mkSamaAll?.85:1)*(S.flags.mkPurged?.95:1)*(S.flags.mkTame?.95:1)*(S.flags.mkHaAlly==='together'||S.flags.mkHaAlly==='her'?.85:1)*(S.flags.mkClaim?.95:1);S.tmp.wk=wk;S.tmp.foe=npcFoe(S,'cheonma',{});},
+ x:S=>`천마전(天魔殿). 검은 옥좌 위에 천마 혁련 무악이 앉아 있었다. 그 아래 교의 모든 장로와 호법이 늘어섰다. 당신이 옥좌 앞에 섰다. 천마결(天魔決). 강자존의 마지막 법. 교의 누구든 천마에게 도전할 수 있다. 지면 죽는다. 이기면 천마다.
+${NN('cheonma')}: “사십 년 전, 나도 이 자리에 섰다. 그때 옥좌에 앉아 있던 자가 나에게 물었지. 이 자리에서 무엇을 보았느냐고.”
+${NN('cheonma')}: “나는 대답하지 못했다. 그래서 그를 베었다. 너는 대답할 수 있느냐.”
+${S.flags.mkSamaAll?'사마 넷이 당신 등 뒤에 섰다. 장로들이 술렁였다.':''}${S.flags.mkHaAlly==='together'||S.flags.mkHaAlly==='her'?`\n혁련 하가 당신 옆으로 걸어 나왔다. 천마의 눈이 처음으로 흔들렸다.\n${NN('cheonma')}: “…하.”\n${NN('ha')}: “아버지. 나는 이 사람 편이야.”`:''}${S.flags.mkClaim?'\n늙은 장로가 외쳤다. “전대 천마의 핏줄이다!” 천마전이 술렁였다.':''}`,
+ ch:S=>[{t:'“이 자리에서 아무것도 보이지 않습니다. 그래서 오릅니다”',h:'목숨을 건 천마결',go:S=>{const b=battle(S,S.tmp.foe,{safe:1,weaken:S.tmp.wk});if(b.win){const got=mkBecome(S);let t=`천마의 검은 손이 당신 가슴 앞에서 멈췄다. 당신의 손이 먼저 닿아 있었다.\n${NN('cheonma')}: “…그 대답, 나도 했어야 했는데.”\n혁련 무악이 옥좌에서 무너졌다. 천마전의 모든 무릎이 꺾였다. “천마! 천마! 천마!” 십만대산이 그 이름으로 울렸다.\n${got}`;
+     if(S.flags.mkHaAlly==='together'&&!S.spouse){S.spouse='ha';S.flags.wedAge=S.age;S.flags.haWife=1;S.chain='wedding';t+='\n옥좌 옆에 하가 섰다. “아침밥은 같이 먹자. 약속했잖아.” 그해 겨울 천마의 혼례가 열렸다.';}
+     if(S.flags.mkHaAlly==='her')t+='\n당신은 옥좌에 앉지 않았다. 하를 앉혔다. 그리고 그 옆에 섰다. 마교에 천마가 둘이라는 말이 돌았다. 아무도 그 말을 부정하지 않았다.';
+     return fightText(b,t,'');}
+   hurtS(S,60,'천마');return fightText(b,'','천마의 손이 당신 가슴을 쳤다. 날아가 기둥에 부딪쳤다. 천마가 일어서 당신을 내려다보았다. “…아직이다. 살려 두마. 다시 와라. 나를 베는 놈은 나보다 강해야 한다.” 사흘 뒤 깨어났다. 천마가 살려 둔 것은 사십 년 만에 처음이라 했다.');}},
+  ...(S.flags.mkHaAlly==='together'?[{t:'하와 함께 천마 앞에 무릎을 꿇는다',h:'천마의 뜻을 묻는다',go:S=>{TK(S,'ha',10);if(chance(.45)){S.flags.cmHeir=1;S.rank=3;A(S,{fame:30});return `천마가 둘을 오래 내려다보았다. 그리고 웃었다. 사십 년 만에 처음 웃는 얼굴이었다.\n${NN('cheonma')}: “강자존. 그런데 둘이 서는 것도 강함이구나. 좋다. 내가 폐관에 들면, 이 자리는 너희 둘의 것이다.”`;}return '천마는 대답하지 않았다. 다만 그날 이후 둘을 쫓아내지도 않았다.';}}]:[])]});
+E({id:'mkVacant',tag:'key',t:'빈 옥좌',a:[26,95],w:S=>inMk(S)&&S.rank>=3&&S.realm>=4&&(S.w.cheonma!=='alive'||S.dead_npc.cheonma||S.flags.cmHeir)&&!S.flags.cmMe?6:0,cd:3,
+ prep:S=>{S.tmp.foe=S.dead_npc.geomma||(S.flags.mkSama||{}).geomma?mkFoe({n:'옥좌를 노리는 장로',realm:clamp(S.realm,5,7),q:1.05}):npcFoe(S,'geomma',{});},
+ x:S=>`천마전의 옥좌가 비어 있었다. ${S.flags.cmHeir?'혁련 무악이 폐관에 들며 남긴 말대로.':'천마가 쓰러진 뒤 교는 석 달 동안 주인이 없었다.'} 강자존의 교에 빈 옥좌는 피를 부른다. ${(S.flags.mkSama||{}).geomma?'옥좌를 노리는 장로 하나가 당신 앞을 막았다.':'검마 사마 율이 옥좌 앞에 서서 검을 반 치 뽑았다.'}`,
+ ch:[{t:'옥좌를 빼앗는다',h:'비무',go:S=>{const b=battle(S,S.tmp.foe,{spar:1,safe:1});if(b.win){const got=mkBecome(S);return fightText(b,`옥좌에 앉았다. 차가웠다. 천마전이 이름 하나를 외쳤다. ${got}`,'');}hurtS(S,30,'빈 옥좌');return fightText(b,'','밀려났다. 다음 해를 기약했다.');}}]});
+/* 천마가 된 뒤: 마교천하로 가는 출정 */
+const MK_MARCH=[['사도련을 굴복시킨다','사도련 총단. 련주 위 패천이 의리의 깃발 아래 흑도를 묶어 두었다. 천마의 사자가 당신의 말을 전했다. “따르든가, 지든가.”','wipc','사파'],
+ ['무림맹을 친다','무림맹 총단. 정천신산 제갈 휘가 바둑판 앞에 앉아 천마의 군세를 셈하고 있었다.','maengju','정파'],
+ ['소림의 산문에 선다','숭산 소림. 천 년 동안 무너지지 않은 산문. 방장 현오 대사가 홀로 산문 앞에 섰다.','hyeono','정파']];
+E({id:'mkMarch',tag:'key',t:'천마의 출정',title:S=>`천마의 출정 · ${MK_MARCH[S.flags.mkMarchN||0][0]}`,a:[28,99],w:S=>S.flags.cmMe&&inMk(S)&&(S.flags.mkMarchN||0)<3?6:0,cd:2,
+ prep:S=>{const [,, id]=MK_MARCH[S.flags.mkMarchN||0];S.tmp.foe=id&&NPCS[id]&&!S.dead_npc[id]?npcFoe(S,id,{}):mkFoe({n:'정파의 고수들',realm:clamp(S.realm,5,7),q:1.05,group:1});},
+ x:S=>{const [t,x]=MK_MARCH[S.flags.mkMarchN||0];return `십만대산에서 검은 깃발이 내려왔다. 천마가 출정한다.\n${x}\n${S.flags.mkSamaAll?'사마 넷이 당신 뒤를 따랐다.':''}${S.spouse==='ha'||S.flags.mkHaAlly==='her'?' 혁련 하가 당신 옆에서 말을 몰았다.':''}`;},
+ ch:S=>{const k=S.flags.mkMarchN||0,[t,,id,side]=MK_MARCH[k];return [{t:'천마의 이름으로 꺾는다',h:'싸움',go:S=>{const b=battle(S,S.tmp.foe,{safe:1,ally:S.flags.mkSamaAll?1.3:1});if(b.win){S.flags.mkMarchN=k+1;if(id&&NPCS[id]&&k>0)S.dead_npc[id]=k===2?S.dead_npc[id]:1;safe(()=>pwAdd(S,'마교',14));safe(()=>pwAdd(S,side,-8));A(S,{fame:50,salgi:6});deed(S,`천마로서 ${t.replace(/다$/,'었다').replace('굴복시킨었다','굴복시켰다').replace('친었다','쳤다').replace('선었다','섰다')}`);hist(S,`천마가 ${t.replace(/다$/,'')}.`);
+     return fightText(b,k===0?'련주가 의리의 깃발을 내렸다. “흑도는 강한 자를 따른다. 그게 우리 의리다.” 사도련이 천마의 깃발 아래 섰다.':k===1?'바둑판이 반으로 갈라졌다. 제갈 휘가 마지막 돌을 쥔 채 웃었다. “열 수 앞을 봤는데… 당신은 열한 수째에 있었구려.” 무림맹이 무너졌다.':'현오 대사가 합장한 채 쓰러졌다. 그는 끝까지 손을 들지 않았다. 산문이 열렸다. 천 년 만에. 당신은 산문 안으로 들어가지 않았다. 문이 열린 것으로 충분했다.','');}hurtS(S,40,t);return fightText(b,'','천마의 군세가 밀렸다. 다시 깃발을 세워야 한다.');}},
+  {t:'칼 대신 사자를 보낸다',h:'구력·명성',go:S=>{if(S.fame/5+S.tongue+R(0,40)>=90){S.flags.mkMarchN=k+1;safe(()=>pwAdd(S,'마교',10));A(S,{fame:30});return k===2?'소림의 방장이 당신의 서찰을 읽고 오래 침묵했다. 그리고 산문을 닫았다. “소림은 천하의 일에서 물러나겠소.” 피 한 방울 없이 중원의 마지막 산문이 닫혔다.':'사자가 돌아왔다. 상대가 깃발을 내렸다. 칼보다 천마의 이름이 먼저 도착했다.';}return '사자의 머리가 상자에 담겨 돌아왔다. 칼로 해야 한다.';}}];}});
+['mkGate','mkPool','mkCave','mkFire','mkElixir','mkBirth','mkSamaOne','mkSamaUnite','mkPurge','mkHa','mkThrone','mkVacant','mkMarch'].forEach(id=>JOB_OK.add(id));
+
+/* ══ 혈교: 피의 부활 ══════════════════════════
+   길: 붉은 호수의 세례 → 사술·강시술·흡혈공 수련 → 인신공양과 식인의 잔(혈교의 법) → 영약 →
+       성녀 홍의의 호위 → 성녀의 비밀(늙은 혈마 단목 혼이 홍의의 몸으로 전생하려 한다) →
+       부활의 밤: (가) 대법을 완성해 홍의로 전생한 혈마와 혈겁을 일으키거나
+                  (나) 홍의를 구원하거나
+                  (다) 되살아난 혈마를 베어 혈마를 계승한다. */
+defA('hkHup','흡혈공','무','권',3,['혈','음']);defA('hkSa','혈영사술','무','암기',3,['혈','음','변']);
+defA('hkMa','혈마신공','심',null,5,['혈','마','강기'],null,{rate:1.85,push:-1});defA('hkBlade','혈마천해도','무','도',5,['혈','마','강기','중']);
+const inHk=S=>S.org==='blood';
+const hkG=S=>S.flags.hkGuardN||0;
+E({id:'hkGate',tag:'arc',t:'붉은 호수의 세례',a:[10,45],w:S=>inHk(S)&&!S.seen.hkGate?9:0,
+ x:S=>`청해. 소금 사막 한가운데 붉은 호수가 있다. 물이 붉은 것은 바닥의 흙 때문이라고, 바깥사람들은 말한다. 혈교도들은 다르게 말한다. 천 년 동안 부은 피 때문이라고.
+새로 든 자 서른이 호숫가에 꿇어앉았다. 붉은 옷의 혈사가 하나씩 이마에 피로 점을 찍었다.
+혈사: “혈교의 법은 하나다. 피는 거짓말을 하지 않는다. 너희가 흘린 피와 남에게 흘리게 한 피, 그것만이 너희의 값이다.”
+혈사: “호수로 걸어 들어가라. 머리끝까지. 붉은 물을 한 모금 삼키고 나와라. 삼키지 못한 자는 호수가 삼킨다.”
+물이 이상하게 따뜻했다. 사람의 체온처럼.`,
+ ch:[{t:'붉은 물을 삼킨다',h:'살기·내공',go:S=>{A(S,{ng:8,salgi:8,moral:-4});S.flags.hkBap='drink';return '비릿한 쇳맛이 목을 타고 내려갔다. 물에서 나오자 혈사가 당신 이마의 점을 엄지로 문질러 길게 그었다. “좋은 피다.” 그날 밤 꿈에 호수 바닥에서 손 수천 개가 올라와 당신 발목을 쓰다듬었다.';}},
+  {t:'머금었다가 몰래 뱉는다',h:'심계',go:S=>{if(chance(.5+S.mind/150)){A(S,{mind:4});S.flags.hkBap='spit';return '물속에서 입을 다물고 나왔다. 아무도 몰랐다. 아니, 하나는 알았다. 호숫가 바위 위에 붉은 옷의 소녀가 앉아 있었다. 소녀가 손가락을 입술에 댔다. 쉿.';}A(S,{salgi:4,ng:4});S.flags.hkBap='drink';return '뱉으려는 순간 혈사의 손이 뒷목을 눌렀다. 물이 목으로 넘어갔다. “혈교에서 뱉는 놈은 혀를 잃는다. 오늘은 봐주마.”';}}]});
+E({id:'hkSorcery',t:'혈영사술',a:[12,50],w:S=>inHk(S)&&S.seen.hkGate&&!S.seen.hkSorcery?5:0,
+ x:S=>`사술당(邪術堂). 창문이 없는 방에 등이 굽은 늙은 여인, 사술당주가 앉아 있었다. 방에 짚으로 만든 인형이 천장까지 쌓여 있었다. 인형마다 머리카락 한 올, 손톱 한 조각이 묶여 있었다.
+사술당의 노파가 인형 하나를 집어 당신에게 내밀었다.
+사술당주: “피 한 방울과 이름 하나. 그거면 백 리 밖 사람의 심장을 쥘 수 있다. 칼은 앞에서 찌르지만 사술은 꿈속에서 찌르지.”
+사술당주: “이건 정파 쪽 어느 표사 놈 거다. 연습해 봐라. 죽지는 않아. 사흘 앓을 뿐이야.”`,
+ ch:[{t:'인형에 바늘을 꽂는다',h:'혈영사술을 익힌다',go:S=>{const r=learn(S,'hkSa');A(S,{salgi:5,moral:-6,mind:3});S.flags.hkSaUsed=1;return `바늘이 짚을 뚫는 순간 손끝이 저렸다. 백 리 밖의 숨소리가 들리는 것 같았다. 노파가 웃었다. “재능이 있구나. 그 재능은 언젠가 네 꿈속에도 찾아온다.” ${r}`;}},
+  {t:'인형 대신 자기 손에 바늘을 꽂는다',h:'수양 · 이치를 먼저 깨친다',go:S=>{const r=learn(S,'hkSa');A(S,{cult:5,hp:-5});return `당신은 인형을 내려놓고 제 손바닥에 바늘을 꽂았다. 노파가 한참 당신을 보았다. “남의 심장을 쥐기 전에 제 심장부터 쥐어 보겠다? 별난 놈. 그런 놈이 사술을 제일 깊게 익히더라.” ${r}`;}}]});
+E({id:'hkGangsi',t:'강시술',a:[14,60],w:S=>inHk(S)&&S.seen.hkGate&&S.rank>=1&&!S.seen.hkGangsi?4:0,
+ x:S=>`시왕전(屍王殿)의 지하. 얼음이 덮인 관 백 개가 줄지어 있었다. 관 뚜껑마다 노란 부적이 붙어 있었다.
+시왕전주: “강시는 죽은 자의 몸에 혈기를 부어 일으킨 것이다. 생각하지 않고, 아프지 않고, 배신하지 않는다. 사람보다 쓸모가 있지.”
+시왕전주가 관 하나를 열었다. 안에 누운 것은 서른쯤 된 검객이었다. 손에 아직 검을 쥐고 있었다.
+시왕전주: “석 달 전 혈교를 치러 왔다가 죽은 정파 놈이다. 좋은 몸이야. 네 첫 강시로 써라.”`,
+ ch:[{t:'부적을 붙이고 혈기를 붓는다',h:'강시를 거느린다 (싸움에 함께한다)',go:S=>{S.flags.hkGangsi=1;A(S,{salgi:6,moral:-8,ng:-4});deed(S,'혈교의 강시술로 첫 강시를 일으켰다');return '이마에 부적을 붙이고 손바닥으로 가슴을 눌렀다. 혈기가 빠져나가 죽은 몸으로 들어갔다. 검객의 눈이 떠졌다. 아무것도 담기지 않은 눈. 검객이 일어나 당신 뒤에 섰다. 그날부터 당신이 어디를 가든 등 뒤에서 젖은 발소리가 따라왔다.';}},
+  {t:'검객의 눈을 감기고 관을 닫는다',h:'강시를 거부한다',go:S=>{A(S,{moral:5,contrib:-10});S.flags.hkNoGangsi=1;return '죽은 검객의 눈을 감겨 주었다. 시왕전주가 혀를 찼다. “쓸모없는 정이다.” 그날 밤 몰래 관을 열어 검객의 손에서 검을 빼 땅에 묻어 주었다. 이름은 몰랐다.';}}]});
+E({id:'hkVamp',t:'흡혈공',a:[16,65],w:S=>inHk(S)&&S.realm>=3&&!S.seen.hkVamp?4:0,
+ prep:S=>{S.tmp.foe=mkFoe({n:'흡혈귀 장로',realm:clamp(S.realm+1,3,7),q:1.05,kw:['혈','음']});},
+ x:S=>`혈교에서 백 년을 산 장로가 있다. 얼굴은 서른 살인데 손등은 백 살이다. 남의 피를 마셔 젊음을 산다고 했다.
+그 장로가 당신을 굴로 불렀다. 굴 안이 피 냄새로 끈적했다.
+흡혈귀 장로: “흡혈공은 남의 내공을 피와 함께 빨아들인다. 가르쳐 주마. 대신 값이 있다. 내 손에 목을 한 번 내어 다오. 딱 한 모금.”
+장로의 입술 사이로 송곳니가 보였다.`,
+ ch:[{t:'목을 내어 준다',h:'흡혈공을 익힌다 · 피를 잃는다',go:S=>{const r=learn(S,'hkHup');hurtS(S,20,'흡혈귀 장로');A(S,{salgi:4});return `차가운 입술이 목에 닿았다. 무엇인가가 빠져나갔다. 장로가 고개를 들었을 때 그의 얼굴이 다섯 살쯤 젊어져 있었다. “좋은 피다. 약속대로.” 장로가 당신 손목을 잡고 기의 길을 거꾸로 그려 주었다. ${r}`;}},
+  {t:'장로의 피를 먼저 빤다',h:'싸움 · 이기면 장로의 내공까지',go:S=>{const b=battle(S,S.tmp.foe);if(b.win){const r=learn(S,'hkHup');A(S,{ng:25,salgi:10,moral:-8,fame:10});deed(S,'흡혈귀 장로의 피를 빨아 흡혈공을 빼앗았다');return fightText(b,`장로를 바닥에 눕히고 그의 손목을 물었다. 백 년 묵은 피가 입안으로 쏟아졌다. 장로가 쭈그러들며 웃었다. “…강자존은 마교 놈들 말인 줄 알았는데.” ${r}`,'');}hurtS(S,35,'흡혈귀 장로');return fightText(b,'','장로가 당신 목을 물었다. 정신을 잃었다가 깨어나니 굴 밖이었다. 목에 구멍 두 개.');}},
+  {t:'거절한다',go:S=>'“피를 사고파는 공부는 하지 않겠소.” 장로가 웃었다. “혈교에서 그 말을 하는 놈은 결국 피를 판다. 기다리마.”'}]});
+E({id:'hkOffer',tag:'key',t:'인신공양',a:[17,70],w:S=>inHk(S)&&S.rank>=1&&!S.seen.hkOffer?5:0,
+ x:S=>`혈사가 명을 내렸다. 혈천대법의 제단에 바칠 산 사람 백. 청해 동쪽 마을 셋에서 채워 오라.
+혈사: “노인과 아이는 빼라. 피가 묽다. 스물에서 마흔. 건장한 놈일수록 좋다.”
+마을 어귀에 이르렀다. 저녁연기가 올라가고 있었다. 우물가에서 아낙들이 웃고 있었다. 당신 뒤에 혈도 스무 명이 쇠사슬을 들고 서 있었다.`,
+ ch:[{t:'명대로 끌고 간다',h:'공헌↑ · 혈천대법이 가까워진다',go:S=>{S.w.blood++;S.flags.hkOffered=1;A(S,{contrib:50,moral:-20,salgi:10});deed(S,'혈교의 제단에 산 사람 백을 끌고 갔다');return '쇠사슬 소리가 밤새 이어졌다. 동틀 무렵 붉은 호수에 이르렀다. 백 명 가운데 하나가 당신을 보고 말했다. “당신도 어미가 있었겠지.” 대답하지 않았다. 대답할 수 없었다.';}},
+  {t:'감옥의 사형수와 산적으로 채운다',h:'처세 · 위험',go:S=>{if(S.savvy+S.mind+R(0,40)>=70){S.w.blood++;A(S,{contrib:30,moral:-6,savvy:3});S.flags.hkSwap=1;return '관아의 옥사를 털고 산채 하나를 쓸었다. 백을 채웠다. 마을의 저녁연기는 그날도 올라갔다. 혈사가 사슬에 묶인 얼굴들을 훑어보았다. “…피가 탁하구나.” 다행히 그 이상은 묻지 않았다.';}A(S,{contrib:-20});hurtS(S,20,'혈사의 벌');return '혈사가 눈치챘다. “피가 탁하다. 너 무슨 짓을 했느냐.” 채찍이 서른 번 떨어졌다. 그리고 혈사는 직접 마을로 갔다.';}},
+  {t:'마을 사람들을 몰래 피신시킨다',h:'도의 · 교에 들키면 끝',go:S=>{A(S,{moral:15});if(chance(.45+S.mind/200)){S.flags.hkMercy=1;S.w.blood=Math.max(0,S.w.blood-1);return '혈도들에게 술을 먹이고 그 밤에 마을 셋을 깨웠다. “산을 넘으시오. 돌아보지 말고.” 새벽, 텅 빈 마을을 보고 혈도들이 고개를 갸웃했다. 당신은 혈사에게 정파 놈들이 먼저 다녀갔다고 보고했다.';}A(S,{contrib:-40});hurtS(S,30,'혈교의 형벌');S.flags.hkSuspect=1;return '절반은 살렸다. 나머지 절반이 사슬에 묶였다. 혈사가 당신을 오래 보았다. 그날부터 당신 등 뒤에 늘 눈 하나가 붙었다.';}}]});
+E({id:'hkFeast',t:'식인의 잔',a:[18,75],w:S=>inHk(S)&&S.rank>=2&&!S.seen.hkFeast?4:0,
+ x:S=>`혈사가 된 자는 장로들의 연회에 한 번 불려 간다. 연회장의 등불이 붉었다. 술잔도 붉었다.
+가운데 놓인 큰 솥에서 김이 올랐다. 무엇을 삶았는지 아무도 말하지 않았다. 말하지 않아도 알았다.
+장로: “혈교의 피를 먹은 자는 혈교를 떠나지 못한다. 한 잔이다. 이 잔을 비우면 너는 우리 식구다.”
+장로들이 동시에 당신을 보았다. 웃는 얼굴이 하나도 없었다.`,
+ ch:[{t:'잔을 비운다',h:'혈교의 식구가 된다 · 돌아갈 길이 좁아진다',go:S=>{S.flags.hkAte=1;A(S,{contrib:40,salgi:12,moral:-25,mood:-15,ng:10});deed(S,'혈교 장로들의 잔을 비웠다');return '잔을 비웠다. 맛은 기억나지 않는다. 기억하지 않기로 했다. 장로들이 처음으로 웃었다. 그날 밤 잠자리에서 오래 손을 씻었다. 피 냄새가 지워지지 않았다.';}},
+  {t:'잔을 들어 바닥에 붓는다',h:'강자존이 아니라 혈자존이라면',go:S=>{const b=battle(S,mkFoe({n:'혈교 장로',realm:clamp(S.realm,4,7),q:1.05,kw:['혈']}),{spar:1});if(b.win){A(S,{fame:20,contrib:10,moral:4});S.flags.hkDefy=1;return fightText(b,'잔을 바닥에 쏟았다. 장로 하나가 일어나 손을 뻗었다. 그 손을 꺾었다. 연회장이 조용해졌다. 상석의 혈마가 처음으로 입을 열었다. “놔둬라. 피를 마시지 않고도 피를 볼 줄 아는 놈이다.”','');}hurtS(S,30,'장로의 손');S.flags.hkSuspect=1;return fightText(b,'','잔을 쏟는 순간 장로의 손이 목을 쥐었다. 연회장 밖으로 내던져졌다.');}},
+  {t:'성녀가 잔을 가로챈다',if:S=>(S.rel.hongui||0)>=25||hkG(S)>=1,h:'홍의',go:S=>{TK(S,'hongui',12);S.flags.hkAteSave=1;return `붉은 옷의 소녀가 걸어와 당신의 잔을 빼앗아 단숨에 비웠다. 장로들이 일어섰다.\n${NN('hongui')}: “성녀가 대신 마셨으니 된 거지? 이 사람은 내 호위야. 내가 먹이는 거 말고는 안 먹어.”\n돌아가는 길에 그녀가 담벼락을 붙잡고 토했다. 오래. 그리고 소매로 입을 닦으며 웃었다. “…이건 처음 아니야. 괜찮아.”`;}}]});
+const HK_ELIX=[['만인혈단','혈교 단방의 가장 깊은 곳. 만 사람의 피를 졸여 만든다는 붉은 환 하나가 옥함 안에서 맥박처럼 뛴다.',40],['시왕의 내단','시왕전 맨 아래층. 이백 년 묵은 시왕강시가 사슬에 묶여 있다. 그 가슴속에 강시가 품은 내단이 있다.',50],['혈옥수','붉은 호수 바닥의 동굴. 바위틈에서 한 방울씩 떨어지는 붉은 물. 일 년에 한 홉이 고인다.',30]];
+E({id:'hkElixir',t:'혈교의 영약',title:S=>S.tmp.ex?`영약 · ${S.tmp.ex[0]}`:'혈교의 영약',a:[15,75],w:S=>inHk(S)&&S.seen.hkGate?2.5:0,cd:4,
+ prep:S=>{S.tmp.ex=pick(HK_ELIX);if(S.tmp.ex[0]==='시왕의 내단')S.tmp.foe=mkFoe({n:'시왕강시',realm:clamp(S.realm+1,3,7),q:1.1,kw:['혈','중']});},
+ x:S=>`${S.tmp.ex[1]}${S.tmp.ex[0]==='만인혈단'?'\n단방의 늙은이: “먹으면 만 사람의 비명이 너를 따라온다. 잘 때마다. 그래도 먹겠나?”':''}`,
+ ch:S=>{const [nm,,ng]=S.tmp.ex;return nm==='시왕의 내단'?[{t:'시왕강시와 싸운다',h:'싸움',go:S=>{const b=battle(S,S.tmp.foe,{ally:S.flags.hkGangsi?1.15:1});if(b.win){A(S,{ng,hp:25});(S.wu||(S.wu={})).elixir=1;return fightText(b,`강시의 가슴을 가르자 검붉은 구슬이 굴러 나왔다. 얼음처럼 찼다. 삼키자 뼈마디가 하나씩 얼었다가 녹았다. ${ngText(ng)}의 내공이 들어찼다.`,'');}hurtS(S,35,'시왕강시');return fightText(b,'','강시의 손톱이 어깨를 꿰뚫었다. 시독이 퍼지기 전에 겨우 기어 나왔다.');}},{t:'물러선다',go:S=>'사슬이 철컹 울렸다. 이백 년을 기다린 놈이다. 조금 더 기다리게 두었다.'}]
+  :nm==='만인혈단'?[{t:'삼킨다',h:'내공↑ · 밤마다 비명',go:S=>{A(S,{ng,salgi:10,mood:-12,moral:-6});(S.wu||(S.wu={})).elixir=1;S.flags.hkScream=1;return `혀에 닿는 순간 녹았다. 피가 끓어올랐다. ${ngText(ng)}의 내공이 들어찼다. 그날 밤부터 잠들면 비명이 들렸다. 만 사람 가운데 하나쯤은 아는 목소리였다.`;}},{t:'성녀에게 가져다준다',if:S=>S.met.hongui&&!S.dead_npc.hongui,go:S=>{TK(S,'hongui',10);A(S,{contrib:-10});return `${NN('hongui')}${bat(NN('hongui'))?'은':'는'} 붉은 환을 손바닥에 올려놓고 한참 보았다.\n${NN('hongui')}: “이걸 먹으면 제단에서 피가 더 잘 나온대. 그래서 다들 나한테 이걸 먹여.”\n그녀가 환을 호수에 던졌다. “고마워. 처음이야, 이걸 나한테 안 먹이려고 한 사람.”`;}}]
+  :[{t:'한 홉을 마신다',go:S=>{A(S,{ng,hp:20,cult:3});(S.wu||(S.wu={})).elixir=1;return `동굴에 이레를 앉아 기다렸다. 한 홉이 고였다. 마시자 경맥이 맑게 열렸다. 혈교에서 드물게 깨끗한 영약이었다. ${ngText(ng)}의 내공이 들어찼다.`;}},{t:'교에 바친다',go:S=>{A(S,{contrib:30});return '혈옥수를 옥병에 담아 장로원에 바쳤다. 장로가 장부에 당신의 이름을 적었다.';}}];}});
+E({id:'hkPit',t:'혈해마공의 구덩이',a:[18,70],w:S=>inHk(S)&&S.realm>=3&&S.seen.hkGate&&!S.seen.hkPit?3:0,
+ x:S=>`혈해마공의 마지막 수련은 구덩이에서 한다. 사방 열 걸음짜리 구덩이에 혈교의 죄인 열을 함께 넣는다. 구덩이에서 나오는 것은 하나다.
+구덩이 위에서 혈위들이 내려다보며 내기를 걸었다. 열 명 가운데 하나가 당신 또래였다. 떨고 있었다.`,
+ ch:[{t:'아홉을 벤다',h:'혈해마공이 깊어진다 · 살기',go:S=>{A(S,{salgi:15,exp:tb(S)*2,moral:-15,fame:6});(S.wu||(S.wu={}))['gaze'+(S.realm+1)]=1;deed(S,'혈교의 구덩이에서 홀로 걸어 나왔다');return '구덩이 바닥이 진흙처럼 질척해졌다. 마지막으로 남은 것은 그 또래였다. 그가 칼을 내려놓았다. 당신은 내려놓지 않았다. 사다리가 내려왔다. 위로 올라가자 혈위들이 내기 돈을 셈하고 있었다.';}},
+  {t:'열이 손을 잡고 구덩이 벽을 오른다',h:'호걸 · 무력이 높아야 한다',go:S=>{if(S.realm>=4||chance(.3+S.tongue/150)){A(S,{moral:10,fame:15,contrib:-25});S.flags.hkPitUp=1;return '“어깨를 내어라.” 열이 서로의 어깨를 밟고 사람 사다리를 만들었다. 맨 아래에 당신이 섰다. 아홉이 구덩이를 빠져나가 사막으로 흩어졌다. 혈위들이 당신을 끌어 올려 매질했다. 그래도 웃음이 났다. 혈교에 와서 처음 웃었다.';}hurtS(S,30,'구덩이');return '벽이 너무 높았다. 위에서 쏜 화살에 둘이 쓰러졌다. 남은 여덟이 당신을 보았다. 결국 칼을 들 수밖에 없었다.';}}]});
+/* 성녀 홍의의 호위: 세 번의 밤 */
+const HK_GUARD=[S=>`혈사가 명을 내렸다. 오늘부터 성녀의 호위다. 제단에 오르는 날까지 성녀가 다치지도, 도망치지도 않게.
+붉은 장막 너머에 소녀가 앉아 있었다. ${S.flags.hkBap==='spit'?'세례 날 바위 위에서 쉿, 하던 그 소녀였다.':'붉은 옷, 하얀 얼굴.'}
+${NN('hongui')}: “새 호위구나. 앞의 호위는 나를 도망치게 해 주려다 호수에 들어갔어. 너는 어떻게 할 거야?”`,
+ S=>`밤. 성녀의 처소 지붕 위. ${NN('hongui')}${bat(NN('hongui'))?'이':'가'} 몰래 올라와 당신 옆에 앉았다.\n${NN('hongui')}: “혈교 사람들은 하늘을 안 봐. 땅에 고인 피만 봐. 나는 하늘이 좋아. 파란색이 있잖아. 혈교엔 파란 게 하나도 없어.”\n${NN('hongui')}: “글을 알아? 내 이름을 써 줄래. 나는 내 이름을 써 본 적이 없어.”`,
+ S=>`${NN('hongui')}${bat(NN('hongui'))?'이':'가'} 소매를 걷어 팔을 보여 주었다. 손목에서 어깨까지 붉은 글자가 살 속에 새겨져 있었다.\n${NN('hongui')}: “그릇의 문양이래. 열다섯 살 생일에 새겼어. 아팠는데, 울면 문양이 번진다고 해서 안 울었어.”\n${NN('hongui')}: “제단에 오르면 이 글자가 다 빛난대. 그다음엔… 몰라. 아무도 안 알려 줘.”`];
+E({id:'hkGuard',tag:'love',t:'성녀의 호위',title:S=>`성녀의 호위 · ${['첫날','지붕 위','그릇의 문양'][hkG(S)]}`,a:[16,70],w:S=>inHk(S)&&S.rank>=1&&!S.dead_npc.hongui&&hkG(S)<3&&!S.flags.hkNight?5:0,cd:1,
+ prep:S=>{S.met.hongui=1;},
+ x:S=>HK_GUARD[hkG(S)](S),
+ ch:S=>{const k=hkG(S),nx=S=>{S.flags.hkGuardN=k+1;};
+  return k===0?[{t:'“도망치게 해 주지는 못한다. 대신 혼자 두지는 않겠다”',go:S=>{nx(S);TK(S,'hongui',12);return `${NN('hongui')}${bat(NN('hongui'))?'이':'가'} 눈을 깜빡였다. “…그건 처음 듣는 대답이네.” 장막이 조금 걷혔다. 그 틈으로 그녀가 손을 내밀었다. 손바닥에 말린 대추 하나가 있었다.`;}},{t:'“명을 따를 뿐이오”',go:S=>{nx(S);TK(S,'hongui',4);A(S,{contrib:10});return '“그렇겠지.” 그녀가 장막을 내렸다. 장막 너머에서 작게 노래가 들렸다. 혈교에서 들어 본 적 없는, 바깥의 동요였다.';}}]
+  :k===1?[{t:'손바닥에 이름을 써 준다',go:S=>{nx(S);TK(S,'hongui',15);npcMem(S,'hongui','지붕 위에서 손바닥에 이름을 써 주었다');return `그녀의 손바닥에 손가락으로 천천히 썼다. 紅衣. 붉은 옷.\n${NN('hongui')}: “…이게 내 이름이야? 그냥 옷 색이잖아.”\n그녀가 웃다가 울었다. 울면서도 손바닥을 꼭 쥐고 펴지 않았다.\n${NN('hongui')}: “다음엔 진짜 이름을 지어 줘. 옷 색 말고.”`;}},{t:'하늘에 손가락으로 쓴다',go:S=>{nx(S);TK(S,'hongui',10);A(S,{cult:3});return '하늘에 크게 썼다. 별 사이로. 그녀가 고개를 젖히고 따라 읽었다. “홍, 의.” 별이 글자 위로 하나 흘렀다. 그녀가 말했다. “지워졌다. 그래도 하늘이 한 번 읽었어.”';}}]
+  :[{t:'문양 위에 손을 얹는다',go:S=>{nx(S);TK(S,'hongui',12);S.flags.hkMark=1;return `손이 닿자 문양이 미지근하게 떨렸다. 그 아래에서 무엇인가가 숨을 쉬고 있었다. 그녀의 것이 아닌 숨이었다.\n${NN('hongui')}: “느꼈어? 가끔 이 안에서 누가 나를 불러. 늙은 목소리로. ‘조금만 더 자라라’고.”`;}},{t:'장로원의 서고를 뒤져 보겠다고 한다',h:'심계',go:S=>{nx(S);TK(S,'hongui',8);A(S,{mind:3});S.flags.hkMark=1;return `${NN('hongui')}: “서고는 장로만 들어가. 들키면 너도 호수에 들어가.”\n“그래도.” 그녀가 당신 소매를 오래 잡았다가 놓았다.`;}}];}});
+E({id:'hkSecret',tag:'key',t:'성녀의 비밀',a:[20,80],w:S=>inHk(S)&&S.flags.hkMark&&S.rank>=1&&S.age>=19&&!S.seen.hkSecret?6:0,
+ x:S=>`장로원 서고의 가장 안쪽. 천 년 된 피의 장부가 있었다. 혈교주 단목 혼의 손으로 쓴 마지막 장.
+“나는 늙었다. 혈천대법은 하늘을 붉게 하는 법이 아니다. 몸을 바꾸는 법이다. 천 명의 피로 길을 열고, 열여덟 해 동안 내 혈기를 먹여 기른 그릇에 나를 붓는다. 그릇의 이름은 홍의. 그릇의 넋은 대법이 끝나면 피로 녹는다. 나는 그 몸으로 다시 백 년을 살 것이다.”
+장부를 덮었다. 손이 떨렸다. 서고의 문이 열렸다.
+${NN('hyeolma')}: “다 읽었느냐.”
+늙은 혈마가 등불을 들고 서 있었다. 노여워하지 않았다. 오히려 기뻐 보였다.
+${NN('hyeolma')}: “잘됐구나. 대법의 밤에 그릇을 지킬 자가 필요했다. 그 아이는 너를 따른다. 네가 그 아이를 제단까지 데려와라. 그러면 새 몸의 내가 너에게 혈교의 절반을 주마.”`,
+ ch:[{t:'“명을 받들겠습니다”',h:'혈마의 오른팔',go:S=>{S.flags.hkKnow='obey';A(S,{contrib:40});S.rank=Math.max(S.rank,3);return '혈마가 웃었다. 이가 하나도 없는 입이었다. “열여덟 해를 기다렸다. 조금만 더.” 그날부터 장로들이 당신에게 머리를 숙였다. 그날 밤 성녀의 처소 앞에서 당신은 오래 서 있다가 들어가지 않았다.';}},
+  {t:'고개를 숙이되 마음은 숙이지 않는다',h:'때를 기다린다',go:S=>{S.flags.hkKnow='wait';A(S,{mind:5});S.rank=Math.max(S.rank,3);return '“명을 받들겠습니다.” 입은 그렇게 말했다. 혈마는 피 냄새를 맡는 노인이었다. 그런데 마음의 냄새는 맡지 못했다. 서고를 나서며 생각했다. 그 몸에 들어간 혈마는, 들어가는 순간 가장 약하다.';}},
+  {t:'그 자리에서 혈마를 친다',h:'목숨을 건 싸움',go:S=>{const b=battle(S,npcFoe(S,'hyeolma',{}),{safe:1,weaken:.92});if(b.win){S.flags.hkKnow='struck';S.dead_npc.hyeolma=1;S.w.bloodDone=1;S.w.blood=0;S.flags.hkSaved=1;S.flags.honguiDone=1;TK(S,'hongui',25);A(S,{fame:100,moral:20,enemies:3});leaveOrg(S);deed(S,'혈교의 서고에서 늙은 혈마를 베었다');hist(S,'혈마 단목 혼이 자기 서고에서 죽었다. 혈천대법은 시작되지 못했다.');return fightText(b,`등불이 쓰러져 서고가 불탔다. 천 년의 피의 장부가 탔다. 불 속에서 성녀의 처소로 달렸다.\n${NN('hongui')}: “…무슨 일이야? 문양이 안 아파. 처음으로.”\n그녀의 손을 잡고 붉은 호수를 등졌다.`,'');}hurtS(S,60,'혈마');S.flags.hkKnow='wait';S.flags.hkSuspect=1;return fightText(b,'','늙은 손이 당신의 가슴을 눌렀다. 피가 거꾸로 돌았다. 혈마가 웃었다. “좋은 피다. 죽이기엔 아깝구나. 대법의 밤까지 살려 두마.”');}}]});
+/* 부활의 밤 */
+const hkLove=S=>(S.rel.hongui||0)>=50||S.flags.honguiVow||S.flags.honguiOut||S.flags.honguiStay;
+function hkBecome(S,saved){S.rank=4;S.flags.hkHeir=1;S.dead_npc.hyeolma=1;S.flags.calam=1;
+  const got=['hkMa','hkBlade'].map(id=>learn(S,id)).filter(Boolean).join(' ');S.heart='hkMa';sTitle(S,'혈마');A(S,{fame:120,contrib:200,salgi:20,ng:40});
+  if(saved){S.flags.hkSaved=1;S.flags.honguiDone=1;delete S.dead_npc.hongui;}else S.dead_npc.hongui=1;deed(S,'되살아난 혈마를 베고 혈마를 이었다');hist(S,'혈교에 새 혈마가 섰다.');repAdd(S,'blood',30);return got;}
+E({id:'hkNight',tag:'key',t:'부활의 밤',a:[22,95],w:S=>inHk(S)&&S.flags.hkKnow&&S.flags.hkKnow!=='struck'&&!S.flags.hkNight&&!S.dead_npc.hyeolma&&!S.dead_npc.hongui&&S.realm>=4&&S.age>=22?8:0,
+ prep:S=>{S.tmp.foe=npcFoe(S,'hyeolma',{});S.loc='청해';S.w.blood=Math.max(S.w.blood,8);},
+ x:S=>`붉은 달이 떴다. 붉은 호수 한가운데 돌 제단이 솟았다. 제단 둘레로 천 명이 사슬에 묶여 있었다. ${S.flags.hkOffered?'그 가운데 백은 당신이 끌고 온 얼굴들이었다.':S.flags.hkMercy?'당신이 살린 마을 대신 다른 마을이 채워졌다.':''}
+제단 위에 홍의가 누웠다. 팔의 문양이 하나씩 빛나기 시작했다. 늙은 혈마가 그 옆에 앉아 그녀의 이마에 손을 얹었다.
+${NN('hyeolma')}: “열여덟 해. 잘 자라 주었다.”
+${NN('hongui')}${bat(NN('hongui'))?'이':'가'} 고개를 돌려 당신을 찾았다. 눈이 마주쳤다.
+${NN('hongui')}: “${hkLove(S)?'…마지막에 볼 얼굴은 네 얼굴로 하기로 했잖아. 그러니까 거기 있어 줘.':'호위. 끝까지 지켜 줘. 뭐로부터인지는 너도 알지.'}”
+천 명의 피가 호수로 흘러들기 시작했다. 혈마의 몸이 녹아 붉은 연기가 되어 그녀의 입으로 흘러들었다.`,
+ ch:S=>{const L=[];
+  L.push({t:'대법을 지킨다 · 혈마가 홍의로 깨어나게 둔다',h:'혈마와 함께 혈겁을 일으킨다',go:S=>{S.flags.hkNight='reborn';S.flags.hkReborn=1;S.w.blood=9;S.flags.calam=1;S.flags.honguiDone=1;S.dead_npc.hongui=1;S.rank=Math.max(S.rank,3);A(S,{moral:-40,salgi:20,contrib:100,fame:60,enemies:4});sTitle(S,'혈마의 오른팔');deed(S,'혈천대법을 지켜 혈마를 되살렸다');hist(S,'혈천대법이 완성되었다. 혈마가 성녀의 몸으로 다시 태어났다.');return `연기가 다 흘러들었다. 제단 위의 소녀가 눈을 떴다. 붉은 눈이었다.\n소녀가 일어나 제 손을 들여다보았다. 손가락을 하나씩 접었다 폈다. 그리고 웃었다. 홍의가 한 번도 짓지 않던 웃음이었다.\n혈마: “젊은 몸은 좋구나. 가볍다. …오른팔. 약속대로 혈교의 절반은 네 것이다. 이제 나머지 천하를 나눠 갖자.”\n하늘에서 피비가 내리기 시작했다.`;}});
+  if(hkLove(S))L.push({t:'제단으로 뛰어올라 홍의를 끌어낸다',h:'홍의를 구원한다 · 혈마와의 싸움',go:S=>{const b=battle(S,S.tmp.foe,{safe:1,weaken:(S.rel.hongui||0)>=70?.72:.8,ally:S.flags.hkGangsi?1.1:1});if(b.win){S.flags.hkNight='saved';S.flags.hkSaved=1;S.flags.honguiDone=1;S.dead_npc.hyeolma=1;S.w.bloodDone=1;S.w.blood=0;TK(S,'hongui',35);npcMem(S,'hongui','부활의 밤, 제단에서 끌어내 주었다');A(S,{fame:120,moral:30,enemies:4});leaveOrg(S);S.flags.hkFled=1;deed(S,'부활의 밤에 혈교의 성녀를 구했다');hist(S,'혈천대법이 무너졌다. 혈마는 다시 태어나지 못했다.');return fightText(b,`반쯤 들어간 붉은 연기를 맨손으로 움켜쥐어 끌어냈다. 연기가 비명을 질렀다. 늙은 혈마의 얼굴이 연기 속에서 일그러졌다가 흩어졌다.\n제단의 문양이 하나씩 꺼졌다. 홍의가 기침을 하며 눈을 떴다. 검은 눈이었다. 그녀의 눈이었다.\n${NN('hongui')}: “…거기 있었네.”\n천 명의 사슬을 끊고 호수를 건넜다. 동이 텄다. 그녀가 고개를 들었다. “파래. 오늘 하늘.”`,'');}hurtS(S,55,'혈마');S.flags.hkNight='reborn';S.flags.hkReborn=1;S.flags.hkLost=1;S.w.blood=9;S.flags.calam=1;S.flags.honguiDone=1;S.dead_npc.hongui=1;TK(S,'hongui',10);hist(S,'혈천대법이 완성되었다. 혈마가 성녀의 몸으로 다시 태어났다.');return fightText(b,'','연기를 움켜쥔 손이 녹아내렸다. 제단에서 튕겨 나갔다. 마지막으로 본 것은 그녀의 눈이 붉게 물드는 순간이었다. 그 눈이 당신을 보고 웃었다. 그녀의 웃음이 아니었다.');}});
+  L.push({t:'혈마가 깨어나는 순간을 기다려 벤다',h:'혈마를 잇는다 · 가장 약한 순간',go:S=>{const b=battle(S,mkFoe({n:'갓 깨어난 혈마',realm:clamp(S.realm,5,8),q:1.08,kw:['혈','마']}),{safe:1,weaken:S.flags.hkKnow==='wait'?1:1.1});if(b.win){S.flags.hkNight='heir';const sv=hkLove(S)&&chance(.75);const got=hkBecome(S,sv);return fightText(b,`붉은 눈이 떠지는 순간 칼이 먼저 닿았다. 혈마가 새 몸에 자리 잡기 전, 넋과 몸 사이의 틈. 그 틈을 베었다.\n늙은 넋이 비명을 지르며 빠져나왔다. 피의 연기가 갈 곳을 잃고 가장 가까운 그릇을 찾았다. 당신이었다.\n천 년의 혈기가 당신의 경맥을 채웠다. 호수가 끓었다. 혈교도 천 명이 동시에 무릎을 꿇었다. “혈마! 혈마! 혈마!”\n${sv?`제단 위의 소녀가 숨을 몰아쉬었다. 검은 눈. 그녀의 눈이었다.\n${NN('hongui')}: “…네가 혈마가 된 거야? 그럼 이제 내 몸 안에서 부르던 목소리는 네 거네.” 그녀가 웃었다. “그건 좀 괜찮다.”`:'제단 위의 소녀는 다시 눈을 뜨지 않았다. 문양이 모두 꺼진 하얀 팔. 당신은 그 팔에 붉은 옷을 덮어 주었다.'}\n${got}`,'');}hurtS(S,55,'혈마');S.flags.hkNight='reborn';S.flags.hkReborn=1;S.flags.hkLost=1;S.w.blood=9;S.flags.calam=1;S.flags.honguiDone=1;S.dead_npc.hongui=1;hist(S,'혈천대법이 완성되었다. 혈마가 성녀의 몸으로 다시 태어났다.');return fightText(b,'','칼이 한 호흡 늦었다. 붉은 눈이 당신을 보고 웃었다. “오른팔이 될 줄 알았는데, 목을 노렸구나. 좋다. 살려 두마. 그 독기가 쓸모 있다.”');}});
+  return L;}});
+/* 홍의로 전생한 혈마와 혈겁 */
+const HK_CAL=[['곤륜을 피로 씻는다','곤륜산. 눈 덮인 산문 앞에 곤륜의 검수 백이 섰다. 혈마가 소녀의 목소리로 웃었다. “하얀 눈이 제일 잘 물들지.”'],
+ ['점창을 강시로 채운다','운남 점창산. 혈마가 말했다. “죽이지 말고 눕혀라. 내일부터 점창의 검은 우리 강시가 쓴다.”'],
+ ['무림맹의 문을 연다','무림맹 총단. 맹의 고수들이 성벽 위에 늘어섰다. 혈마가 성벽을 올려다보며 하품을 했다. “오른팔. 오늘은 네가 열어 봐.”']];
+E({id:'hkCalam',tag:'key',t:'혈겁',title:S=>`혈겁 · ${HK_CAL[S.flags.hkCalN||0][0]}`,a:[22,99],w:S=>S.flags.hkReborn&&!S.flags.hkHeir&&!S.flags.hkUsurped&&(S.flags.hkCalN||0)<3?6:0,cd:2,
+ prep:S=>{const k=S.flags.hkCalN||0;S.tmp.foe=k===2&&NPCS.maengju&&!S.dead_npc.maengju?npcFoe(S,'maengju',{}):mkFoe({n:k===0?'곤륜의 검수들':'점창의 고수들',realm:clamp(S.realm,4,7),q:1.05,group:1});},
+ x:S=>`${HK_CAL[S.flags.hkCalN||0][1]}\n피비가 사흘째 내리고 있었다. ${S.flags.hkGangsi?'당신의 강시들이 젖은 발소리를 내며 뒤를 따랐다.':''}`,
+ ch:S=>{const k=S.flags.hkCalN||0,[t]=HK_CAL[k];return [{t:'혈마의 오른팔로서 친다',h:'싸움',go:S=>{const b=battle(S,S.tmp.foe,{safe:1,ally:1.35});if(b.win){S.flags.hkCalN=k+1;if(k===2&&NPCS.maengju)S.dead_npc.maengju=1;safe(()=>pwAdd(S,'마교',12));safe(()=>pwAdd(S,'정파',-10));A(S,{fame:50,salgi:10,moral:-15,enemies:2});deed(S,`혈겁 속에서 ${t.replace(/다$/,'었다').replace('씻는었다','씻었다').replace('채운었다','채웠다').replace('연었다','열었다')}`);hist(S,`혈교가 ${t.replace(/다$/,'')}.`);
+     return fightText(b,k===0?'눈이 붉게 녹았다. 곤륜의 산문이 쓰러졌다. 혈마가 눈 위에서 맨발로 춤을 추었다. 홍의의 몸으로. 당신은 그 춤을 보지 않으려고 고개를 돌렸다.':k===1?'점창의 검수들이 일어났다. 눈이 비어 있었다. 혈마가 손뼉을 쳤다. “봐라. 이제 배신하지 않는 점창이다.”':'맹주가 쓰러졌다. 무림맹의 깃발이 피비에 젖어 내려왔다. 혈마가 맹주의 의자에 앉아 다리를 흔들었다. “천하가 생각보다 작구나, 오른팔.”','');}hurtS(S,40,t);return fightText(b,'','혈교의 군세가 밀렸다. 혈마가 혀를 찼다. “오른팔이 무디구나. 다시 갈아라.”');}},
+  {t:'칼을 들지 않고 뒤에 선다',go:S=>{S.flags.hkCalN=k+1;A(S,{moral:-5,mood:-10});return '혈마가 혼자 갔다. 홍의의 작은 손이 사람들을 찢었다. 당신은 산문 밖에서 끝날 때까지 서 있었다. 돌아온 혈마가 피 묻은 손으로 당신 뺨을 쓰다듬었다. “겁먹었느냐? 이 아이도 처음엔 그랬지.”';}}];}});
+E({id:'hkUsurp',tag:'key',t:'혈마 시해',a:[24,99],w:S=>S.flags.hkReborn&&!S.flags.hkHeir&&!S.flags.hkUsurped&&S.realm>=5&&((S.flags.hkCalN||0)>=1||S.flags.hkLost)?5:0,cd:2,
+ prep:S=>{S.tmp.foe=mkFoe({n:'홍의의 몸을 입은 혈마',realm:clamp(S.realm,6,8),q:1.08,kw:['혈','마','음']});},
+ x:S=>`혈겁의 밤. 혈마가 잠든 막사에 들어갔다. 소녀의 몸이 붉은 이불 아래 웅크려 있었다. 자는 얼굴은 홍의였다.
+잠꼬대가 들렸다. 소녀의 목소리. 그녀의 목소리였다.
+“…파래.”
+${S.flags.hkLost?'제단에서 놓친 손이 떠올랐다.':''} 혈마가 눈을 떴다. 붉은 눈.
+붉은 눈의 홍의: “올 줄 알았다. 오른팔은 언젠가 목을 노리지. 나도 그렇게 혈마가 되었다.”`,
+ ch:[{t:'혈마를 벤다',h:'혈마를 잇는다 · 목숨을 건 싸움',go:S=>{const b=battle(S,S.tmp.foe,{safe:1,weaken:(S.rel.hongui||0)>=50?.86:.92});if(b.win){S.flags.hkUsurped=1;const sv=(S.rel.hongui||0)>=50&&chance(.5);const got=hkBecome(S,sv);return fightText(b,`칼이 소녀의 가슴 앞에서 멈칫했다. 그 멈칫한 사이로 붉은 연기가 빠져나와 당신에게 덤벼들었다. 그것을 들이마셨다. 천 년의 혈기와 늙은 넋을 함께. 그리고 늙은 넋만 뱉어 냈다. 넋이 피비 속에서 흩어졌다.\n${sv?`소녀가 기침을 했다. 검은 눈이 천천히 떠졌다.\n${NN('hongui')}: “…꿈을 오래 꿨어. 꿈속에서 계속 사람을 죽였어. …네가 깨워 준 거야?”`:'소녀는 다시 숨 쉬지 않았다. 혈마는 그 몸을 다 써 버리고 떠났다. 당신은 그녀를 붉은 호수가 보이지 않는 언덕에 묻었다. 하늘이 보이는 곳에.'}\n${got}`,'');}hurtS(S,65,'혈마');return fightText(b,'','작은 손이 당신의 칼을 잡아 꺾었다. 혈마가 웃었다. “아직이다. 하지만 그 눈빛은 좋다. 다시 와라.”');}},
+  {t:'그 잠꼬대를 듣고 돌아선다',go:S=>{A(S,{mood:-10});return '칼을 거뒀다. 막사를 나왔다. 피비가 그쳐 있었다. 오랜만에 별이 보였다. 그녀가 보고 싶어 하던 하늘이었다.';}}]});
+/* 혈마가 된 뒤 */
+E({id:'hkReign',tag:'key',t:'새 혈마의 첫 명',a:[22,99],w:S=>S.flags.hkHeir&&inHk(S)&&!S.seen.hkReign?8:0,
+ x:S=>`붉은 호수의 제단에 앉았다. 천 년 동안 혈마들이 앉던 자리. 혈교의 모든 장로가 그 아래 엎드렸다.
+장로: “혈마께서 첫 명을 내리소서. 혈겁을 이으시겠습니까.”
+${S.flags.hkSaved&&!S.dead_npc.hongui?`홍의가 제단 아래 서 있었다. 붉은 옷이 아니라 하늘색 옷이었다. 당신이 사 준 옷이었다.`:'제단 옆자리가 비어 있었다. 붉은 옷 한 벌이 접힌 채 놓여 있었다.'}`,
+ ch:S=>[{t:'“혈겁을 잇는다. 천하를 붉게 하라”',h:'혈교천하',go:S=>{S.w.blood=9;S.flags.hkReignC='blood';A(S,{fame:80,moral:-30,salgi:10,enemies:5});safe(()=>pwAdd(S,'마교',18));hist(S,'새 혈마가 혈겁을 이었다. 중원의 문파 열둘이 사라졌다.');deed(S,'새 혈마로서 혈겁을 이었다');return '피비가 다시 내렸다. 이번에는 당신의 이름으로. 열두 문파가 사라졌다는 소식이 차례로 들어왔다. 장로들이 기뻐했다. 당신은 손을 씻지 않기로 했다. 씻어도 지워지지 않으니까.';}},
+  {t:'“제단을 부숴라. 혈교는 오늘로 피를 끊는다”',h:'혈교를 바꾼다',go:S=>{S.w.blood=0;S.w.bloodDone=1;S.flags.hkReignC='end';A(S,{moral:30,fame:60,salgi:-20});hist(S,'새 혈마가 붉은 호수의 제단을 부쉈다. 혈교가 피를 끊었다.');deed(S,'혈마가 되어 혈교의 제단을 부쉈다');return '장로들이 고개를 들었다. 아무도 믿지 않았다. 당신이 혈마천해도로 제단을 내리쳤다. 천 년의 돌이 갈라졌다. 붉은 호수가 사흘 동안 끓더니, 나흘째 아침 처음으로 하늘색을 비췄다.';}},
+  ...(S.flags.hkSaved&&!S.dead_npc.hongui?[{t:'홍의의 손을 잡고 호수를 떠난다',h:'혈마의 이름을 버린다',go:S=>{S.w.blood=0;S.w.bloodDone=1;S.flags.hkReignC='leave';TK(S,'hongui',20);leaveOrg(S);A(S,{mood:25,moral:15});hist(S,'새 혈마가 사라졌다. 혈교는 주인 없이 흩어졌다.');return `제단에서 내려왔다. 장로들 사이를 지나 홍의 앞에 섰다.\n${NN('hongui')}: “…혈마님은 어디 가시게?”\n“파란 데.”\n그녀가 웃었다. 그날 붉은 호수의 혈교는 주인을 잃었다. 남쪽 바닷가 어딘가에 붉은 옷을 다시는 입지 않는 여자와, 칼을 바다에 던진 사내가 산다는 소문이 돌았다.`;}}]:[])]});
+/* 구원한 뒤: 혈교의 추격 */
+E({id:'hkChase',t:'붉은 추격',a:[22,99],w:S=>S.flags.hkFled&&!S.flags.hkChaseDone&&!S.dead_npc.hongui?6:0,
+ prep:S=>{S.tmp.foe=mkFoe({n:'혈교의 추격대',realm:clamp(S.realm,4,7),q:1.05,group:1,kw:['혈']});},
+ x:S=>`호수를 건넌 지 석 달. 혈교의 장로 셋이 남은 혈위들을 이끌고 쫓아왔다. 그들에게 홍의는 아직 그릇이었다. 혈마가 없어도, 다음 혈마를 위한.
+${NN('hongui')}: “…나 때문이지.”
+그녀가 소매 속의 단검을 꺼냈다. 제 손목에 대려 했다.`,
+ ch:[{t:'단검을 빼앗고 앞에 선다',h:'싸움',go:S=>{const b=battle(S,S.tmp.foe,{safe:1,ally:1.2});if(b.win){S.flags.hkChaseDone=1;TK(S,'hongui',15);A(S,{fame:30,enemies:-1});deed(S,'혈교의 추격대를 물리쳐 성녀를 지켰다');return fightText(b,`마지막 장로가 쓰러지며 말했다. “그릇이 사람이 되면… 혈교는 끝이다.”\n${NN('hongui')}${bat(NN('hongui'))?'이':'가'} 단검을 강물에 던졌다. “그럼 끝내자. 나는 사람이 될래.”`,'');}hurtS(S,35,'혈교의 추격대');return fightText(b,'','둘이 피투성이로 산을 넘었다. 추격은 끝나지 않았다.');}},
+  {t:'그녀의 문양을 사술로 지운다',if:S=>has(S,'hkSa'),h:'혈영사술',go:S=>{S.flags.hkChaseDone=1;TK(S,'hongui',18);A(S,{cult:5});hurtS(S,15,'역사술');return '혈영사술을 거꾸로 돌렸다. 그녀 팔의 글자가 하나씩 당신 팔로 옮겨 왔다. 마지막 글자가 옮겨 오자 추격대의 나침반이 방향을 잃었다. 그릇이 사라졌으니까. 그녀가 당신 팔의 붉은 글자를 손가락으로 쓸었다. “…이제 네가 그릇이야?” “그릇 말고 지게쯤 해 두지.”';}}]});
+['hkGate','hkSorcery','hkGangsi','hkVamp','hkOffer','hkFeast','hkElixir','hkPit','hkGuard','hkSecret','hkNight','hkCalam','hkUsurp','hkReign','hkChase'].forEach(id=>JOB_OK.add(id));
+/* 마교·혈교의 뼈대 사건은 조건이 맞으면 반드시 온다 */
+{const ls=S=>id=>S.age-(S.last[id]??-99);const F={mkGate:S=>S.age>=10,mkBirth:S=>S.age>=18,mkSamaOne:S=>ls(S)('mkSamaOne')>=4&&S.age>=22&&(S.flags.mkSamaTry=(S.flags.mkSamaTry||0))<7,mkSamaUnite:S=>1,mkPurge:S=>S.age>=25,mkHa:S=>S.age>=24,mkThrone:S=>ls(S)('mkThrone')>=5,mkVacant:S=>1,mkMarch:S=>ls(S)('mkMarch')>=2,
+  hkGate:S=>S.age>=10,hkOffer:S=>S.age>=17,hkGuard:S=>S.age>=16&&ls(S)('hkGuard')>=2,hkSecret:S=>1,hkNight:S=>1,hkCalam:S=>ls(S)('hkCalam')>=2,hkUsurp:S=>ls(S)('hkUsurp')>=4&&(S.flags.hkCalN||0)>=2,hkReign:S=>1,hkChase:S=>1};
+ for(const id in F){const e=EV.find(x=>x.id===id);if(e){const f=F[id];e.force=S=>!S.chain&&wOf(S,e)>0&&f(S);}}}
+/* 혈교 루트를 탄 이는 바깥의 혈천대법 대신 부활의 밤을 맞는다 */
+{const e=EV.find(x=>x.id==='bloodRite');if(e){const oi=e.if;e.if=S=>(oi?oi(S):true)&&!(S.org==='blood'&&S.seen.hkGate)&&!S.flags.hkNight;}}
+{const e=EV.find(x=>x.id==='honguiRescue');if(e){const ow=e.w;e.w=S=>S.flags.hkNight||(S.org==='blood'&&S.seen.hkGate)?0:(typeof ow==='function'?ow(S):ow);}}
+
+
 /* 처음 마주친 인연의 첫 만남 이야기를 순서대로 띄운다 */
 function fmNext(S){const f=S.flags.fmAt||(S.flags.fmAt={});
   if(!S.flags.fmInit){S.flags.fmInit=1;for(const id of romList(S))if(S.met[id])f[id]=-99;}
@@ -12893,7 +13181,7 @@ function saveHall(h){try{localStorage.setItem(HKEY,JSON.stringify(h));}catch(e){
 const NAI_URL='https://image.novelai.net/ai/generate-image';
 const NAI_MODELS=[['nai-diffusion-4-5-full','V4.5 Full'],['nai-diffusion-4-5-curated','V4.5 Curated'],['nai-diffusion-5-full','V5 Full'],['nai-diffusion-5-curated','V5 Curated'],['nai-diffusion-4-full','V4 Full']];
 const NAI_Q={'nai-diffusion-5-full':'very aesthetic, masterpiece, best quality','nai-diffusion-5-curated':'very aesthetic, masterpiece, best quality','nai-diffusion-4-5-full':'very aesthetic, masterpiece, no text','nai-diffusion-4-5-curated':'location, masterpiece, no text','nai-diffusion-4-full':'no text, best quality, very aesthetic, absurdres'};
-const GAME_VER='2026.10.25-49';
+const GAME_VER='2026.10.25-50';
 const NAI_NEG='nsfw, nude, lowres, bad anatomy, bad hands, missing fingers, extra digits, text, watermark, signature, logo, worst quality, low quality, blurry, modern clothes, glasses, eyewear, jpeg artifacts';
 const NKEY='murim-nai';
 function ncfg(){let c={};try{c=JSON.parse(localStorage.getItem(NKEY)||'{}');}catch(e){}return Object.assign({key:'',relay:'',model:'nai-diffusion-4-5-full',style:'wuxia, ancient china, hanfu, detailed illustration, cinematic lighting',autoEv:false,autoPc:false,vn:true,neg:NAI_NEG,tnpc:'',tev:'',tmap:'',q:true},c,{pr:Object.assign({},c.pr)});}
@@ -13277,7 +13565,7 @@ const ORG_ALIAS=(()=>{const a=[];for(const o in ORGS){const n=ORGS[o].n;a.push([
   a.push(['마교','demon'],['교도','demon'],['산적','bandit'],['수적','jangsu'],['살수','salmak'],['거지','beggar']);return a.sort((x,y)=>y[0].length-x[0].length);})();
 const MOB_ELDER=/장로|장문|원로|태상|문주|교주|방주|련주|채주|궁주|가주|호법|당주/,MOB_FEM=/사저|사매|여제자|여협|소저|낭자|비구니|성녀|궁녀/;
 const MOB_RULE2=[[/흑도.*(두목|대장|우두머리)/,'heukdo_boss'],[/흑도|칼잡이|낭인/,'heukdo'],[/녹림.*(채주|두목)|산채 두목/,'nokrim_boss'],[/녹림|산적/,'nokrim'],[/수적/,'sujeok'],[/표사|표두/,'pyosa'],[/동창|제독/,'dongchang'],[/관병|관군/,'gwanbyeong'],[/포졸|포두|포쾌/,'pojol'],
- [/점소이/,'jeomsoi'],[/주모/,'jumo'],[/기녀|기생/,'gisaeng'],[/악사/,'akssa'],[/농부/,'farmer'],[/뱃사공|어부/,'fisher'],[/사냥꾼/,'hunter'],[/나그네|길손/,'traveler'],[/취객|술꾼/,'drunk'],[/노름꾼|도박/,'gambler'],[/사범|교두/,'sabeom'],[/의녀/,'uinyeo'],[/하녀/,'nobi_f'],[/하인|노비|종놈/,'nobi'],[/^장수$|장군/,'general'],[/병사|군졸/,'soldier'],[/설서인/,'storyteller'],[/거지 아이/,'kid_beggar'],[/사신|칙사/,'official'],[/졸개/,'d_bandit'],[/수졸|철선방|은선방/,'d_jangsu'],[/흑풍채|청룡채|호두채/,'nokrim'],[/독안룡/,'heukdo'],[/피난/,'farmer'],[/선주|상인|행수/,'merchant'],[/교관/,'e_salmak'],[/^동기$|[가-힣]호$/,'d_salmak']];
+ [/점소이/,'jeomsoi'],[/주모/,'jumo'],[/기녀|기생/,'gisaeng'],[/악사/,'akssa'],[/농부/,'farmer'],[/뱃사공|어부/,'fisher'],[/사냥꾼/,'hunter'],[/나그네|길손/,'traveler'],[/취객|술꾼/,'drunk'],[/노름꾼|도박/,'gambler'],[/사범|교두/,'sabeom'],[/의녀/,'uinyeo'],[/하녀/,'nobi_f'],[/하인|노비|종놈/,'nobi'],[/^장수$|장군/,'general'],[/병사|군졸/,'soldier'],[/설서인/,'storyteller'],[/거지 아이/,'kid_beggar'],[/사신|칙사/,'official'],[/졸개/,'d_bandit'],[/수졸|철선방|은선방/,'d_jangsu'],[/흑풍채|청룡채|호두채/,'nokrim'],[/독안룡/,'heukdo'],[/피난/,'farmer'],[/선주|상인|행수/,'merchant'],[/교관/,'e_salmak'],[/^동기$|[가-힣]호$/,'d_salmak'],[/늙은 호법|천마의 호법|^호법$/,'e_demon'],[/^대주$/,'d_demon'],[/혈사|시왕전주|흡혈귀 장로|단방의 늙은이|사술당주/,'e_blood'],[/혈위|혈도/,'d_blood']];
 function mobOrg(S,nm){const hit=ORG_ALIAS.find(([a])=>nm.includes(a));let o=hit&&hit[1];
   if(!o&&/^(사형|사저|사제|사매|제자|동문|사숙|사백)/.test(nm)&&S.org)o=S.org;if(!o&&MOB_ELDER.test(nm)&&/^(장로|원로|장문인|집법 장로|태상장로)$/.test(nm)&&S.org)o=S.org;
   if(!o||!ORGS[o])return null;if(MOB_ELDER.test(nm)&&!/제자/.test(nm))return 'e_'+o;return (MOB_FEM.test(nm)||o==='emei')?'f_'+o:'d_'+o;}
@@ -13484,7 +13772,7 @@ const vnAuto=()=>{try{return localStorage.getItem('murim-vnauto')==='1';}catch(e
 const vnOn=()=>ncfg().vn!==false;
 function vnNames(S){const o=[];for(const id in NPCS){const p=NPCS[id];if(!p.n)continue;o.push([p.n,id]);const g=p.n.split(' ').pop();if(g!==p.n&&g.length>=2)o.push([g,id]);const k=safe(()=>npcNick(id,S));if(k&&k.length>=2)o.push([k,id]);}
   const cnt={};o.forEach(([n])=>cnt[n]=(cnt[n]||0)+1);return o.filter(([n])=>cnt[n]===1).sort((a,b)=>b[0].length-a[0].length);}
-function vnWho(S,name,NM){name=name.trim();if(/^(당신|나)$/.test(name))return 'me';const f=NM.find(([n])=>n===name);return f?f[1]:null;}
+function vnWho(S,name,NM){name=name.trim();if(/^(당신|나)$/.test(name))return 'me';if(name==='붉은 눈의 홍의')return 'hongui';const f=NM.find(([n])=>n===name);return f?f[1]:null;}
 // 한 문장 안에서 가장 뒤(또는 앞)에 나오는 주어를 찾는다
 function vnSubj(S,t,NM,fromEnd,back){if(!t)return undefined;const hits=[];
   for(const [n,id] of NM){let i=t.indexOf(n);while(i>=0){hits.push([i,id]);i=t.indexOf(n,i+n.length);}}
