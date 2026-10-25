@@ -444,6 +444,17 @@
   "wp:staff": "wp/staff.webp",
   "wp:spear": "wp/spear.webp",
   "wp:sword": "wp/sword.webp",
-  "wp:zither": "wp/zither.webp"
+  "wp:zither": "wp/zither.webp",
+  "ev:duoBing": "ev/duoBing.webp",
+  "ev:duoEmei": "ev/duoEmei.webp",
+  "ev:duoHao": "ev/duoHao.webp",
+  "ev:duoHwasan": "ev/duoHwasan.webp",
+  "ev:duoJumo": "ev/duoJumo.webp",
+  "ev:duoManhwa": "ev/duoManhwa.webp",
+  "ev:duoNgSeorin": "ev/duoNgSeorin.webp",
+  "ev:duoNgSib": "ev/duoNgSib.webp",
+  "ev:duoNokrim": "ev/duoNokrim.webp",
+  "ev:duoTang": "ev/duoTang.webp",
+  "ev:pastBond": "ev/pastBond.webp"
  }
 }
