@@ -11500,6 +11500,112 @@ ${n}${bat(n)?'이':'가'} 잔을 비웠다.
 ${n}: “삼백 년 동안 정을 안 주기로 했는데, 너한테 줘 버렸다. 돌려받을 생각은 없다. 다만….”
 ${n}: “둘째 자리라도 좋다. 다시 혼자 늙어 가는 건, 한 번이면 충분하다.”`;}
 
+/* ══ 열여덟 해가 전부다 ══════════════════════════════
+   스무 살까지는 한 해가 봄·가을 두 철로 나뉘어 사건이 두 번 일어나고(가을에는 수련 대신 이야기 사건), 그 뒤로는 한 해에 한 번으로 돌아온다.
+   그 사이에 굴곡이 정해져 있다: 열둘의 겨울(내려감) → 열넷의 빛(올라감) → 열여섯의 칼끝(내려감) → 열여덟의 맹세(삶의 결) → 스물의 문턱(정리). */
+const YOUNG=20;
+const seasonOf=S=>S.age<YOUNG?(S.flags.half?'가을':'봄'):'';
+const ageLabel=S=>`${S.age}세${seasonOf(S)?' '+seasonOf(S):''}`;
+const ytWhere=S=>S.job?({inn:'객잔',smith:'대장간',doctor:'약방'})[S.job]||'일터':S.org?ORGS[S.org].n:'떠돌이 길';
+E({id:'yt12',arc:1,t:'열둘의 겨울',a:[12,13],force:S=>!S.seen.yt12&&!S.chain,
+ prep:S=>{S.tmp.k=S.org?'sect':S.origin==='orphan'?'orphan':'home';},
+ x:S=>{const k=S.tmp.k,p=parentOf(S),c=cf(S)?cfN(S):null;
+  if(k==='sect')return `열두 살 겨울, ${ORGS[S.org].n}의 장경각에서 비급 한 권이 사라졌다. 그날 밤 장경각 앞을 지나간 아이는 당신 하나였다.
+집법 장로: “네가 가져갔느냐.”
+당신: “아닙니다.”
+집법 장로: “그럼 누가 가져갔느냐.”
+당신은 대답하지 못했다. 사형 하나가 그날 밤 장경각 안에서 나오는 것을 보았다. 당신을 늘 감싸 주던 사형이었다.
+사형 하나가 당신 뒤에서 작게 말했다. 바로 그 사형이었다.
+사형: “…미안하다. 말하지 말아 줘. 집에 아픈 어머니가 있어. 그걸 팔아야 했어.”
+집법 장로의 회초리가 탁자를 내리쳤다. 눈발이 연무장을 덮고 있었다.`;
+  if(k==='orphan')return `열두 살 겨울은 유난히 추웠다. 다리 밑 움막에 불이 났다. 누가 버린 화로였다. 겨우내 모은 것이 다 탔다. 동냥 그릇, 헌 이불, ${c?`${c}${bat(c)?'이':'가'} 준 돌멩이,`:''} 그리고 ${p}.
+${p}${bat(p)?'은':'는'} 연기를 많이 마셨다. 사흘을 앓다가 일어나지 못했다.
+${p}: “…울지 마라. 다리 밑에서 난 놈이 다리 밑에서 우는 거 아니다.”
+당신: “할멈.”
+${p}: “밥은 꼭 챙겨 먹어라. 남의 밥 뺏지 말고, 네 밥 뺏기지도 말고.”
+그게 마지막 말이었다. 눈이 내렸다. 당신은 열두 살이었고, 세상에 혼자였다.`;
+  return `열두 살 겨울, 집에 빚쟁이들이 들이닥쳤다. ${p}${bat(p)?'이':'가'} 몰래 진 빚이었다. 당신 약값이었다. 열병이 돌던 그해의.
+빚쟁이: “석 달 안에 은자 백 냥. 못 갚으면 이 집은 우리 거요.”
+${p}${bat(p)?'은':'는'} 고개를 숙이고 있었다. 늘 단단해 보이던 등이 작았다.
+빚쟁이들이 돌아간 밤, ${p}${bat(p)?'이':'가'} 당신을 불러 앉혔다.
+${p}: “네 탓 아니다. 그 말부터 해 두마.”
+당신: “제 약값이었잖아요.”
+${p}: “그러니까 네 탓이 아니지. 내가 고른 거다. 너를 살리는 쪽을.”
+${c?`창밖에서 ${c}${bat(c)?'이':'가'} 기웃거렸다. 그 손에 엽전 몇 닢이 쥐어져 있었다. 제 몫의 설빔 값이었다.`:'창밖에 눈이 내렸다.'}`;},
+ ch:S=>{const k=S.tmp.k;const fx=(S,o)=>{S.flags.y12=o;};
+  if(k==='sect')return [{t:'끝까지 아니라고만 한다',h:'도덕↑ · 공헌↓',go:S=>{fx(S,'silent');A(S,{moral:8,contrib:-15,mood:-12,cult:3});hurt(S,15,'회초리');return '회초리 서른 대. 당신은 사형의 이름을 말하지 않았다. 사흘 뒤 사형이 스스로 장로 앞에 무릎을 꿇었다. 비급은 돌아왔다. 사형은 산문을 떠나며 당신에게 한 번 고개를 숙였다. 그 등이 오래 남았다.';}},
+   {t:'사형의 이름을 댄다',h:'공헌↑ · 마음이 무겁다',go:S=>{fx(S,'told');A(S,{contrib:10,moral:-3,mind:4,mood:-15});return '사형은 그날로 파문되었다. 산문을 나서는 사형의 어깨에 눈이 쌓였다. 당신은 옳은 일을 했다. 그런데 그 겨울 내내 잠이 오지 않았다.';}},
+   {t:'내가 가져갔다고 한다',h:'도덕↑↑ · 큰 벌',go:S=>{fx(S,'took');A(S,{moral:15,contrib:-30,mood:-8,cult:5});hurt(S,25,'벌');deed(S,'열두 살에 사형의 죄를 대신 졌다');return '석 달 동안 뒷산 동굴에 갇혔다. 사형은 몰래 찐 감자를 밀어 넣어 주었다. 봄에 동굴에서 나왔을 때, 사형은 비급 값으로 산 약으로 어머니를 살렸다고 했다. 그리고 평생 갚겠다고 했다.';}}];
+  if(k==='orphan')return [{t:'할멈을 묻고 혼자 일어선다',h:'처세·심계',go:S=>{fx(S,'alone');S.flags.parentsGone=1;A(S,{savvy:6,mind:6,mood:-20,temper:4});return '언 땅을 손톱으로 팠다. 할멈을 묻고 돌 하나를 올렸다. 그 겨울 당신은 동냥을 그만두었다. 대신 장터에서 짐을 날랐다. 남의 밥을 뺏지 않고, 제 밥을 뺏기지 않으려고.';}},
+   {t:'할멈의 마지막 말을 가슴에 새긴다',h:'도덕·수양',go:S=>{fx(S,'vow');S.flags.parentsGone=1;A(S,{moral:8,cult:5,mood:-15});(S.words||(S.words=[])).push({age:S.age,who:'할멈',t:'남의 밥 뺏지 말고, 네 밥 뺏기지도 말고.'});return '그 말을 평생 지켰다. 그게 쉬운 말이 아니라는 걸 안 것은 한참 뒤였다.';}}];
+  return [{t:'일을 해서 빚을 갚겠다고 한다',h:'체력↓ · 처세·근골',go:S=>{fx(S,'work');A(S,{gold:-Math.min(S.gold,30),savvy:5,hp:-10,mood:-6});if(chance(.5))T(S,'bone',1);return '석 달 동안 새벽마다 짐을 졌다. 손바닥이 갈라졌다. 백 냥은 못 채웠다. 그래도 빚쟁이는 집을 빼앗지 않았다. 열두 살짜리가 지게를 지는 것을 본 이웃들이 남은 빚을 나눠 갚아 주었다. 그날 당신은 처음으로 사람에게 빚지는 법을 배웠다.';}},
+   {t:'무공을 배워 다시는 이런 일이 없게 하겠다고 다짐한다',h:'성정↑ · 수련',go:S=>{fx(S,'power');A(S,{temper:6,exp:20,mood:-8});return '그 겨울 당신은 뒷산에서 나무를 베었다. 매일, 손이 터질 때까지. 힘이 없으면 지키지 못한다. 열두 살의 당신이 세상에 대해 처음 배운 것이었다. 맞는 말이었다. 다 맞는 말은 아니었지만.';}},
+   {t:`${S.flags.cf?cfN(S)+'의 엽전을 돌려준다':'창밖의 눈을 오래 본다'}`,go:S=>{fx(S,'friend');if(cf(S))TKcf(S,2);A(S,{moral:4,mood:-4,cult:3});return cf(S)?`당신은 문을 열고 나가 엽전을 ${jo(cfN(S),'의','의')} 손에 다시 쥐여 주었다.\n당신: “네 설빔 값이잖아.”\n${cfN(S)}: “…설빔 안 입어도 설은 와.”\n둘은 눈 오는 마당에 한참 서 있었다. 그해 설, 둘 다 헌 옷을 입었다. 그래도 설은 왔다.`.replace('의의','의'):'눈은 밤새 내렸다. 아침이 되자 세상이 하얗게 덮여 있었다. 아무 일도 없었던 것처럼. 당신은 그게 이상하게 위로가 되었다.';}}];}});
+E({id:'yt14',arc:1,t:'열넷의 빛',a:[14,15],force:S=>!S.seen.yt14&&!S.chain,
+ x:S=>{const w=ytWhere(S),m=S.master&&NPCS[S.master]?ngN(S):S.master&&MASTERS[S.master]?MASTERS[S.master].n:null;
+  const who=S.org?`${ORGS[S.org].n}의 장로`:m?`사부`:S.job==='inn'?'객잔에 묵던 늙은 검객':'길에서 만난 늙은 검객';
+  return `열네 살 봄, ${w}의 마당에서 혼자 수련을 하고 있었다. 늘 하던 대로, 아무도 보지 않는 새벽에.
+그날은 누가 보고 있었다. ${who}였다.
+${who}: “방금 그 초식, 누가 가르쳤느냐.”
+당신: “…아무도요. 그냥 하다 보니.”
+${who}${bat(who)?'이':'가'} 한참 말이 없었다. 그러다 당신 손목을 잡아 맥을 짚었다.
+${who}: “열둘에 겨울을 크게 앓았구나. 그런데 그 겨울이 네 뼈를 굵게 했다.”
+당신: “그런 것도 맥으로 알 수 있어요?”
+${who}: “칼이 알려 주더구나. 겨울을 아는 칼은 무게가 다르다.”
+${who}${bat(who)?'이':'가'} 당신 어깨에 손을 얹었다. 처음으로 누군가가 당신을 ‘될 놈’으로 보는 눈이었다.
+${who}: “하나만 가르쳐 주마. 나머지는 네가 찾아라.”`;},
+ ch:[{t:'무릎을 꿇고 배운다',h:'수련·무학',go:S=>{S.flags.y14='learn';A(S,{exp:tb(S)*2+30,mu:8,mood:20});(S.wu||(S.wu={})).y14=1;deed(S,'열네 살에 처음으로 인정받았다');return '해가 뜰 때까지 같은 초식을 백 번 했다. 백 번째에 검이 처음으로 바람을 갈랐다. 소리가 났다. 그 소리를 당신은 평생 기억했다. 자신이 될 놈이라는 걸 처음 안 소리였다.';}},
+  {t:'“왜 저를요?” 하고 묻는다',h:'오성·심계',go:S=>{S.flags.y14='ask';A(S,{exp:tb(S)+20,mind:4,mood:15});if(chance(.35))T(S,'wit',1);return '“네가 아무도 안 볼 때 하고 있었으니까.” 그 대답이 초식보다 오래 남았다. 그 뒤로 당신은 남이 볼 때보다 안 볼 때 더 열심히 했다. 그게 평생의 버릇이 되었다.';}},
+  {t:'웃으며 사양한다',h:'수양',go:S=>{S.flags.y14='refuse';A(S,{cult:6,mood:12});return '“제 길은 제가 찾아보고 싶어요.” 상대가 껄껄 웃었다. “건방진 놈. 그래서 될 놈이다.” 그날 아무것도 배우지 않았다. 그런데 그날부터 혼자 하는 수련이 덜 외로웠다.';}}]});
+E({id:'yt16',arc:1,t:'열여섯의 칼끝',a:[16,17],force:S=>!S.seen.yt16&&!S.chain,
+ prep:S=>{S.tmp.foe=mkFoe({n:pick(['흑풍채 부두목','떠돌이 칼잡이','혈수 낭인']),realm:clamp(S.realm+1,2,5),q:1.1,kw:['쾌']});},
+ x:S=>{const c=cf(S)?cfN(S):null,f=S.tmp.foe;return `열여섯, 처음으로 진짜 칼을 마주했다. 장날 저잣거리에 ${f.n}${bat(f.n)?'이':'가'} 나타났다. 칼에는 아직 마르지 않은 피가 묻어 있었다.
+${f.n}: “이 동네에서 칼 좀 쓴다는 놈이 누구냐. 나와라.”
+사람들이 흩어졌다. 당신의 발이 저절로 앞으로 나갔다. 열넷에 들은 그 말이 귀에 남아 있었다. 될 놈.
+${c?`${c}: “${S.name}, 하지 마! 저건 진짜야!”\n`:''}당신: “내가 상대하겠다.”
+${f.n}${bat(f.n)?'이':'가'} 웃었다. 이를 드러내고.
+${f.n}: “애송이가. 목검이나 휘두르다 왔느냐.”
+칼집에서 칼이 나오는 소리가 났다. 처음 듣는 소리였다. 수련장의 목검과는 전혀 다른, 사람을 베는 소리.
+당신의 손이 떨렸다. 열네 살 새벽의 그 소리가 아무리 기억하려 해도 떠오르지 않았다.`;},
+ ch:S=>[{t:'물러서지 않는다',go:S=>{const b=battle(S,S.tmp.foe);S.flags.y16=b.win?'won':'lost';if(b.win){A(S,{fame:8,mood:10,salgi:3});deed(S,'열여섯에 처음으로 진짜 칼과 맞서 이겼다');return fightText(b,`이겼다. 그런데 기쁘지 않았다. ${S.tmp.foe.n}의 피가 당신 손등에 튀어 있었다. 따뜻했다. 그날 밤 당신은 손을 백 번 씻었다. 처음으로 칼이 무엇인지 알았다.`,'');}
+    hurt(S,35,'첫 실전');A(S,{mood:-20,temper:3});(S.wu||(S.wu={})).death=S.hp<hpMax(S)*.2?1:(S.wu||{}).death;
+    return fightText(b,'',`세 합. 칼끝이 당신 옆구리를 지나갔다. 피가 났다. 쓰러졌다. ${cf(S)?cfN(S)+(bat(cfN(S))?'이':'가')+' 당신을 끌어안고 울부짖었다. ':''}${S.tmp.foe.n}${bat(S.tmp.foe.n)?'은':'는'} 침을 뱉고 떠났다. “목숨은 남겨 주마. 다음엔 칼을 들 이유를 알고 와라.” 흉터는 평생 남았다. 그 흉터가 당신을 가르쳤다.`);}},
+  {t:'사람들을 먼저 피신시킨다',h:'도덕·처세',go:S=>{S.flags.y16='shield';hurt(S,18,'첫 실전');A(S,{moral:10,fame:5,mood:-5});return '당신은 칼을 겨누는 대신 노점 할머니의 손을 잡고 뛰었다. 아이 둘을 골목으로 밀어 넣었다. 등에 칼등이 떨어졌다. 그래도 아무도 죽지 않았다. 관병이 왔을 때 칼잡이는 사라지고 없었다. 이긴 것은 아니었다. 그런데 진 것 같지도 않았다.';}},
+  {t:'칼을 내려놓고 달아난다',h:'살아남는다 · 마음이 꺾인다',go:S=>{S.flags.y16='fled';A(S,{mood:-25,temper:-2,mind:4});return '달렸다. 뒤돌아보지 않고. 저잣거리에서 비명이 들렸다. 그날 누가 다쳤는지 당신은 끝내 묻지 못했다. 몇 해 동안 칼을 쥘 때마다 그 비명이 들렸다. 그 비명을 이기는 데, 열여섯의 당신은 너무 어렸다.';}}]});
+const CREED={hyeop:['협(俠)','지키는 칼'],gang:['강(強)','누구보다 강하게'],ja:['자유(自由)','아무것에도 묶이지 않게'],jeong:['정(情)','곁의 사람을 위해'],han:['한(恨)','잊지 않는다']};
+function ytRecap(S){const L=[];const p=parentOf(S),c=cf(S);
+  if(c)L.push(`여섯 살 개울가의 ${c.n}.${c.path==='same'?' 지금은 한 사문의 사형제.':c.path==='other'?` 지금은 ${ORGS[c.org]?ORGS[c.org].n:'다른 문파'}에.`:c.path==='escort'?' 지금은 표국에.':c.path==='home'?' 지금도 고목 아래에.':''}`);
+  if(S.flags.ngM)L.push(`다리 밑에서 당신을 주운 꼬마 사부, ${ngN(S)}.`);else if(S.master&&MASTERS[S.master])L.push(`길에서 만난 스승, ${MASTERS[S.master].nick} ${MASTERS[S.master].n}.`);
+  L.push(S.org?`열 살에 오른 ${ORGS[S.org].n}의 산문.`:S.flags.failedTest?'열 살, 끝내 열리지 않은 산문.':'');
+  L.push({silent:'열둘의 겨울, 말하지 않은 사형의 이름.',told:'열둘의 겨울, 대 버린 사형의 이름.',took:'열둘의 겨울, 대신 진 죄.',alone:`열둘의 겨울, 언 땅에 묻은 ${p}.`,vow:`열둘의 겨울, ${p}의 마지막 말.`,work:'열둘의 겨울, 지게와 갈라진 손바닥.',power:'열둘의 겨울, 손이 터지도록 벤 나무.',friend:'열둘의 겨울, 돌려준 엽전.'}[S.flags.y12]||'');
+  L.push({learn:'열넷의 새벽, 처음으로 바람을 가른 소리.',ask:'열넷의 새벽, “네가 아무도 안 볼 때 하고 있었으니까.”',refuse:'열넷의 새벽, 사양한 가르침.'}[S.flags.y14]||'');
+  L.push({won:'열여섯, 손등에 튄 따뜻한 피.',lost:'열여섯, 옆구리의 흉터.',shield:'열여섯, 칼 대신 잡은 할머니의 손.',fled:'열여섯, 뒤에 두고 온 비명.'}[S.flags.y16]||'');
+  return L.filter(Boolean).map(x=>'— '+x).join('\n');}
+E({id:'yt18',arc:1,t:'열여덟의 맹세',a:[18,19],force:S=>!S.seen.yt18&&!S.chain,
+ x:S=>`열여덟 번째 봄. 혼자 높은 곳에 올라 지난 열여덟 해를 세어 보았다. 손가락이 모자랐다.
+${ytRecap(S)}
+사람들은 말한다. 무인의 삶은 열여덟 해에 다 정해진다고. 그 뒤로는 그때 정한 길을 걸어갈 뿐이라고.
+바람이 불었다. 당신은 칼을 땅에 꽂고 그 앞에 앉았다. 무엇을 위해 칼을 쥘 것인가. 그 대답을 오늘 정해야 했다. 정한 대답이 남은 평생을 끌고 갈 것이다.`,
+ ch:Object.entries(CREED).map(([k,[n,d]])=>({t:`${n} — ${d}`,h:{hyeop:'도덕·명성. 약한 자를 지키는 사건이 잦아진다',gang:'수련·벽을 깰 확률. 강자와의 대결이 잦아진다',ja:'경공·기연. 떠도는 사건이 잦아진다',jeong:'인연의 호감이 오른다. 사람과의 사건이 잦아진다',han:'살기·성정. 원한과 복수의 사건이 잦아진다'}[k],
+  go:S=>{S.flags.creed=k;deed(S,`열여덟에 ‘${n}’을 맹세했다`);
+   if(k==='hyeop')A(S,{moral:15,fame:10,cult:3});if(k==='gang'){A(S,{exp:tb(S)*2,temper:4});S.bt+=.12;}if(k==='ja'){A(S,{qing:8,mood:10});T(S,'luck',1);}
+   if(k==='jeong'){for(const id in S.rel)if(NPCS[id]&&(S.rel[id]||0)>=20)TK(S,id,8);if(cf(S))TKcf(S,2);A(S,{mood:12});}if(k==='han')A(S,{salgi:10,temper:8,mind:5});
+   return {hyeop:'칼을 뽑아 하늘에 대고 맹세했다. 이 칼은 약한 자 앞에서만 뽑는다. 쉬운 맹세가 아니었다. 강자 앞에서 칼을 거두는 것보다, 약자 앞에서 칼을 뽑는 것이 더 무서운 날이 올 것이다.',
+    gang:'칼을 쥔 손에 힘을 주었다. 누구보다 강해진다. 그래야 다시는 열둘의 겨울 같은 일이 없다. 바람이 칼날을 울렸다. 대답처럼 들렸다.',
+    ja:'칼을 등에 메고 일어섰다. 어디에도 묶이지 않는다. 사문에도, 이름에도, 원한에도. 그 맹세가 얼마나 외로운 것인지는 아직 몰랐다. 몰라서 다행이었다.',
+    jeong:'칼 대신 품속의 것들을 떠올렸다. 개울가의 신 한 짝, 엽전, 찐빵 반쪽. 이 칼은 그것들을 위해 쓴다. 강호에서 가장 약해 보이는 맹세였다. 그리고 가장 오래가는 맹세였다.',
+    han:'칼끝으로 바위에 이름 몇 개를 새겼다. 잊지 않는다. 열여덟 해 동안 당신을 짓밟은 것들을. 바위는 말이 없었다. 새긴 이름이 바람에 깎일 때까지, 당신은 그 앞을 떠나지 않을 것이다.'}[k];}}))});
+E({id:'yt20',arc:1,t:'스물의 문턱',a:[20,21],force:S=>!S.seen.yt20&&!S.chain,
+ x:S=>{const cr=S.flags.creed&&CREED[S.flags.creed];return `스무 살이 되던 날 아침, 이상하게 조용했다. 봄과 가을이 숨 가쁘게 갈마들던 날들이 끝났다는 걸, 몸이 먼저 알았다.
+${cfN(S)!=='동무'?`${cfN(S)}에게서 짧은 서찰이 왔다. ‘스물이다. 이제 어른이란다. 웃기지.’\n`:''}당신은 거울 앞에 섰다. 열두 살의 겨울도, 열넷의 새벽도, 열여섯의 칼끝도 얼굴 어딘가에 남아 있었다.${cr?` 그리고 열여덟에 맹세한 ‘${cr[0]}’이 눈빛에.`:''}
+이제부터 삶은 천천히 흐를 것이다. 한 해에 한 번씩, 정한 길을 따라. 열여덟 해가 전부였다. 남은 것은 그 열여덟 해를 증명하는 일이다.`;},
+ ch:[{t:'고향에 들러 인사한다',go:S=>{A(S,{mood:12,cult:3});if(cf(S))TKcf(S,1);return `고향은 그대로였다. ${parentOf(S)}${bat(parentOf(S))?'이':'가'} ${S.flags.parentsGone?'잠든 무덤에 술 한 잔을 부었다':'문간에 서서 당신을 오래 보았다'}. 떠날 때 뒤를 한 번 돌아보았다. 열 살 때는 돌아보지 못했던 그 길을.`;}},
+  {t:'곧장 길을 떠난다',go:S=>{A(S,{qing:3,exp:tb(S)*.5,mood:6});return '돌아보지 않았다. 스무 살의 길은 앞에만 있었다. 그게 젊음이라는 걸, 나중에 알았다.';}},
+  {t:'하루를 비워 아무것도 하지 않는다',go:S=>{A(S,{cult:6,mood:10});return '하루 종일 누워서 하늘을 보았다. 열여덟 해 동안 처음으로. 구름이 느렸다. 앞으로의 삶도 저만큼 느릴 것이다. 그게 나쁘지 않았다.';}}]});
+/* 맹세가 남은 삶의 사건에 결을 남긴다 */
+const CREED_W={hyeop:/^(jp|helpless|bandits|kneel|jpVillage|rescue|lostVillage|famine|tavern)/,gang:/^(challenge|fastDuel|nongeom|grand|eldChallenge|enemyMeet|tourney|first|factionTop)/,ja:/^(sd|travel|hermit|cliff|oreFind|elixir|haoInfo|music)/,jeong:/^(visit|talk|wedLife|date|cf|sworn|lv|duo)/,han:/^(revenge|feud|ambush|assassin|hitman|salFrenzy|bloodLure|orgHunt)/};
+
+['yt12','yt14','yt16','yt18','yt20'].forEach(id=>JOB_OK.add(id));
 /* 처음 마주친 인연의 첫 만남 이야기를 순서대로 띄운다 */
 function fmNext(S){const f=S.flags.fmAt||(S.flags.fmAt={});
   if(!S.flags.fmInit){S.flags.fmInit=1;for(const id of romList(S))if(S.met[id])f[id]=-99;}
@@ -11790,10 +11896,10 @@ function chooseEvent(S){
   const f=EV.find(e=>e.force&&eligible(S,e)&&e.force(S));if(f)return f.id;
   {const fm=fmNext(S);if(fm)return fm;}
   if(S.flags.nextEv){const id=S.flags.nextEv;delete S.flags.nextEv;if(EVM[id])return id;}
-  if(chance(S.age<13?.5:.6)){const pool=EV.filter(e=>e.w&&eligible(S,e)&&wOf(S,e)>0);
-    const ws=pool.map(e=>wOf(S,e)*ageFit(S,e)*(e.reg?(e.reg.includes(S.loc)?3:.35):1));const tot=ws.reduce((a,b)=>a+b,0);
+  if(S.flags.half||chance(S.age<YOUNG?.8:.6)){const pool=EV.filter(e=>e.w&&eligible(S,e)&&wOf(S,e)>0);
+    const cw=S.flags.creed&&CREED_W[S.flags.creed];const ws=pool.map(e=>wOf(S,e)*ageFit(S,e)*(cw&&cw.test(e.id)?1.8:1)*(e.reg?(e.reg.includes(S.loc)?3:.35):1));if(S.flags.half&&!pool.length)return null;const tot=ws.reduce((a,b)=>a+b,0);
     let r=Math.random()*tot;for(let i=0;i<pool.length;i++){if((r-=ws[i])<0)return pool[i].id;}}
-  return 'focus';}
+  return S.flags.half?null:'focus';}
 /* 결과를 읽는 동안 다음 해에 쓸 법한 그림(지금·이웃 지역 배경, 만난 인물의 스탠딩)을 하나씩 미리 받아 풀어 둔다 */
 let WARMQ=[],WARMT=0;function warmSoon(S){try{const ks=[];if(REG[S.loc])ks.push('reg:'+REG_EN[S.loc]);Object.keys(S.met||{}).filter(id=>NPCS[id]).sort((a,b)=>(S.rel[b]||0)-(S.rel[a]||0)).slice(0,24).forEach(id=>ks.push('st:'+id));
   WARMQ=ks.map(k=>imgURL(k)).filter(u=>u&&!WARM.has(u));if(!WARMT){const step=()=>{const u=WARMQ.shift();if(u)warmImg(u);WARMT=WARMQ.length?setTimeout(step,180):0;};WARMT=setTimeout(step,300);}}catch(e){}}
@@ -11852,6 +11958,8 @@ function doCraft(){const c=S.tmp.craft;if(!c||c.sel.length<2)return;if(c.mode===
 function deathCard(S){S.phase='death';const c=S.dead;
   S.res={title:c==='천수를 다함'?'마지막 겨울':c==='우화등선'?'우화등선':'생의 끝',text:c==='천수를 다함'?`${S.age}세 겨울, 당신은 툇마루에 앉아 조용히 눈을 감았다.`:c==='구음절맥'?'스무 살 봄, 얼음이 마침내 심장에 닿았다. 짧았지만 당신이 본 세상은 넓었다.':`${S.age}세. ${c}. 강호는 또 한 사람을 잃었다.`,chips:[]};}
 function nextYear(){if(S.dead){endLife();return;}
+  if(S.age<YOUNG&&!S.flags.half&&S.phase!=='birth'){S.flags.half=1;let id=null;try{id=chooseEvent(S);}catch(e){}if(id&&id!=='focus'){openEvent(S,id);view='ev';resetScroll=true;save();render();return;}}
+  S.flags.half=0;
   passive(S);if(S.dead){deathCard(S);addLog(S,S.res.text,1);save();render();return;}
   let id=chooseEvent(S);if(aiTake(S,id))id='ai';openEvent(S,id);view='ev';resetScroll=true;save();render();aiPrefetch();}
 
@@ -11899,7 +12007,7 @@ function saveHall(h){try{localStorage.setItem(HKEY,JSON.stringify(h));}catch(e){
 const NAI_URL='https://image.novelai.net/ai/generate-image';
 const NAI_MODELS=[['nai-diffusion-4-5-full','V4.5 Full'],['nai-diffusion-4-5-curated','V4.5 Curated'],['nai-diffusion-5-full','V5 Full'],['nai-diffusion-5-curated','V5 Curated'],['nai-diffusion-4-full','V4 Full']];
 const NAI_Q={'nai-diffusion-5-full':'very aesthetic, masterpiece, best quality','nai-diffusion-5-curated':'very aesthetic, masterpiece, best quality','nai-diffusion-4-5-full':'very aesthetic, masterpiece, no text','nai-diffusion-4-5-curated':'location, masterpiece, no text','nai-diffusion-4-full':'no text, best quality, very aesthetic, absurdres'};
-const GAME_VER='2026.10.25-44';
+const GAME_VER='2026.10.25-45';
 const NAI_NEG='nsfw, nude, lowres, bad anatomy, bad hands, missing fingers, extra digits, text, watermark, signature, logo, worst quality, low quality, blurry, modern clothes, glasses, eyewear, jpeg artifacts';
 const NKEY='murim-nai';
 function ncfg(){let c={};try{c=JSON.parse(localStorage.getItem(NKEY)||'{}');}catch(e){}return Object.assign({key:'',relay:'',model:'nai-diffusion-4-5-full',style:'wuxia, ancient china, hanfu, detailed illustration, cinematic lighting',autoEv:false,autoPc:false,vn:true,neg:NAI_NEG,tnpc:'',tev:'',tmap:'',q:true},c,{pr:Object.assign({},c.pr)});}
@@ -12486,7 +12594,7 @@ function vnScreen(S,o){const beats=vnBeats(S,o.text,o.scene);if(!beats.length)be
   return `<section class="vnfull ${done?'done':''} ${VN.i?'':'vnfade'}" ${done||VN.log?'':'data-a="vnnext"'} aria-live="polite">
    <div class="vnbg">${o.bg?`<img src="${o.bg}" alt="" decoding="async">`:''}</div>
    <div class="vnsps">${cast.map((id,j)=>`<img class="vnsp ${bk===id?'on':b.s?'':'nar'} ${i===0?'in':''}" style="left:${pos[j]}%" decoding="async" src="${imgURL(castKey(id))}" alt="${esc(id.startsWith('mob:')?MOB[id.slice(4)].n:NPCS[id].n)}">`).join('')}</div>
-   <div class="vntop"><div class="vnttl"><b>${S.age}세 · ${esc(o.title)}</b>${o.tags||''}${o.sub?`<span class="vnsub">${esc(o.sub)}</span>`:''}</div>
+   <div class="vntop"><div class="vnttl"><b>${ageLabel(S)} · ${esc(o.title)}</b>${o.tags||''}${o.sub?`<span class="vnsub">${esc(o.sub)}</span>`:''}</div>
     <div class="vntools">${o.draw||''}<span class="vnpv" ${i>0?'':'hidden'}>${tool('vnprev','◀','','이전 대사')}</span>${tool('vnlog','기록')}${done?'':tool('vnauto','자동',auto)+tool('vnskip','넘기기 ▶▶')}</div></div>
    ${done?`<div class="vnch ${/data-a="next"/.test(o.acts||'')?'one':''}">${o.panel?`<div class="vnpanel">${o.panel}</div>`:''}${o.acts||''}</div>`:''}
    <div class="vnbox"><span class="vnpw" style="display:contents">${vnPlate(who)}</span><div class="vnbody"><div class="vnt ${b.s?'':'nar'}">${line(b)}</div>${done&&o.end?o.end:''}</div>${done?'':'<span class="vnar" aria-hidden="true">▼</span>'}</div>
