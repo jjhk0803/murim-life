@@ -265,6 +265,7 @@ button.chip.on{background:var(--jade);color:var(--card);border-color:var(--jade)
 .cgp{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px}
 .cgf{position:relative}
 .cgf img.ink,.cgtile img.ink{display:block;width:100%;aspect-ratio:3/2;object-fit:cover;border-radius:6px;filter:grayscale(1) contrast(1.15)}
+.cgf img.ink.lv,.cgtile img.ink.lv{filter:none}
 .inkph{aspect-ratio:3/2;border-radius:6px;background:radial-gradient(ellipse at 50% 45%,#fbfaf6 0 38%,#ebe9e2 70%,#d4d1c7);color:#151515;display:grid;place-items:center;position:relative;overflow:hidden}
 .inkph svg{position:absolute;left:15%;top:6%;width:70%;height:88%}
 .inkph span{font-family:var(--f-disp);font-size:3.2rem;color:#121212;position:relative}
@@ -3492,6 +3493,10 @@ const ENDINGS=[
 ENDINGS.find(e=>e[0]==='head')[4]=S=>`${ORGS[S.org].n}의 ${ORGS[S.org].ranks[4]}. 마지막 날 제자들이 산문 앞에 줄지어 섰다. 당신은 그들의 얼굴을 하나하나 보았다. 다 당신을 닮아 있었다.`;
 ENDINGS.find(e=>e[0]==='head')[5]='sect master on mountain gate stairs, rows of disciples bowing, banners, morning mist';
 const endingOf=S=>ENDINGS.find(e=>{try{return e[3](S);}catch(_){return false;}})||ENDINGS[ENDINGS.length-1];
+/* 인연 CG: 인물은 설정한 그림체 그대로 색을 입히고, 배경만 먹으로 */
+const CG_LOVE='partially colored, spot color, colored character, vivid colors on character, greyscale background, monochrome background, ink wash painting background, sumi-e scenery, brush strokes, negative space';
+const CG_LOVE_NEG='colorful background, colored background, full color scenery';
+const isLoveCg=k=>/^cg:love_/.test(k);
 const CG_INK='ink wash painting, sumi-e, monochrome, black ink on white paper, bold brush strokes, ink splatter, dry brush, high contrast, negative space';
 const CGKEY='murim-cg';
 function cgLoad(){try{const v=JSON.parse(localStorage.getItem(CGKEY)||'null');if(v&&v.e)return v;}catch(e){}return {e:{},l:{}};}
@@ -3500,13 +3505,13 @@ function cgUnlock(S){const v=cgLoad(),e=endingOf(S);S.ending=e[0];v.e[e[0]]=v.e[
  const sp=S.spouse&&NPCS[S.spouse]?S.spouse:null;if(sp){v.l[sp]=v.l[sp]||{n:0,who:S.name};v.l[sp].n++;}cgSave(v);}
 const cgLoveText=(S,id)=>LOVE[id]&&LOVE[id].wed?LOVE[id].wed:`혼례를 올린 이듬해 봄, ${jo(NPCS[id].n,'이','가')} 당신 손을 끌고 꽃길로 나섰다. ${WED_VOW[id]||''} 그 약속은 끝까지 지켜졌다.`;
 const cgLovePrompt=id=>{const g=NPC_TAGS[id];return String((typeof g==='function'?g(S):g)||'').replace(/\bsolo\b/g,'').replace(/,\s*,/g,',').replace(/^[,\s]+/,'')+', young, beautiful, looking at viewer, gentle smile, pov, pov hands, holding hands, '+(LOVE_BG[id]||'garden with willow and plum blossoms');};
-function cgFrame(k,ch,cap){const u=imgURL(k);return `<div class="cgf">${u?`<img class="ink" src="${u}" alt="${esc(cap||'')}">`:`<div class="inkph" aria-hidden="true"><svg viewBox="0 0 200 120"><path d="M100 14c-36 0-64 22-64 48s27 46 63 46c30 0 55-15 61-38" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" opacity=".82"/><circle cx="168" cy="40" r="2.4" fill="currentColor"/><circle cx="176" cy="52" r="1.6" fill="currentColor"/></svg><span>${esc(ch)}</span></div>`}<button class="ghost cgd" data-a="cgdraw" data-k="${esc(k)}">${u?'CG 다시 그리기':'CG 그리기'}</button></div>`;}
+function cgFrame(k,ch,cap){const u=imgURL(k);return `<div class="cgf">${u?`<img class="ink${isLoveCg(k)?' lv':''}" src="${u}" alt="${esc(cap||'')}">`:`<div class="inkph" aria-hidden="true"><svg viewBox="0 0 200 120"><path d="M100 14c-36 0-64 22-64 48s27 46 63 46c30 0 55-15 61-38" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" opacity=".82"/><circle cx="168" cy="40" r="2.4" fill="currentColor"/><circle cx="176" cy="52" r="1.6" fill="currentColor"/></svg><span>${esc(ch)}</span></div>`}<button class="ghost cgd" data-a="cgdraw" data-k="${esc(k)}">${u?'CG 다시 그리기':'CG 그리기'}</button></div>`;}
 function endingHTML(s){const e=endingOf(s),sp=s.spouse&&NPCS[s.spouse]?s.spouse:null;
  return `<section class="cgp fade">${cgFrame('cg:'+e[0],e[2],e[1])}<div class="cgcap"><span class="seal" aria-hidden="true">${e[2]}</span>결말 · ${esc(e[1])}</div><p class="cgt">${esc(e[4](s))}</p></section>
   ${sp?`<section class="cgp">${cgFrame('cg:love_'+sp,'緣',NPCS[sp].n)}<div class="cgcap"><span class="seal" aria-hidden="true">緣</span>${esc(NPCS[sp].n)}${bat(NPCS[sp].n)?'과':'와'} 함께</div><p class="cgt">${esc(cgLoveText(s,sp))}</p></section>`:''}`;}
 function cgGalHTML(){const v=cgLoad(),m=modal,loves=[...new Set(Object.keys(LOVE).concat(LOVE_X.m,LOVE_X.f))].filter(id=>NPCS[id]);
  const ne=ENDINGS.filter(e=>v.e[e[0]]).length,nl=loves.filter(id=>v.l[id]).length;
- const tile=(k,ch,name,open,sub)=>`<button class="cgtile ${open?'':'lock'}" ${open?`data-a="cgview" data-k="${esc(k)}"`:'disabled'}>${open&&imgURL(k)?`<img class="ink" src="${imgURL(k)}" alt="" loading="lazy">`:`<span class="ch">${open?ch:'？'}</span>`}<span class="cn">${open?esc(name):'미발견'}</span>${open&&sub?`<span class="cs">${esc(sub)}</span>`:''}</button>`;
+ const tile=(k,ch,name,open,sub)=>`<button class="cgtile ${open?'':'lock'}" ${open?`data-a="cgview" data-k="${esc(k)}"`:'disabled'}>${open&&imgURL(k)?`<img class="ink${isLoveCg(k)?' lv':''}" src="${imgURL(k)}" alt="" loading="lazy">`:`<span class="ch">${open?ch:'？'}</span>`}<span class="cn">${open?esc(name):'미발견'}</span>${open&&sub?`<span class="cs">${esc(sub)}</span>`:''}</button>`;
  return `<div class="modal" data-a="mbg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mt"><div class="row" style="justify-content:space-between"><h3 id="mt" style="margin:0">결말과 CG</h3><button class="ghost" data-a="mclose">닫기</button></div>
   <p class="muted small" style="margin:0">살아 본 결말과 함께한 사람의 CG가 모인다. 그림은 수묵으로 그린다. 그림이 없으면 설정의 NovelAI로 그리거나, 그림 관리 → CG 탭에서 넣는다.</p>
   <p class="grp-t" style="margin:0">결말 ${ne}/${ENDINGS.length}</p><div class="cgg">${ENDINGS.map(e=>tile('cg:'+e[0],e[2],e[1],v.e[e[0]],v.e[e[0]]?`${v.e[e[0]].who} 외 ${v.e[e[0]].n}번`:'')).join('')}</div>
@@ -3992,7 +3997,7 @@ function saveHall(h){try{localStorage.setItem(HKEY,JSON.stringify(h));}catch(e){
 const NAI_URL='https://image.novelai.net/ai/generate-image';
 const NAI_MODELS=[['nai-diffusion-4-5-full','V4.5 Full'],['nai-diffusion-4-5-curated','V4.5 Curated'],['nai-diffusion-5-full','V5 Full'],['nai-diffusion-5-curated','V5 Curated'],['nai-diffusion-4-full','V4 Full']];
 const NAI_Q={'nai-diffusion-5-full':'very aesthetic, masterpiece, best quality','nai-diffusion-5-curated':'very aesthetic, masterpiece, best quality','nai-diffusion-4-5-full':'very aesthetic, masterpiece, no text','nai-diffusion-4-5-curated':'location, masterpiece, no text','nai-diffusion-4-full':'no text, best quality, very aesthetic, absurdres'};
-const GAME_VER='2026.10.25-29';
+const GAME_VER='2026.10.25-30';
 const NAI_NEG='nsfw, nude, lowres, bad anatomy, bad hands, missing fingers, extra digits, text, watermark, signature, logo, worst quality, low quality, blurry, modern clothes, jpeg artifacts';
 const NKEY='murim-nai';
 function ncfg(){let c={};try{c=JSON.parse(localStorage.getItem(NKEY)||'{}');}catch(e){}return Object.assign({key:'',relay:'',model:'nai-diffusion-4-5-full',style:'wuxia, ancient china, hanfu, detailed illustration, cinematic lighting',autoEv:false,autoPc:false,vn:true,neg:NAI_NEG,tnpc:'',tev:'',tmap:'',q:true},c,{pr:Object.assign({},c.pr)});}
@@ -4191,7 +4196,7 @@ async function storeSlot(k,b){ // 스탠딩은 원본을 raw:로 남기고 배�
   await imgPut(k,b);setImg(k,b);}
 async function drawSlot(k,prompt,portrait,quiet){if(BUSY.has(k))return '이미 그리는 중';BUSY.add(k);if(modal&&modal.k===k){modal.err='';}render();
   try{let b;const tp=k.startsWith('st:')&&ncfg().v5tp!==false&&!NAI_TP_OFF;
-    const go=async t=>{try{return await naiDraw(fullPrompt(k,prompt),portrait,{tp:t,negAdd:/^wp:/.test(k)?WP_NEG:/^cg:/.test(k)?CG_NEG:''});}catch(e){if(!/잦아요/.test(e.message))throw e;await new Promise(r=>setTimeout(r,8000));return await naiDraw(fullPrompt(k,prompt),portrait,{tp:t,negAdd:/^wp:/.test(k)?WP_NEG:/^cg:/.test(k)?CG_NEG:''});}};
+    const go=async t=>{try{return await naiDraw(fullPrompt(k,prompt),portrait,{tp:t,negAdd:/^wp:/.test(k)?WP_NEG:isLoveCg(k)?CG_NEG+', '+CG_LOVE_NEG:/^cg:/.test(k)?CG_NEG:''});}catch(e){if(!/잦아요/.test(e.message))throw e;await new Promise(r=>setTimeout(r,8000));return await naiDraw(fullPrompt(k,prompt),portrait,{tp:t,negAdd:/^wp:/.test(k)?WP_NEG:isLoveCg(k)?CG_NEG+', '+CG_LOVE_NEG:/^cg:/.test(k)?CG_NEG:''});}};
     if(tp){try{b=await go(true);}catch(e){if(/토큰|Anlas|연결/.test(e.message))throw e;NAI_TP_OFF=true;toast('투명 배경으로 그리지 못해 흰 배경으로 그렸어요. 다시 켜기 전까지는 흰 배경으로 그려요.');b=await go(false);}}else b=await go(false);
     await storeSlot(k,b);if(modal&&modal.k===k)modal.err='';return true;}
   catch(e){if(modal&&modal.k===k)modal.err=e.message;else if(!quiet)toast(e.message);return e.message;}
@@ -4216,7 +4221,7 @@ const STYLE_PRESETS=[['무협 일러스트','wuxia, ancient china, hanfu, detail
  ['무협 웹툰','korean webtoon style, murim, wuxia, sharp lineart, dramatic shading, dynamic composition'],
  ['반실사 유화','semi-realistic, oil painting, painterly, wuxia, ancient china, dramatic lighting, rich texture']];
 const isPort=k=>/^(pc|npc|st):/.test(k);
-function fullPrompt(k,p){const c=ncfg();if(p==null)p=slotPrompt(k);const cg=/^cg:/.test(k),wp=/^wp:/.test(k),kt=cg||wp?'':k==='map'?c.tmap:isPort(k)?c.tnpc:c.tev;return [p,kt,cg?CG_INK:wp?WP_STYLE:c.style,c.q?NAI_Q[c.model]:''].filter(x=>x&&String(x).trim()).join(', ');}
+function fullPrompt(k,p){const c=ncfg();if(p==null)p=slotPrompt(k);const cg=/^cg:/.test(k),wp=/^wp:/.test(k),lv=isLoveCg(k),kt=lv?c.tnpc:cg||wp?'':k==='map'?c.tmap:isPort(k)?c.tnpc:c.tev;return [p,kt,lv?CG_LOVE+', '+c.style:cg?CG_INK:wp?WP_STYLE:c.style,c.q?NAI_Q[c.model]:''].filter(x=>x&&String(x).trim()).join(', ');}
 const REG_EN={북해:'beihai',신강:'xinjiang',하북:'hebei',산동:'shandong',섬서:'shaanxi',하남:'henan',청해:'qinghai',안휘:'anhui',호북:'hubei',사천:'sichuan',강남:'jiangnan',호남:'hunan',귀주:'guizhou',운남:'yunnan',광동:'guangdong'};
 const REG_KO=Object.fromEntries(Object.entries(REG_EN).map(([a,b])=>[b,a]));
 const REG_TAGS={beihai:'frozen northern sea, ice palace, snowstorm, glaciers',xinjiang:'vast desert mountains, demonic cult fortress, dark clouds, red banners',hebei:'imperial capital, massive city walls, northern plains',shandong:'mount tai, bandit fortress on cliffs, pine trees',
