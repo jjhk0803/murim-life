@@ -1354,12 +1354,12 @@ E({id:'smTrial',t:'열 명 중 하나',a:[12,16],w:5,if:S=>S.org==='salmak'&&S.r
  prep:S=>{S.tmp.sn=randName(pick(['m','f']));S.tmp.foe=mkFoe({n:S.tmp.sn,nick:'같은 방의 동기',realm:clamp(S.realm,1,3),q:1});},
  x:S=>`마지막 시험. 같은 방에서 자란 ${jo(S.tmp.sn,'과','와')} 단둘이 남았다. 문은 하나, 나가는 사람도 하나다.`,
  ch:[{t:'싸운다',go:S=>{const b=battle(S,S.tmp.foe,{spar:1});if(b.win){A(S,{salgi:10,contrib:30,moral:-10,mood:has(S,'slaughter')?5:-20});return '문을 나선 건 당신이었다. 막주가 처음으로 당신 이름을 불렀다.'+b.rev;}A(S,{contrib:10});return '졌다. 동기는 당신 목에 칼을 대고 한참 떨다가 거두었다. 둘 다 살아남았고 둘 다 벌을 받았다.'+b.rev;}},
-  {t:'함께 문을 부수고 나간다',h:'살막의 적이 된다.',go:S=>{leaveOrg(S);S.flags.salmakEsc=1;A(S,{moral:10,enemies:2,mood:10});S.flags.sib=`동기 ${S.tmp.sn}`;deed(S,'동기와 함께 살막을 탈출했다');return '둘이서 감시 넷을 쓰러뜨리고 담을 넘었다. 그날부터 그는 당신의 사형제다.';}}]});
+  {t:'함께 달아나자고 한다',h:'붙잡히면 큰 벌. 떠날 마음이 생긴다',go:S=>{S.flags.smWant=1;S.flags.smHum=(S.flags.smHum||0)+2;S.flags.sib=`동기 ${S.tmp.sn}`;hurt(S,25,'살막의 벌');A(S,{moral:6,contrib:-20,mood:-15});return `둘이서 문을 부수고 담까지 달렸다. 담 위에 칠영이 앉아 있었다. 그는 칼을 뽑지 않았다. 그냥 고개를 저었다.\n칠영: “지금 넘으면 석 달 뒤에 피를 토하고 죽는다. 너희 피 속의 사슬부터 끊어라.”\n둘은 끌려가 지하 감옥에 갇혔다. 동기는 다른 분단으로 보내졌다. 헤어지기 전에 동기가 속삭였다. “언젠가 꼭 나가.” 그날부터 당신은 담을 보는 눈이 달라졌다.`;}}]});
 E({id:'smLeave',t:'나가는 문',a:[18,45],w:1.5,if:S=>S.org==='salmak'&&S.rank<4,
  x:'살막을 떠나는 길은 죽음뿐이라 했다. 그래도 떠나고 싶은 밤이 있다.',
  ch:[{t:'떠난다',go:S=>{leaveOrg(S);S.flags.salmakEsc=1;S.flags.lone=1;A(S,{moral:10,enemies:3,mood:15});deed(S,'살막을 떠났다');return '표식을 불에 던지고 담을 넘었다. 이제 살막이 당신을 쫓는다.';}},
   {t:'남는다',go:S=>{A(S,{contrib:15,mind:3});return '문 앞에서 돌아섰다.';}}]});
-E({id:'hitman',t:'자객',a:[14,99],w:S=>(S.enemies||0)*.5+(S.flags.salmakEsc?1:0),cd:3,if:S=>(S.enemies||0)>=2||S.flags.salmakEsc,
+E({id:'hitman',t:'자객',a:[14,99],w:S=>(S.enemies||0)*.5+(S.flags.salmakEsc&&!S.flags.smFree?.5:0),cd:3,if:S=>(S.enemies||0)>=2||(S.flags.salmakEsc&&!S.flags.smFree),
  prep:S=>{S.tmp.foe=mkFoe({n:pick(['살막','귀영루'])+'의 자객',realm:clamp(S.realm+(chance(.3)?1:0),1,7),q:1.05,hide:.5,hs:60+S.realm*8,kw:['암','쾌'],lethal:1});},
  x:'잠결에 서늘한 기운이 목덜미를 스쳤다. 누군가 당신의 목에 값을 매겼다.',
  ch:S=>[{t:'맞서 싸운다',go:S=>{const b=battle(S,S.tmp.foe);if(b.win)A(S,{enemies:-1,fame:5});return fightText(b,'자객의 복면을 벗겼다. 품속에서 의뢰서가 나왔다. 원한 하나를 지웠다.','자객의 비수가 깊이 들어왔다.');}},
@@ -11575,6 +11575,8 @@ ${f.n}: “애송이가. 목검이나 휘두르다 왔느냐.”
 const CREED={hyeop:['협(俠)','지키는 칼'],gang:['강(強)','누구보다 강하게'],ja:['자유(自由)','아무것에도 묶이지 않게'],jeong:['정(情)','곁의 사람을 위해'],han:['한(恨)','잊지 않는다']};
 function ytRecap(S){const L=[];const p=parentOf(S),c=cf(S);
   if(c)L.push(`여섯 살 개울가의 ${c.n}.${c.path==='same'?' 지금은 한 사문의 사형제.':c.path==='other'?` 지금은 ${ORGS[c.org]?ORGS[c.org].n:'다른 문파'}에.`:c.path==='escort'?' 지금은 표국에.':c.path==='home'?' 지금도 고목 아래에.':''}`);
+  if(S.flags.kidnapped)L.push(`${S.flags.kidnapped}세, 자루 속의 밤. 그날부터 이름 대신 ${smNo(S)}.`);
+  if(S.flags.smFirst)L.push({kill:'지하 감옥에서 처음 벤 산적.',no:'베지 못하고 매달린 우물, 동전만 한 하늘.',free:'몰래 끊어 준 밧줄.'}[S.flags.smFirst]);
   if(S.flags.ngM)L.push(`다리 밑에서 당신을 주운 꼬마 사부, ${ngN(S)}.`);else if(S.master&&MASTERS[S.master])L.push(`길에서 만난 스승, ${MASTERS[S.master].nick} ${MASTERS[S.master].n}.`);
   L.push(S.org?`열 살에 오른 ${ORGS[S.org].n}의 산문.`:S.flags.failedTest?'열 살, 끝내 열리지 않은 산문.':'');
   L.push({silent:'열둘의 겨울, 말하지 않은 사형의 이름.',told:'열둘의 겨울, 대 버린 사형의 이름.',took:'열둘의 겨울, 대신 진 죄.',alone:`열둘의 겨울, 언 땅에 묻은 ${p}.`,vow:`열둘의 겨울, ${p}의 마지막 말.`,work:'열둘의 겨울, 지게와 갈라진 손바닥.',power:'열둘의 겨울, 손이 터지도록 벤 나무.',friend:'열둘의 겨울, 돌려준 엽전.'}[S.flags.y12]||'');
@@ -11679,6 +11681,219 @@ ${n}${bat(n)?'이':'가'} 웃었다. 처음 만난 날, 개울가에서 울다 �
  ch:[{t:'손을 놓지 않는다',go:S=>{const c=cf(S);c.dead=1;S.dead_npc.cfriend=1;S.flags.widowed=1;(S.wu||(S.wu={})).grief=1;A(S,{mood:-15,cult:10});deed(S,`평생의 동무이자 반려 ${jo(c.n,'의','의')} 마지막을 지켰다`.replace('의의','의'));return '바람이 불었다. 잎사귀가 한꺼번에 소리를 냈다. 당신은 그 손을 해가 질 때까지 놓지 않았다. 그해 봄, 고목에 새순이 돋았다. 껍질에 새긴 두 이름 바로 위에서.';}}]});
 {const e=EV.find(x=>x.id==='cfLast');if(e){const of=e.force;e.force=S=>S.spouse!=='cfriend'&&of(S);}}
 ['cfSpark','cfConfess','cfLastW'].forEach(id=>JOB_OK.add(id));
+
+/* ══ 살수의 길 ══════════════════════════════════════
+   살막에 납치되면 고향의 어린 날 사건은 끊기고(동무·서당·장터…), 이름 대신 번호로 불린다.
+   살막은 살수를 절혼독으로 묶는다: 달마다 해독약을 받지 못하면 독이 도진다. 그래서 나가는 길은 여러 단계다.
+     결심(smWant) → 해독법 구하기(smCure) → 탈출의 밤(smBreak). 해독 없이 나가면 해마다 독이 몸을 갉는다.
+   살막에 남으면: 그림자 수업 → 첫 피 → 열 명 중 하나 → 첫 의뢰 → 정·사·마·관의 의뢰(smJob)를 받아 흑살·혈살·장로로 오른다.
+     살기가 짙고 도덕을 버리면 ‘살귀’가 된다. 그 끝에 무림맹주 살해 의뢰, 막주의 자리가 있다.
+   동무와 정을 쌓았고 정도를 벗어나지 않았다면, 장성한 동무가 구하러 온다. 살귀가 되었다면 동무가 칼을 들고 온다.
+   빠져나오면 옛 동기들이 번호를 달고 쫓아오고(smHunt), 끝내 막주를 베면 추격이 멎는다. */
+const SM_NO=['십칠','이십삼','삼십일','사십이','오십육','십삼','이십구','삼십팔'];
+const inSal=S=>S.org==='salmak';
+const smNo=S=>(S.flags.smNo||'십칠')+'호';
+const dispName=S=>inSal(S)&&S.flags.smNo&&!S.flags.smName?smNo(S):S.name;
+const smGood=S=>!S.flags.salgwi&&S.moral>-30;
+const SM_BLOCK=new Set(['beggar','bully','fever','school','smithy','inn','cfPromise','cfPart','cfLetter','cfReunion','cfSpark','cfConfess','yt12','yt14','yt16','sectTest','ngPick','ngLife','lifePath','descend','chuldo','hujigisu','yongbong','tourney','library','spar','sibling','master','momHands','fatherBack','homeLetter','momSilk']);
+E({id:'smName',arc:1,t:'이름을 지우는 날',
+ x:S=>{const no=smNo(S),c=cf(S);return `동굴에서 사흘을 굶었다. 나흘째 아침, 검은 옷의 사내가 아이들을 한 줄로 세웠다. 얼굴에 표정이라는 것이 없는 사내였다.
+교관: “지금부터 너희 이름을 지운다. 이름이 있는 놈은 울고, 울면 칼이 무뎌진다.”
+교관이 맨 앞 아이의 이마에 먹으로 숫자를 썼다. 아이가 울었다. 교관은 그 아이를 줄에서 빼냈다. 그 아이를 다시 본 사람은 없었다.
+당신 차례가 왔다. 차가운 붓끝이 이마에 닿았다.
+교관: “너는 이제 ${no}다. 대답해 봐라. 이름이 뭐지?”
+당신: “…${S.name}.”
+교관의 손바닥이 뺨을 쳤다. 귀가 울렸다.
+교관: “다시. 이름이 뭐지?”
+${c?`그 순간 개울가가 떠올랐다. 신 한 짝을 잃고 울던 ${c.n}. “너 이름 이상하다.” 그 목소리.`:'그 순간 아무것도 떠오르지 않았다. 떠오를 것이 별로 없는 삶이었다.'}`;},
+ ch:S=>[{t:`“${smNo(S)}”라고 대답한다`,h:'살기↑ · 살아남는다',go:S=>{S.flags.smHum=(S.flags.smHum||0);A(S,{salgi:6,mind:3});return '교관이 고개를 끄덕였다. “잘했다.” 그 밤 당신은 이불 속에서 자기 이름을 한 번 불러 보려다 그만두었다. 입이 그 이름을 잊어 가고 있었다.';}},
+  {t:'대답하고, 속으로 제 이름을 백 번 되뇐다',h:'사람으로 남는다',go:S=>{S.flags.smHum=(S.flags.smHum||0)+2;A(S,{cult:3,mood:-6});return `“${smNo(S)}.” 입으로는 그렇게 말했다. 그날 밤부터 당신은 잠들기 전에 속으로 이름을 불렀다. ${S.name}. ${S.name}. 아무도 부르지 않는 이름을, 자기 자신만은 잊지 않으려고.`;}},
+  ...(cf(S)?[{t:`속으로 ${cfN(S)}의 이름을 부른다`,h:'동무와의 정이 남는다',go:S=>{S.flags.smHum=(S.flags.smHum||0)+2;TKcf(S,2);A(S,{mood:-4});return `“${smNo(S)}.” 대답하면서, 속으로는 다른 이름을 불렀다. ${cfN(S)}. 개울가의 그 아이. 그 아이는 지금쯤 당신이 죽은 줄 알 것이다. 그래도 당신은 그 이름을 잊지 않기로 했다. 누군가 한 사람은 당신을 이름으로 기억하고 있을 테니까.`;}}]:[])]});
+E({id:'smShadow',arc:1,t:'그림자 수업',a:[8,14],force:S=>inSal(S)&&S.flags.kidnapped&&!S.seen.smShadow&&!S.chain&&S.age>=(S.flags.kidnapped+1),
+ x:S=>`살막의 수업은 밤에만 열렸다. 그날 밤 교관 대신 젊은 살수 하나가 앞에 섰다. 얼굴에 칼자국이 있었다. 사람들은 그를 일곱째 그림자, 칠영이라 불렀다.
+칠영: “오늘은 걷는 법을 배운다. 발소리를 내는 놈은 내일 아침을 못 본다.”
+아이들이 숨을 죽이고 마당을 가로질렀다. 누군가 자갈을 밟았다. 칠영의 비도가 그 아이 발 앞 한 치에 꽂혔다.
+칠영: “다음은 발이다.”
+수업이 끝나고 아이들에게 검은 환약 한 알씩이 돌았다. 쓴맛이 혀를 찔렀다.
+칠영: “이건 절혼독의 해독약이다. 너희 피에는 이미 절혼독이 들어 있다. 들어올 때 마신 물에.”
+당신: “…해독약이 없으면요?”
+칠영: “석 달이면 손끝이 검어지고, 반년이면 피를 토하고, 한 해면 죽는다. 살막에 들어오는 문은 있어도 나가는 문은 없다는 말, 그게 이 뜻이다.”
+칠영이 당신을 오래 보았다. 그 눈이 아주 잠깐, 사람의 눈이었다.
+칠영: “${smNo(S)}. 너는 발이 가볍구나. 오래 살겠다. 오래 사는 게 좋은 건지는 모르겠지만.”`,
+ ch:[{t:'누구보다 조용히 걷는 법을 익힌다',h:'경공·수련',go:S=>{S.met.chilyeong=1;TK(S,'chilyeong',4);A(S,{qing:6,exp:tb(S),salgi:3});return '석 달 뒤, 당신이 칠영의 등 뒤까지 다가갔을 때 그는 돌아보지 않고 말했다. “세 걸음 늦었다. 그래도 살막에서 제일 빠르다.”';}},
+  {t:'해독약의 맛과 색을 몰래 기억해 둔다',h:'심계·의술. 훗날 해독법을 찾을 실마리',go:S=>{S.met.chilyeong=1;S.flags.smClue=1;A(S,{mind:5,med:4});return '쓴맛 뒤에 감초 냄새, 그 뒤에 아주 희미한 철분 냄새. 당신은 그 맛을 혀에 새겼다. 언젠가 이 사슬을 끊으려면, 사슬이 무엇으로 만들어졌는지부터 알아야 했다.';}},
+  {t:'칠영에게 “사형도 이름이 있었어요?” 하고 묻는다',h:'사람으로 남는다',go:S=>{S.met.chilyeong=1;TK(S,'chilyeong',10);S.flags.smHum=(S.flags.smHum||0)+1;return '칠영이 한참 말이 없었다. “…있었다. 잊었다.” 그리고 돌아서며 덧붙였다. “너는 잊지 마라. 잊으면 편해지는데, 편해지면 끝이다.”';}}]});
+E({id:'smBlood',arc:1,t:'첫 피',a:[11,15],force:S=>inSal(S)&&S.seen.smShadow&&!S.seen.smBlood&&!S.chain&&S.age>=12,
+ x:S=>`지하 감옥에 사내 하나가 묶여 있었다. 관아에서 사형을 받은 산적이라 했다. 마을 셋을 불태웠다고.
+교관: “${smNo(S)}. 오늘 이자를 베어라. 살수는 처음 한 번이 어렵다. 그다음부터는 쉽다.”
+교관이 단검을 내밀었다. 손잡이가 차가웠다.
+묶인 사내가 고개를 들었다. 수염이 피로 엉겨 있었다. 그가 당신을 보고 웃었다.
+산적: “애새끼한테 죽는구나. 내 팔자도 참.”
+당신: “…마을을 태웠다면서요.”
+산적: “태웠지. 내 마을도 누가 태웠거든. 그래서 나도 태웠다. 너도 커서 그렇게 될 거다. 칼 쥔 놈들은 다 그래.”
+단검을 쥔 손이 떨렸다. 등 뒤에서 다른 아이들이 지켜보고 있었다. 실패한 아이가 어떻게 되는지, 모두 알고 있었다.`,
+ ch:[{t:'벤다',h:'살기↑ · 도덕↓',go:S=>{S.flags.smFirst='kill';S.flags.smKills=(S.flags.smKills||0)+1;A(S,{salgi:12,moral:-8,mood:-15,mind:3});return '한 번에 끝냈다. 손이 떨리지 않았다. 그게 더 무서웠다. 그날 밤 당신은 손을 씻지 않았다. 씻으면 그게 진짜로 일어난 일이 될 것 같아서.';}},
+  {t:'끝내 베지 못한다',h:'벌을 받는다 · 사람으로 남는다',go:S=>{S.flags.smFirst='no';S.flags.smHum=(S.flags.smHum||0)+2;hurt(S,25,'살막의 벌');A(S,{moral:3,contrib:-10});return '단검이 손에서 떨어졌다. 교관은 아무 말 없이 다른 아이에게 단검을 건넸다. 그리고 당신을 사흘 동안 물 한 모금 없이 우물에 매달았다. 우물 바닥에서 올려다본 하늘은 동전만 했다. 그래도 그 동전만 한 하늘이, 당신이 아직 사람이라는 증거 같았다.';}},
+  {t:'몰래 밧줄을 끊어 놓는다',h:'심계. 들키면 크게 다친다',go:S=>{S.flags.smFirst='free';S.flags.smHum=(S.flags.smHum||0)+3;if(chance(.4+S.mind/150)){A(S,{mind:5,moral:5});return '베는 척 칼을 휘두르며 밧줄을 끊었다. 그날 밤 산적이 사라졌다. 교관들은 감시를 탓했다. 산적이 정말 마을 셋을 태웠는지, 당신은 끝내 알지 못했다. 다만 그가 사라지기 전에 당신에게 한 말은 기억했다. “고맙다, 꼬마. 너는 그렇게 되지 마라.”';}
+    hurt(S,35,'살막의 벌');A(S,{contrib:-20});return '들켰다. 산적은 교관 손에 죽었고, 당신은 등에 채찍 서른 대를 맞았다. 흉터가 평생 남았다. 그 흉터를 볼 때마다, 당신은 그날 칼을 쥔 손이 아니라 밧줄을 쥔 손을 떠올렸다.';}}]});
+/* 열 명 중 하나(smTrial)는 살막 아이에게 반드시 온다 */
+{const e=EV.find(x=>x.id==='smTrial');if(e){e.force=S=>inSal(S)&&S.rank===0&&S.seen.smBlood&&!S.seen.smTrial&&!S.chain&&S.age>=14;}}
+E({id:'smJobFirst',arc:1,t:'첫 의뢰',a:[14,20],force:S=>inSal(S)&&S.seen.smTrial&&!S.seen.smJobFirst&&!S.chain&&S.age>=15,
+ prep:S=>{S.tmp.foe=mkFoe({n:'탐관 현령의 호위',realm:clamp(S.realm,1,4),q:1,group:1});},
+ x:S=>`첫 의뢰가 내려왔다. 붉은 봉투 안에 이름 하나와 은자 오십 냥.
+막주의 사자: “${smNo(S)}. 남쪽 고을의 현령이다. 세금을 세 배로 걷어 굶어 죽은 사람이 백을 넘는다. 의뢰인은 그 고을 사람들이 돈을 모아서 보냈다.”
+당신: “…그 사람들이 살막에 돈을 냈다고요?”
+막주의 사자: “살막은 의뢰인을 고르지 않는다. 표적도 고르지 않는다. 오늘은 마침 나쁜 놈이 걸렸을 뿐이다. 다음엔 아닐 수도 있다.”
+그 말이 오래 귀에 남았다. 다음엔 아닐 수도 있다.
+현령의 집은 담이 높고 호위가 넷이었다. 달이 구름에 가렸다.`,
+ ch:S=>[{t:'의뢰대로 처리한다',go:S=>{const b=battle(S,S.tmp.foe);if(b.win){S.flags.smKills=(S.flags.smKills||0)+1;A(S,{gold:50,contrib:20,salgi:8,moral:-3,fame:2});return fightText(b,'호위 넷을 지나 침상 머리맡에 섰다. 현령은 끝까지 살려 달라고 하지 않았다. 대신 금고 열쇠를 내밀었다. 당신은 그 열쇠를 고을 우물에 던졌다. 이튿날 고을 사람들이 우물에서 금고 열쇠를 건졌다는 소문이 돌았다.','');}hurt(S,25,'첫 의뢰');A(S,{contrib:-10});return fightText(b,'','호위의 칼이 어깨를 갈랐다. 겨우 담을 넘어 돌아왔다. 막주의 사자가 말했다. “첫 의뢰를 실패한 놈은 셋 중 하나만 두 번째 의뢰를 받는다. 너는 운이 좋았다.”');}},
+  {t:'현령을 묶어 고을 사람들 앞에 내놓는다',h:'명성↑ · 살막은 마음에 들어 하지 않는다',go:S=>{S.flags.smHum=(S.flags.smHum||0)+2;A(S,{fame:10,moral:8,contrib:-5});return '현령을 죽이지 않았다. 대신 묶어서 장터 한가운데 세웠다. 고을 사람들이 관아의 창고를 열었다. 막주의 사자는 혀를 찼다. “살수가 판관 노릇을 하는구나.” 의뢰비는 절반만 나왔다. 당신은 그 절반이 이상하게 무겁지 않았다.';}}]});
+const SM_JOB=[
+ {k:'정',who:'정파의 장로',why:'같은 문파의 다른 장로가 장문인 자리를 노린다. 표면으로는 손을 쓸 수 없으니 살막에 맡긴다.',tg:'정파 장로',kw:['강']},
+ {k:'정',who:'명문 세가의 집사',why:'가주의 서자가 적자보다 무공이 뛰어나다. 집안이 시끄러워지기 전에 조용히.',tg:'세가의 서자',kw:['쾌']},
+ {k:'사',who:'흑도 방회의 두목',why:'이웃 구역 두목이 뱃길 세금을 가로챘다. 본보기가 필요하다.',tg:'흑도 두목',kw:['중']},
+ {k:'사',who:'하오문의 중개인',why:'정보를 팔아넘긴 배신자. 하오문은 직접 피를 묻히지 않는다.',tg:'하오문 배신자',kw:['환']},
+ {k:'마',who:'천마신교의 호법',why:'교 안의 반역 무리 하나. 교의 칼로 베면 교가 갈라진다. 바깥 칼이 필요하다.',tg:'마교 반역자',kw:['마']},
+ {k:'관',who:'동창의 환관',why:'황궁에 상소를 올리려는 청렴한 어사. 상소가 올라가기 전에.',tg:'청렴한 어사',kw:['유']},
+ {k:'상',who:'비단 상단의 대행수',why:'경쟁 상단의 행수가 장강 뱃길을 독차지하려 한다.',tg:'상단 행수',kw:['변']}];
+E({id:'smJob',t:'살막의 의뢰',title:S=>S.tmp.j?`살막의 의뢰 · ${S.tmp.j.k}`:'살막의 의뢰',a:[16,80],force:S=>inSal(S)&&S.seen.smJobFirst&&!S.chain&&!(S.flags.smWant&&S.flags.smCured)&&S.age-(S.last.smJob??-99)>=2,cd:1,
+ prep:S=>{const j=pick(SM_JOB);S.tmp.j=j;S.tmp.foe=mkFoe({n:j.tg,realm:clamp(S.realm+(chance(.3)?1:0),2,7),q:1.05,kw:j.kw,hide:.3,hs:60});},
+ x:S=>{const j=S.tmp.j;return `붉은 봉투가 왔다. 의뢰인은 ${j.who}. 표적은 ${j.tg}.
+${j.why}
+막주의 사자: “${smNo(S)}. 의뢰비는 은자 ${100+S.realm*30}냥. 기한은 보름.”
+${j.k==='관'?'당신은 봉투를 오래 들여다보았다. 청렴한 어사. 이번엔 나쁜 놈이 아니었다.':j.k==='정'?'정파의 장로가 살막에 돈을 냈다. 협의를 말하던 입으로.':j.k==='마'?'교의 사람이 교의 사람을 죽여 달라고 한다. 마교도 결국 사람의 집이었다.':'흑도의 일은 흑도답게 단순했다. 돈과 길과 체면.'}`;},
+ ch:S=>{const j=S.tmp.j,pay=100+S.realm*30;return [{t:'의뢰대로 처리한다',go:S=>{const b=battle(S,S.tmp.foe);if(b.win){S.flags.smKills=(S.flags.smKills||0)+1;A(S,{gold:pay,contrib:15,salgi:j.k==='관'?10:6,moral:j.k==='관'||j.k==='정'?-8:-3});smPromote(S);return fightText(b,`보름이 되기 전에 끝냈다. 봉투를 태웠다. 재가 바람에 흩어졌다. ${j.k==='관'?'어사의 품에서 다 쓰지 못한 상소문이 나왔다. 당신은 그것도 태웠다. 그날 밤 꿈에 그 글씨가 나왔다.':'표적의 얼굴은 사흘이 지나자 기억나지 않았다. 그게 이 일에 익숙해진다는 뜻이었다.'}`,'');}hurt(S,15,'의뢰');A(S,{contrib:-10});return fightText(b,'','표적이 생각보다 강했다. 피를 흘리며 돌아왔다. 막주의 사자가 실패를 장부에 적었다. 붓이 지나가는 소리가 칼보다 무서웠다.');}},
+  {t:'표적을 놓아주고 죽은 것으로 꾸민다',h:'사람으로 남는다 · 들키면 큰 벌',go:S=>{S.flags.smHum=(S.flags.smHum||0)+2;A(S,{moral:6});if(chance(.5+S.mind/200)){A(S,{gold:Math.round(pay/2),mind:3});return `표적에게 피 묻은 옷 한 벌과 먼 곳으로 가는 배표를 건넸다. “오늘 당신은 죽었소.” ${j.tg}${bat(j.tg)?'은':'는'} 무릎을 꿇었다. 살막 장부에는 ‘처리’라고 적혔다.`;}hurt(S,30,'살막의 벌');A(S,{contrib:-25});S.flags.smSus=(S.flags.smSus||0)+1;return '석 달 뒤, 표적이 강남 장터에서 목격되었다. 살막의 장부에 당신 번호 옆으로 붉은 줄이 그어졌다. 매질은 사흘 동안 이어졌다.';}},
+  ...(j.k==='관'||j.k==='정'?[{t:'의뢰인을 벤다',h:'살막의 규율을 어긴다',go:S=>{S.flags.smHum=(S.flags.smHum||0)+1;S.flags.smSus=(S.flags.smSus||0)+2;A(S,{moral:10,fame:6,contrib:-30,salgi:4});return `표적 대신 의뢰인의 처소로 갔다. ${j.who}${bat(j.who)?'은':'는'} 당신 얼굴을 보고 모든 것을 알았다. 살막에서는 의뢰인을 베는 살수를 ‘뒤집힌 칼’이라 부른다. 당신 번호 옆에 두 번째 붉은 줄이 그어졌다.`;}}]:[])];}});
+function smPromote(S){const k=S.flags.smKills||0,need=[0,3,6,10];if(S.rank<3&&k>=need[S.rank+1]){S.rank++;const t=ORGS.salmak.ranks[S.rank];deed(S,`살막의 ${t}에 올랐다`);addLog(S,`살막의 ${t}이 되었다. 장부에 ${smNo(S)}의 이름이 한 줄 올라갔다.`,1);}
+  if(!S.flags.salgwi&&S.salgi>=60&&S.moral<=-40)S.flags.nextEv='smGwi';}
+E({id:'smGwi',t:'살귀',
+ x:S=>`요즘 사람들이 당신을 번호로 부르지 않는다. 다른 이름으로 부른다. 살귀(殺鬼).
+의뢰를 받으면 기한의 반도 되기 전에 끝냈다. 표적이 누구든 묻지 않았다. 칼이 손에서 떨어지지 않았고, 떨어지면 손이 허전했다.
+칠영: “${smNo(S)}.”
+칠영이 당신 앞에 섰다. 처음 만났을 때보다 그가 작아 보였다. 아니, 당신이 커진 것이다.
+칠영: “너, 요즘 잠은 자냐.”
+당신: “잘 잡니다.”
+칠영: “…그게 문제다. 나는 백 번 죽이고 한 번 살렸다. 그 한 번 때문에 지금도 잠을 못 잔다. 그게 내가 아직 사람이라는 증거다.”
+칠영이 돌아서며 말했다.
+칠영: “너는 잘 잔다니. 이제 너를 부를 이름이 없구나.”`,
+ ch:[{t:'아무 대답도 하지 않는다',go:S=>{S.flags.salgwi=1;A(S,{salgi:10,fame:15,mind:4});deed(S,'살귀라 불렸다');return '그날 밤도 잘 잤다. 꿈도 꾸지 않았다. 칠영은 그 뒤로 당신에게 말을 걸지 않았다.';}},
+  {t:'그날 밤 잠들지 못한다',h:'돌아올 길이 아주 조금 남는다',go:S=>{S.flags.salgwi=1;S.flags.smHum=(S.flags.smHum||0)+1;A(S,{mood:-10,salgi:5});deed(S,'살귀라 불렸다');return '처음으로 잠들지 못했다. 천장의 얼룩을 세다가 새벽이 왔다. 얼룩은 백 개가 넘었다. 당신이 벤 사람 수보다는 적었다.';}}]});
+/* 동무가 구하러 온다 / 동무가 칼을 들고 온다 */
+E({id:'cfRescue',tag:'love',t:'담을 넘어온 사람',a:[18,40],force:S=>inSal(S)&&cf(S)&&!cf(S).dead&&smGood(S)&&(cf(S).bond||0)>=3&&S.age>=18&&!S.seen.cfRescue&&!S.chain,
+ prep:S=>{const c=cf(S);if(!c.path)c.path=chance(.5)?'escort':'other';if(c.path==='other'&&!c.org)c.org=pick(['huashan','wudang','emei','shaolin']);},
+ x:S=>{const c=cf(S),n=c.n,role=c.path==='escort'?'표사':c.path==='other'?ORGS[c.org].n+' 제자':'떠돌이 무인';return `살막의 담 밖에서 불길이 올랐다. 경보 종이 울렸다. 살수들이 칼을 뽑고 뛰어나갔다.
+당신의 방문이 열렸다. 복면을 한 사람이 들어왔다. ${role}의 복색이었다. 복면을 내리자 얼굴이 보였다.
+${n}: “${S.name}.”
+열몇 해 만에 누군가 그 이름을 불렀다. 살막에서는 아무도 부르지 않던 이름.
+당신: “…어떻게.”
+${n}: “여섯 살 때부터 너 찾았어. 다들 죽었다고 했는데, 나는 안 믿었어. 개울에 신 떠내려가도 바위에 걸려 있었잖아.”
+${n}${bat(n)?'이':'가'} 품에서 작은 약병을 꺼냈다.
+${n}: “절혼독 해독약. 사천의 의원한테 삼 년 일해 주고 받았어. 이거면 살막 약 없이도 살 수 있대.”
+멀리서 칼 부딪는 소리가 다가왔다.
+${n}: “가자. 지금 아니면 못 가.”`;},
+ ch:S=>{const c=cf(S),n=c.n;return [{t:'그 손을 잡고 담을 넘는다',h:'살막을 빠져나온다 · 추격이 시작된다',go:S=>{smEscape(S,'rescue');S.flags.smCured=1;TKcf(S,4);if(c.sex!==S.sex){c.love=Math.max(c.love||0,1);S.rel.cfriend=Math.max(S.rel.cfriend||0,60);}S.seen.cfPart=1;S.seen.cfReunion=1;deed(S,`소꿉동무 ${jo(n,'의','의')} 손을 잡고 살막을 빠져나왔다`.replace('의의','의'));
+   return `담 위에서 돌아보았다. 열몇 해를 산 곳이 불타고 있었다. 슬프지 않았다. 다만 이상했다.\n산을 셋 넘어 새벽이 왔다. ${n}${bat(n)?'이':'가'} 바위에 주저앉아 숨을 몰아쉬다가 웃었다.\n${n}: “너 이름 아직 이상하다.”\n당신: “…네 이름도.”\n열몇 해 만에 웃었다. 웃는 법을 잊은 줄 알았는데, 얼굴이 기억하고 있었다.`;}},
+  {t:'“나는 이미 늦었어”라며 돌려보낸다',go:S=>{TKcf(S,1);S.flags.smCured=1;A(S,{mood:-15,salgi:3});return `당신: “돌아가. 나는 이미 늦었어. 손이 너무 더러워.”\n${n}: “…바보.”\n${n}${bat(n)?'은':'는'} 해독약을 당신 손에 쥐여 주고 담을 넘었다. 그 약병을 당신은 버리지 못했다.`.replace(/$/,'');}}];}});
+E({id:'cfDuel',tag:'key',t:'개울가의 칼',a:[20,60],force:S=>cf(S)&&!cf(S).dead&&S.flags.salgwi&&S.age>=20&&!S.seen.cfDuel&&!S.chain,
+ prep:S=>{S.tmp.foe=mkFoe({n:cfN(S),nick:'옛 동무',realm:clamp(S.realm,3,7),q:1.1,kw:['유','강']});},
+ x:S=>{const n=cfN(S);return `의뢰서의 이름을 보았을 때 손이 멈췄다. 표적이 아니었다. 당신을 노리는 자의 이름이었다. 살귀를 베겠다고 나선 정파의 젊은 무인. 이름이 ${n}${bat(n)?'이었다':'였다'}.
+달 밝은 밤, 버려진 사당 마당에서 마주 섰다. ${n}${bat(n)?'은':'는'} 칼을 들고 있었다. 손이 떨리지 않았다.
+${n}: “${S.name}.”
+당신: “그 이름은 오래전에 지웠다.”
+${n}: “나는 안 지웠어. 개울가에서부터 지금까지 하루도.”
+${n}${bat(n)?'이':'가'} 칼끝을 내렸다가 다시 올렸다.
+${n}: “네가 벤 사람 중에 내가 표행 때 지켜 주던 상단 행수가 있었어. 그 사람 딸이 아직 우리 고을에 살아. 아버지 얼굴을 기억 못 해.”
+당신: “…그래서 나를 베러 왔나.”
+${n}: “아니. 너를 데리러 왔어. 칼은, 네가 안 따라오면 쓰려고.”
+달빛이 두 칼날에 똑같이 내려앉았다.`;},
+ ch:S=>{const n=cfN(S);return [{t:'칼을 맞댄다',h:'목숨을 건 싸움',go:S=>{const b=battle(S,S.tmp.foe);if(b.win){const c=cf(S);c.dead=1;S.dead_npc.cfriend=1;(S.wu||(S.wu={})).grief=1;A(S,{salgi:15,mood:-30,fame:10});deed(S,`소꿉동무 ${jo(n,'을','를')} 베었다`);
+     return fightText(b,`${n}${bat(n)?'이':'가'} 쓰러졌다. 당신이 다가가자 피 묻은 손으로 당신 손목을 잡았다.\n${n}: “…신 한 짝… 아직 갖고 있어. 네가 벗어 준 거.”\n손에서 힘이 빠졌다. 품에서 작은 신 한 짝이 굴러 나왔다. 여섯 살 아이의 발만 한.\n그날 이후 당신은 잠들지 못했다. 살귀가 처음으로 잠들지 못했다.`,'');}
+     hurt(S,40,'개울가의 칼');S.flags.salgwi=0;S.flags.smHum=(S.flags.smHum||0)+3;S.flags.smWant=1;A(S,{moral:10,salgi:-15});return fightText(b,'',`${n}의 칼끝이 당신 목 앞에서 멈췄다. 찌르지 않았다.\n${n}: “봐. 너 아직 질 줄 알잖아. 살귀는 지지 않는대. 그러니까 너는 살귀가 아니야.”\n${n}${bat(n)?'은':'는'} 칼을 거두고 당신 옆에 주저앉았다. 둘은 밤새 아무 말 없이 달을 보았다. 새벽에 당신은 처음으로 살막을 떠날 생각을 했다.`);}},
+  {t:'칼을 내려놓는다',h:'살귀에서 돌아온다',go:S=>{S.flags.salgwi=0;S.flags.smHum=(S.flags.smHum||0)+4;S.flags.smWant=1;TKcf(S,3);A(S,{moral:12,salgi:-20,mood:10});deed(S,'개울가의 동무 앞에서 칼을 내려놓았다');return `당신은 칼을 땅에 내려놓았다. 손이 허전했다. 그 허전함이 오랜만이었다.\n${n}: “…늦었다며.”\n당신: “늦었지. 그래도.”\n${n}${bat(n)?'이':'가'} 다가와 당신을 끌어안았다. 피 냄새가 났을 텐데, 놓지 않았다.\n${n}: “살막에서 나와. 해독약은 내가 구해 놨어.”`;}}];}});
+/* 빠져나가는 길: 결심 → 해독 → 탈출의 밤 */
+{const e=EV.find(x=>x.id==='smLeave');if(e){e.t='나가는 문';e.if=S=>inSal(S)&&S.rank<4&&!S.flags.smWant;e.force=S=>inSal(S)&&S.rank<4&&!S.flags.smWant&&!S.seen.smLeave&&!S.chain&&S.age>=20;e.x=S=>`살막을 떠나는 길은 죽음뿐이라 했다. 문이 아니라 피에 사슬이 감겨 있으니까. 그래도 떠나고 싶은 밤이 있다. 오늘이 그런 밤이었다.\n칠영: “${smNo(S)}. 담을 보고 있구나.”\n당신: “…보고만 있었습니다.”\n칠영: “나도 이십 년째 보고만 있다. 넘으려면 셋이 필요하다. 마음, 해독약, 그리고 그날 밤 너를 막는 놈들을 넘을 칼.”`;
+  e.ch=[{t:'떠나기로 마음먹는다',h:'해독법을 찾아 나선다',go:S=>{S.flags.smWant=1;A(S,{mind:3});return '그날부터 당신은 살막의 모든 것을 다시 보기 시작했다. 감시가 바뀌는 시각, 해독약이 보관된 곳, 그리고 칠영의 눈빛.';}},{t:'남는다',go:S=>{A(S,{contrib:15,mind:3});return '문 앞에서 돌아섰다. 사슬은 피 속에 있었다.';}}];}}
+E({id:'smCure',t:'사슬의 열쇠',a:[15,60],w:S=>inSal(S)&&S.flags.smWant&&!S.flags.smCured?5:0,cd:1,
+ x:S=>`절혼독의 해독약은 막주의 처소 아래 약방에서 달마다 지어진다. 처방은 막주와 늙은 약사 둘만 안다고 했다.${S.flags.smClue?'\n어린 날 혀에 새긴 맛이 있었다. 감초, 그리고 희미한 철분. 실마리였다.':''}${has(S,'dokche')||has(S,'manduk')?'\n그런데 이상했다. 당신 몸은 해독약을 거른 달에도 멀쩡했다. 독이 독으로 듣지 않는 몸이었다.':''}`,
+ ch:S=>[...(has(S,'dokche')||has(S,'manduk')?[{t:'독이 듣지 않는 몸임을 확인한다',go:S=>{S.flags.smCured=1;return '석 달 동안 해독약을 몰래 버렸다. 손끝이 검어지지 않았다. 사슬은 처음부터 당신을 묶지 못했던 것이다.';}}]:[]),
+  {t:'약방에 숨어들어 처방을 훔친다',h:'경공·기연',go:S=>{if(chance(.3+S.qing/150+S.t.luck*.03+(S.flags.smClue?.15:0))){S.flags.smCured=1;A(S,{mind:3});return '약사가 잠든 사이 처방전을 베껴 냈다. 아홉 가지 약재. 그중 하나가 당신 혀가 기억하던 철분이었다. 사슬의 열쇠를 손에 넣었다.';}hurt(S,20,'약방의 함정');S.flags.smSus=(S.flags.smSus||0)+1;return '약방 문턱에 독침 함정이 있었다. 사흘을 앓았다. 누군가 당신을 의심하기 시작했다.';}},
+  {t:'칠영에게 묻는다',h:'칠영의 호감',if:S=>S.met.chilyeong&&!S.dead_npc.chilyeong,go:S=>{if((S.rel.chilyeong||0)>=20||chance(.35)){S.flags.smCured=1;TK(S,'chilyeong',8);return '칠영이 오래 당신을 보았다. 그리고 종이 한 장을 내밀었다. 처방이었다. “이십 년 동안 외워 두고 쓰지 못했다. 너는 써라.” 그의 손이 처음으로 떨렸다.';}TK(S,'chilyeong',2);return '칠영은 대답하지 않았다. 다만 다음 날, 당신 베개 밑에 감초 한 뿌리가 놓여 있었다.';}},
+  {t:'의원 출신 동기에게 해독약 한 알을 맡겨 분석한다',h:'의술',go:S=>{if(S.med>=25||chance(.25+S.med/100)){S.flags.smCured=1;A(S,{med:4});return '해독약 한 알을 쪼개 반년 동안 맛보고, 태우고, 물에 녹였다. 마침내 아홉 가지를 다 찾았다. 당신은 이제 스스로 사슬을 풀 수 있다.';}A(S,{med:3});return '반년을 매달렸지만 두 가지를 끝내 찾지 못했다. 다음 해를 기약했다.';}}]});
+E({id:'smBreak',t:'탈출의 밤',a:[16,70],force:S=>inSal(S)&&S.flags.smWant&&S.flags.smCured&&!S.chain&&S.age-(S.last.smBreak??-99)>=2,
+ prep:S=>{S.tmp.foe=mkFoe({n:'살막의 추격조',realm:clamp(S.realm,3,7),q:1.1,group:1,kw:['암','쾌'],lethal:1});},
+ x:S=>`그믐밤이었다. 해독약 아홉 첩을 허리에 감고, 번호가 새겨진 패를 화로에 던졌다.
+담 앞에 그림자 셋이 서 있었다. 같은 해에 들어온 동기들이었다. 이마에 먹으로 쓴 번호가 아직도 희미하게 남아 있는 얼굴들.
+동기: “${smNo(S)}. 어디 가.”
+당신: “나간다.”
+동기: “나가는 문은 없다.”
+당신: “그럼 만들지.”
+동기의 비도가 달빛을 갈랐다.${S.met.chilyeong&&!S.dead_npc.chilyeong?'\n담 위에 또 하나의 그림자가 앉아 있었다. 칠영이었다. 그는 칼을 뽑지 않았다. 그냥 보고 있었다.':''}`,
+ ch:S=>[{t:'베고 나간다',h:'목숨을 건 싸움',go:S=>{const b=battle(S,S.tmp.foe);if(b.win){smEscape(S,'break');A(S,{salgi:5,fame:8});return fightText(b,'동기 셋이 쓰러졌다. 담을 넘었다. 등 뒤에서 경보 종이 울렸다. 산 아래로 달리면서, 당신은 십몇 년 만에 처음으로 소리 내어 자기 이름을 불렀다.','');}hurt(S,35,'탈출의 밤');A(S,{contrib:-20});S.flags.smSus=(S.flags.smSus||0)+1;return fightText(b,'','담 앞에서 쓰러졌다. 끌려가 지하 감옥에 갇혔다. 두 해 뒤, 다시 그믐이 올 것이다.');}},
+  ...(S.met.chilyeong&&!S.dead_npc.chilyeong&&(S.rel.chilyeong||0)>=15?[{t:'칠영에게 손을 내민다',h:'칠영과 함께',go:S=>{const b=battle(S,S.tmp.foe,{ally:1.4});if(b.win){smEscape(S,'break');TK(S,'chilyeong',15);S.flags.smWithChil=1;return fightText(b,'칠영이 담에서 뛰어내렸다. 두 개의 그림자가 추격조를 지나갔다. 산마루에서 칠영이 숨을 몰아쉬며 말했다. “이십 년을 보고만 있었는데. 넘으니 별것 아니군.” 그가 처음으로 웃었다.','');}hurt(S,30,'탈출의 밤');return fightText(b,'','둘이서도 모자랐다. 칠영이 당신을 담 너머로 밀어 올리고 자기는 남았다. 당신은 혼자 산을 내려왔다. 등 뒤의 비명이 누구 것인지 묻지 않았다.');}}]:[])]});
+function smEscape(S,how){const c=cf(S);if(c){if(!c.path)c.path='escort';S.seen.cfPart=1;}leaveOrg(S);S.flags.salmakEsc=1;S.flags.smName=1;S.flags.smOut=how;S.flags.smOutAge=S.age;S.flags.smHuntN=0;A(S,{enemies:2,mood:15});deed(S,how==='rescue'?'살막을 빠져나왔다':'살막의 담을 베고 나왔다');}
+/* 해독 없이 빠져나오면 절혼독이 해마다 도진다 */
+function smYear(S){if(S.flags.smPoison&&!S.flags.smCured&&!inSal(S)&&!has(S,'dokche')&&!has(S,'manduk')){hurt(S,15,'절혼독');addLog(S,'절혼독이 도졌다. 손끝이 검어졌다.',1);}}
+E({id:'smPoisonCure',t:'검어지는 손끝',a:[12,90],w:S=>S.flags.smPoison&&!S.flags.smCured&&!inSal(S)?6:0,cd:1,
+ x:'손끝이 검게 물들었다. 해마다 조금씩 더. 살막을 나왔지만 사슬은 피 속에 남아 있었다.',
+ ch:[{t:'이름난 의원을 찾아간다',h:'은자 150',if:S=>S.gold>=150,go:S=>{A(S,{gold:-150});S.flags.smCured=1;return '사천의 의원이 맥을 짚고 한숨을 쉬었다. “절혼독이군. 살막 놈들 짓이지.” 아홉 첩의 약을 지어 주었다. 손끝의 검은 기운이 봄눈처럼 빠졌다.';}},
+  {t:'내공으로 독을 밀어낸다',h:'내공 60년 이상',if:S=>S.ng>=60,go:S=>{A(S,{ng:-20});S.flags.smCured=1;return '이레 동안 운기조식으로 독을 손끝으로 몰아 짜냈다. 검은 피가 한 사발 나왔다. 내공이 크게 줄었지만, 사슬이 끊어졌다.';}},
+  {t:'버틴다',go:S=>{A(S,{cult:2});return '아직은 버틸 만했다. 아직은.';}}]});
+/* 쫓아오는 번호들 */
+E({id:'smHunt',t:'번호를 단 자객',title:S=>`번호를 단 자객 · ${S.tmp.no||''}`,a:[14,90],force:S=>S.flags.salmakEsc&&!S.flags.smFree&&!inSal(S)&&!S.chain&&S.age-(S.last.smHunt??S.flags.smOutAge??S.age)>=3,cd:2,
+ prep:S=>{S.tmp.no=pick(SM_NO.filter(x=>x!==S.flags.smNo))+'호';S.tmp.foe=mkFoe({n:S.tmp.no,nick:'살막의 추격자',realm:clamp(S.realm+((S.flags.smHuntN||0)>=2?1:0),2,7),q:1.05+(S.flags.smHuntN||0)*.03,hide:.6,hs:80+S.realm*8,kw:['암','쾌'],lethal:1});},
+ x:S=>{const k=S.flags.smHuntN||0;return `${['객잔에서 국수를 먹는데 젓가락이 하나 더 놓였다. 맞은편에 낯익은 얼굴이 앉았다. 이마에 지워지지 않은 번호.','밤길, 뒤에서 발소리가 났다. 아니, 발소리가 나지 않았다. 살막의 걸음이었다.','비 오는 산길에서 우산을 쓴 사람이 길을 막았다. 우산 아래 얼굴은 같은 해 같은 동굴에서 울던 아이였다.'][Math.min(k,2)]}
+${S.tmp.no}: “${smNo(S)}. 오랜만이다.”
+당신: “그 이름은 버렸다.”
+${S.tmp.no}: “살막은 버린 이름도 장부에 적어 둔다. 너를 지우러 왔다.”
+${k>=2?`${S.tmp.no}: “벌써 ${k}번째다. 막주께서 화가 많이 나셨다. 막주가 살아 있는 한, 우리는 끝없이 온다.”`:''}`;},
+ ch:S=>[{t:'맞선다',go:S=>{const b=battle(S,S.tmp.foe);if(b.win){S.flags.smHuntN=(S.flags.smHuntN||0)+1;A(S,{salgi:3,fame:4});return fightText(b,`${S.tmp.no}${bat(S.tmp.no)?'이':'가'} 쓰러지며 웃었다. “…부럽다. 넘었구나, 담을.” 당신은 그 이마의 번호를 소매로 닦아 주었다. 지워지지 않았다.`,'');}hurt(S,30,'살막의 자객');return fightText(b,'','칼이 옆구리를 스쳤다. 겨우 달아났다. 살막은 다음에도 온다.');}},
+  {t:'함께 도망치자고 한다',h:'구력·심계',go:S=>{if(chance(.25+S.tongue/200+S.mind/250)){S.flags.smHuntN=(S.flags.smHuntN||0)+1;A(S,{moral:6});return `${S.tmp.no}${bat(S.tmp.no)?'이':'가'} 한참 칼을 쥐고 있다가 내려놓았다. “…해독약은?” 당신은 처방을 적어 주었다. 그는 반대쪽 길로 사라졌다.`;}hurt(S,20,'살막의 자객');return '“살막에서 나간 놈은 살막보다 무섭게 변한다더니.” 그는 듣지 않았다. 칼이 먼저 왔다.';}}]});
+E({id:'smBoss',tag:'key',t:'막주를 베러 가는 길',a:[18,90],w:S=>S.flags.salmakEsc&&!S.flags.smFree&&!inSal(S)&&((S.flags.smHuntN||0)>=2||S.age-(S.flags.smOutAge||S.age)>=9)&&S.realm>=4&&!S.dead_npc.amje?8:0,cd:2,
+ prep:S=>{S.tmp.foe=npcFoe(S,'amje',{lethal:1});},
+ x:S=>`세 번째 자객을 묻고 깨달았다. 막주가 살아 있는 한 이 일은 끝나지 않는다. 살막의 장부는 막주의 머릿속에 있다.
+살막의 본거지는 호남의 깊은 골짜기, 폭포 뒤 동굴이었다. 열몇 해를 산 곳이라 길은 눈을 감고도 알았다.
+가장 깊은 방에 막주가 앉아 있었다. 사람들은 그를 암제라 불렀다. 이름도 얼굴도 없다는 자. 가면 아래 목소리가 늙었는지 젊었는지도 알 수 없었다.
+암제: “${smNo(S)}. 돌아왔구나.”
+당신: “끝내러 왔다.”
+암제: “끝? 살막은 끝나지 않는다. 내가 죽으면 다른 내가 앉는다. 이 자리가 그렇게 생겼다.”
+당신: “그럼 그 자리까지 베겠다.”
+암제가 처음으로 웃었다. 가면 안에서 흐르는 웃음소리가 동굴 벽을 타고 돌았다.
+암제: “좋다. 너를 고른 건 나였다. 자루 속의 백 명 중에서. 내 눈이 틀리지 않았구나.”`,
+ ch:S=>[{t:'살막에서 배운 대로, 그림자로 숨어든다',h:'경공·심계가 높을수록 유리하다',go:S=>{const b=battle(S,npcFoe(S,'amje',{lethal:1,q:NPCS.amje.q*.78}),{weaken:clamp(1-S.qing/400-S.mind/500,.7,.95)});if(b.win)return smBossWin(S,b);hurt(S,40,'암제');return fightText(b,'','그림자는 그림자를 알아보았다. 암제의 비도가 어깨에 박혔다. 겨우 폭포 밖으로 빠져나왔다.');}},
+  {t:'정면으로 벤다',h:'목숨을 건 싸움',go:S=>{const b=battle(S,S.tmp.foe);if(b.win)return smBossWin(S,b);hurt(S,45,'암제');return fightText(b,'','암제의 손이 보이지 않았다. 피를 토하며 폭포 밖으로 굴러 나왔다. 아직은 아니다.');}},
+  ...((S.flags.smWithChil&&!S.dead_npc.chilyeong)||(cf(S)&&!cf(S).dead&&S.flags.smOut==='rescue')?[{t:`${S.flags.smWithChil?'칠영':cfN(S)}${bat(S.flags.smWithChil?'칠영':cfN(S))?'과':'와'} 함께 들어간다`,h:'도움을 받는다',go:S=>{const b=battle(S,S.tmp.foe,{ally:1.35});if(b.win)return smBossWin(S,b);hurt(S,35,'암제');return fightText(b,'','둘이서도 닿지 않았다. 동료가 당신을 끌고 빠져나왔다. 다음엔 더 강해져서 온다.');}}]:[])]});
+function smBossWin(S,b){S.dead_npc.amje=1;S.flags.smFree=1;S.flags.smCured=1;A(S,{fame:50,salgi:5,enemies:-2});deed(S,'살막의 막주 암제를 베었다');hist(S,'살막의 막주 암제가 쓰러졌다. 살막의 장부가 불탔다.');
+  return fightText(b,'암제의 가면이 반으로 갈라졌다. 그 아래 얼굴은 평범한 노인이었다. 이마에 아주 오래된, 거의 지워진 먹 자국이 있었다. 번호였다.\n암제: “…나도 자루 속에서 왔다.”\n그가 눈을 감았다. 당신은 동굴 가장 깊은 곳의 장부를 꺼내 불에 던졌다. 수천 개의 번호가 타올랐다. 그 불빛 속에서 당신은 오래 서 있었다. 그날 이후 번호를 단 자객은 다시 오지 않았다.','');}
+/* 살막에 남는다면: 무림맹주 살해, 그리고 막주의 자리 */
+E({id:'smMaengju',tag:'key',t:'맹주의 목',a:[26,80],w:S=>inSal(S)&&S.rank>=2&&(S.flags.smKills||0)>=6&&!S.dead_npc.maengju&&!S.seen.smMaengju?8:0,
+ prep:S=>{S.tmp.foe=npcFoe(S,'maengju',{lethal:1,q:NPCS.maengju.q*.85,realm:Math.max(NPCS.maengju.realm,S.realm)});},
+ x:S=>`막주가 직접 당신을 불렀다. 처음 있는 일이었다.
+암제: “${smNo(S)}. 의뢰가 들어왔다. 살막이 생긴 이래 가장 큰 의뢰다.”
+암제가 봉투를 탁자에 놓았다. 봉인이 셋이었다. 정파의 봉인, 사파의 봉인, 그리고 아무 무늬도 없는 검은 봉인.
+암제: “표적은 ${S.w.alliance?'무림맹주':'무림맹을 세우려는 자'}, 정천신산 제갈 휘. 의뢰인은 셋이다. 그가 죽기를 바라는 자가 천하에 그만큼 많다는 뜻이지.”
+당신: “…맹주의 곁에는 천하의 고수들이 있습니다.”
+암제: “그래서 너다. 성공하면 너는 살막의 장로가 된다. 그리고 천하가 네 번호를 기억하게 된다.”
+봉투를 집어 들었다. 생각보다 가벼웠다. 천하의 무게가 이것뿐이었다.`,
+ ch:S=>[{t:'결행한다',h:'목숨을 건 싸움 · 천하가 뒤집힌다',go:S=>{const b=battle(S,S.tmp.foe,{weaken:.85});if(b.win){S.dead_npc.maengju=1;S.flags.mjKill=1;S.flags.smKills=(S.flags.smKills||0)+1;if(S.rank<3)S.rank=3;A(S,{fame:80,salgi:15,moral:-25,contrib:80});if(S.w)S.w.alliance=0;deed(S,'무림맹주 제갈 휘를 암살했다');hist(S,'무림맹주 정천신산 제갈 휘가 암살당했다. 범인은 끝내 밝혀지지 않았다.');repAdd(S,'wudang',-30);repAdd(S,'shaolin',-30);
+     return fightText(b,'맹주의 처소는 조용했다. 제갈 휘는 바둑판 앞에 앉아 있었다. 당신이 들어서자 돌 하나를 놓고 말했다. “열 수 앞을 보는데, 오늘 이 수는 못 봤구려.” 그게 마지막 말이었다. 이튿날 천하가 뒤집혔다. 아무도 범인의 이름을 몰랐다. 이름이 없는 자였으니까.','');}
+     hurt(S,50,'맹주의 호위');S.flags.smSus=(S.flags.smSus||0)+2;return fightText(b,'','맹주의 호위들이 문 앞에서 기다리고 있었다. 열 수 앞을 보는 사람이었다. 겨우 살아서 돌아왔다. 막주는 당신을 보지도 않았다.');}},
+  {t:'맹주에게 경고하고 살막을 등진다',h:'살막을 나온다 · 추격이 시작된다',go:S=>{smEscape(S,'betray');S.met.maengju=1;S.flags.smCured=1;TK(S,'maengju',30);A(S,{moral:20,fame:20});return '봉투를 든 채 맹주의 처소로 갔다. 칼 대신 봉투를 내밀었다. 제갈 휘가 봉인 셋을 보고 오래 웃었다. “살수가 표적에게 의뢰서를 배달하다니. 이 수는 정말 못 봤구려.” 맹주의 의원이 절혼독을 풀어 주었다. 그날부터 살막이 당신을 쫓았다.';}}]});
+E({id:'smThrone',tag:'key',t:'막주의 자리',a:[30,90],w:S=>inSal(S)&&S.rank===3&&S.flags.mjKill&&!S.dead_npc.amje?4:0,
+ prep:S=>{S.tmp.foe=npcFoe(S,'amje',{lethal:1});},
+ x:S=>`맹주가 죽은 지 몇 해, 살막의 장부에서 당신 번호가 가장 위에 올라갔다. 그리고 어느 밤, 막주가 당신을 불렀다.
+암제: “살막에는 법이 하나 있다. 막주의 자리는 물려주는 것이 아니라 빼앗는 것이다.”
+당신: “…그 말씀은.”
+암제: “나도 그렇게 앉았다. 너도 그렇게 앉아라. 아니면 내가 너를 지운다. 너는 너무 커졌다.”
+암제가 가면을 벗지 않은 채 일어섰다. 동굴 벽의 등불이 한꺼번에 흔들렸다.`,
+ ch:[{t:'자리를 빼앗는다',h:'목숨을 건 싸움',go:S=>{const b=battle(S,S.tmp.foe);if(b.win){S.dead_npc.amje=1;S.rank=4;S.flags.smFree=1;S.flags.smCured=1;A(S,{fame:60,salgi:10,contrib:100});deed(S,'살막의 막주가 되었다');hist(S,'살막의 막주가 바뀌었다. 새 막주는 이름이 없다.');return fightText(b,'암제가 쓰러졌다. 당신은 그의 가면을 집어 들었다. 가면 안쪽에 아주 작게 이름 하나가 새겨져 있었다. 그가 끝내 지우지 못한 이름. 당신은 가면을 썼다. 그날부터 살막은 당신의 것이었다. 그리고 당신은 아무것도 아니었다.','');}hurt(S,50,'암제');S.rank=2;return fightText(b,'','암제의 손이 당신 목에 닿았다가 멈췄다. “아직 이르다.” 혈살로 강등되었다.');}},
+  {t:'무릎을 꿇는다',go:S=>{A(S,{contrib:-20,mood:-10});return '“아직은 막주님의 칼입니다.” 암제가 한참 당신을 보았다. “영리하구나. 그래서 더 위험하다.” 그 뒤로 당신의 의뢰는 점점 더 위험한 것들뿐이었다.';}}]});
+['smName','smShadow','smBlood','smJobFirst','smJob','smGwi','cfRescue','cfDuel','smCure','smBreak','smPoisonCure','smHunt','smBoss','smMaengju','smThrone'].forEach(id=>JOB_OK.add(id));
+
+/* 납치되어 살막에 들면: 번호, 절혼독, 그리고 이름을 지우는 날 */
+function smJoin(S){if(S.flags.smPoison)return;S.flags.smPoison=1;S.flags.smNo=pick(SM_NO);if(S.age<=12)S.flags.kidnapped=S.age;}
+{const e=EV.find(x=>x.id==='kidnap');if(e){const oc=e.ch;e.ch=(typeof oc==='function'?oc:()=>oc);const f=e.ch;e.ch=S=>f(S).map(c=>({...c,go:S=>{const r=c.go(S);if(inSal(S)&&!S.flags.smPoison){smJoin(S);S.chain='smName';}return r;}}));}}
+{const e=EV.find(x=>x.id==='smTrial');if(e){const oc=e.ch;e.ch=S=>(typeof oc==='function'?oc(S):oc).map(c=>({...c,go:S=>{const r=c.go(S);if(S.flags.salmakEsc&&!S.flags.smName){S.flags.smName=1;S.flags.smOut='trial';S.flags.smHuntN=0;const k=cf(S);if(k){if(!k.path)k.path='escort';S.seen.cfPart=1;}}return r;}}));}}
 
 /* 처음 마주친 인연의 첫 만남 이야기를 순서대로 띄운다 */
 function fmNext(S){const f=S.flags.fmAt||(S.flags.fmAt={});
@@ -11936,7 +12151,7 @@ function craftWeapons(S){const ws=WEAPONS.filter(w=>S.sk[w]>=10);return ws.lengt
 
 /* ══ 한 해의 흐름 ═══════════════════════════════════ */
 function passive(S){
-  S.age++;safe(()=>wuNote(S));safe(()=>repYear(S));
+  S.age++;safe(()=>wuNote(S));safe(()=>repYear(S));safe(()=>{if(S.org==='salmak')smJoin(S);smYear(S);});
   (S.wpns||[]).forEach(w=>{if(w.w==='권'&&/수갑$/.test(w.n))w.n=w.n.replace(/수갑$/,'권갑');});if(S.wpn&&S.wpn.w==='권'&&/수갑$/.test(S.wpn.n))S.wpn.n=S.wpn.n.replace(/수갑$/,'권갑');
   if(S.org)sectMeet(S);
   if(S.org||S.arts.length)A(S,{exp:tb(S)*.35});
@@ -11961,6 +12176,7 @@ function passive(S){
   const L=lifespan(S);if(!S.dead&&S.age>L&&chance(.2+(S.age-L)*.08))S.dead='천수를 다함';
   if(S.rp>=100&&!has(S,'manduk')){S.traits.push('manduk');addLog(S,'어떤 독도 몸에 들지 않게 되었다. 만독불침.',1);}}
 function eligible(S,e){
+  if(S.org==='salmak'&&typeof SM_BLOCK!=='undefined'&&SM_BLOCK.has(e.id))return false;
   if(S.job){if(e.job){if(e.job!==S.job)return false;}else if(e.tag!=='family'&&e.tag!=='love'&&!JOB_OK.has(e.id))return false;}else if(e.job)return false;
   if(e.a&&(S.age<e.a[0]||S.age>e.a[1]))return false;
   if(e.cd){if(S.age-(S.last[e.id]??-99)<e.cd)return false;}else if(S.seen[e.id])return false;
@@ -12082,7 +12298,7 @@ function saveHall(h){try{localStorage.setItem(HKEY,JSON.stringify(h));}catch(e){
 const NAI_URL='https://image.novelai.net/ai/generate-image';
 const NAI_MODELS=[['nai-diffusion-4-5-full','V4.5 Full'],['nai-diffusion-4-5-curated','V4.5 Curated'],['nai-diffusion-5-full','V5 Full'],['nai-diffusion-5-curated','V5 Curated'],['nai-diffusion-4-full','V4 Full']];
 const NAI_Q={'nai-diffusion-5-full':'very aesthetic, masterpiece, best quality','nai-diffusion-5-curated':'very aesthetic, masterpiece, best quality','nai-diffusion-4-5-full':'very aesthetic, masterpiece, no text','nai-diffusion-4-5-curated':'location, masterpiece, no text','nai-diffusion-4-full':'no text, best quality, very aesthetic, absurdres'};
-const GAME_VER='2026.10.25-46';
+const GAME_VER='2026.10.25-47';
 const NAI_NEG='nsfw, nude, lowres, bad anatomy, bad hands, missing fingers, extra digits, text, watermark, signature, logo, worst quality, low quality, blurry, modern clothes, glasses, eyewear, jpeg artifacts';
 const NKEY='murim-nai';
 function ncfg(){let c={};try{c=JSON.parse(localStorage.getItem(NKEY)||'{}');}catch(e){}return Object.assign({key:'',relay:'',model:'nai-diffusion-4-5-full',style:'wuxia, ancient china, hanfu, detailed illustration, cinematic lighting',autoEv:false,autoPc:false,vn:true,neg:NAI_NEG,tnpc:'',tev:'',tmap:'',q:true},c,{pr:Object.assign({},c.pr)});}
@@ -12466,7 +12682,7 @@ const ORG_ALIAS=(()=>{const a=[];for(const o in ORGS){const n=ORGS[o].n;a.push([
   a.push(['마교','demon'],['교도','demon'],['산적','bandit'],['수적','jangsu'],['살수','salmak'],['거지','beggar']);return a.sort((x,y)=>y[0].length-x[0].length);})();
 const MOB_ELDER=/장로|장문|원로|태상|문주|교주|방주|련주|채주|궁주|가주|호법|당주/,MOB_FEM=/사저|사매|여제자|여협|소저|낭자|비구니|성녀|궁녀/;
 const MOB_RULE2=[[/흑도.*(두목|대장|우두머리)/,'heukdo_boss'],[/흑도|칼잡이|낭인/,'heukdo'],[/녹림.*(채주|두목)|산채 두목/,'nokrim_boss'],[/녹림|산적/,'nokrim'],[/수적/,'sujeok'],[/표사|표두/,'pyosa'],[/동창|제독/,'dongchang'],[/관병|관군/,'gwanbyeong'],[/포졸|포두|포쾌/,'pojol'],
- [/점소이/,'jeomsoi'],[/주모/,'jumo'],[/기녀|기생/,'gisaeng'],[/악사/,'akssa'],[/농부/,'farmer'],[/뱃사공|어부/,'fisher'],[/사냥꾼/,'hunter'],[/나그네|길손/,'traveler'],[/취객|술꾼/,'drunk'],[/노름꾼|도박/,'gambler'],[/사범|교두/,'sabeom'],[/의녀/,'uinyeo'],[/하녀/,'nobi_f'],[/하인|노비|종놈/,'nobi'],[/^장수$|장군/,'general'],[/병사|군졸/,'soldier'],[/설서인/,'storyteller'],[/거지 아이/,'kid_beggar']];
+ [/점소이/,'jeomsoi'],[/주모/,'jumo'],[/기녀|기생/,'gisaeng'],[/악사/,'akssa'],[/농부/,'farmer'],[/뱃사공|어부/,'fisher'],[/사냥꾼/,'hunter'],[/나그네|길손/,'traveler'],[/취객|술꾼/,'drunk'],[/노름꾼|도박/,'gambler'],[/사범|교두/,'sabeom'],[/의녀/,'uinyeo'],[/하녀/,'nobi_f'],[/하인|노비|종놈/,'nobi'],[/^장수$|장군/,'general'],[/병사|군졸/,'soldier'],[/설서인/,'storyteller'],[/거지 아이/,'kid_beggar'],[/교관/,'e_salmak'],[/^동기$|[가-힣]호$/,'d_salmak']];
 function mobOrg(S,nm){const hit=ORG_ALIAS.find(([a])=>nm.includes(a));let o=hit&&hit[1];
   if(!o&&/^(사형|사저|사제|사매|제자|동문|사숙|사백)/.test(nm)&&S.org)o=S.org;if(!o&&MOB_ELDER.test(nm)&&/^(장로|원로|장문인|집법 장로|태상장로)$/.test(nm)&&S.org)o=S.org;
   if(!o||!ORGS[o])return null;if(MOB_ELDER.test(nm)&&!/제자/.test(nm))return 'e_'+o;return (MOB_FEM.test(nm)||o==='emei')?'f_'+o:'d_'+o;}
@@ -12714,7 +12930,7 @@ function vnStep(){const c=VN.cur,root=document.querySelector('.vnfull[data-a="vn
 function vnScreen(S,o){const beats=vnBeats(S,o.text,o.scene);if(!beats.length)beats.push({s:null,t:''});if(VN.k!==o.key){VN.k=o.key;VN.i=0;VN.log=0;}
   const n=beats.length,i=Math.min(VN.i,n-1),b=beats[i],done=i>=n-1,auto=vnAuto();
   const cast=vnCast(S,beats,o.scene).filter(id=>imgURL(castKey(id))),pos=VN_POS[cast.length]||[],bk=beatKey(S,b);
-  const whoOf=(x,nm)=>x==='me'?{k:S.nick?S.nick.n:'',n:S.name,me:1}:x==='@'?{k:'',n:nm}:x&&NPCS[x]?{k:safe(()=>npcNick(x,S))||'',n:NPCS[x].n}:x==='?'?{k:'',n:'???'}:null;
+  const whoOf=(x,nm)=>x==='me'?{k:S.nick?S.nick.n:'',n:dispName(S),me:1}:x==='@'?{k:'',n:nm}:x&&NPCS[x]?{k:safe(()=>npcNick(x,S))||'',n:NPCS[x].n}:x==='?'?{k:'',n:'???'}:null;
   const who=whoOf(b.s,b.n),line=x=>x.s?'“'+esc(x.t)+'”':esc(x.t);
   VN.cur={key:o.key,beats,cast,whoOf,line};vnArm(o.key,i,n,b);
   const tool=(a,l,on,lab)=>`<button class="vntool ${on?'on':''}" data-a="${a}" ${lab?`aria-label="${lab}"`:''} ${on!=null?`aria-pressed="${!!on}"`:''}>${l}</button>`;
@@ -12822,7 +13038,7 @@ function affText(s){const parts=[];
   if(s.enemies)parts.push(`<span style="color:var(--seal)">원한 ${s.enemies}</span>`);
   return parts.join(' · ');}
 function topHTML(){const s=S,hm=hpMax(s);
-  return `<header class="top">${portrait('pc:'+s.lifeId,'주인공')}<div class="tinfo"><div class="tn">${esc(s.name)}${s.nick?` <span class="nick">${esc(s.nick.n)}</span>`:''}</div>
+  return `<header class="top">${portrait('pc:'+s.lifeId,'주인공')}<div class="tinfo"><div class="tn">${esc(dispName(s))}${s.nick?` <span class="nick">${esc(s.nick.n)}</span>`:''}</div>
    <div class="ts"><span>${s.age}세</span>${s.job?`<span>${esc(jobTitle(s))}</span>`:''}<span>${realmLabel(s)}</span><span>전투력 <b>${num(pow(s))}</b></span><span>${esc(s.loc)}</span></div>
    <div class="bar hp" title="체력 ${Math.round(s.hp)}/${hm}"><i style="width:${s.hp/hm*100}%"></i></div></div><button class="ghost" data-a="nai">설정</button></header>`;}
 function navHTML(){const pend=S.phase==='event'||S.phase==='craft'||S.phase==='forge';
