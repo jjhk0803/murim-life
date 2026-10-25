@@ -3997,7 +3997,7 @@ function saveHall(h){try{localStorage.setItem(HKEY,JSON.stringify(h));}catch(e){
 const NAI_URL='https://image.novelai.net/ai/generate-image';
 const NAI_MODELS=[['nai-diffusion-4-5-full','V4.5 Full'],['nai-diffusion-4-5-curated','V4.5 Curated'],['nai-diffusion-5-full','V5 Full'],['nai-diffusion-5-curated','V5 Curated'],['nai-diffusion-4-full','V4 Full']];
 const NAI_Q={'nai-diffusion-5-full':'very aesthetic, masterpiece, best quality','nai-diffusion-5-curated':'very aesthetic, masterpiece, best quality','nai-diffusion-4-5-full':'very aesthetic, masterpiece, no text','nai-diffusion-4-5-curated':'location, masterpiece, no text','nai-diffusion-4-full':'no text, best quality, very aesthetic, absurdres'};
-const GAME_VER='2026.10.25-30';
+const GAME_VER='2026.10.25-31';
 const NAI_NEG='nsfw, nude, lowres, bad anatomy, bad hands, missing fingers, extra digits, text, watermark, signature, logo, worst quality, low quality, blurry, modern clothes, jpeg artifacts';
 const NKEY='murim-nai';
 function ncfg(){let c={};try{c=JSON.parse(localStorage.getItem(NKEY)||'{}');}catch(e){}return Object.assign({key:'',relay:'',model:'nai-diffusion-4-5-full',style:'wuxia, ancient china, hanfu, detailed illustration, cinematic lighting',autoEv:false,autoPc:false,vn:true,neg:NAI_NEG,tnpc:'',tev:'',tmap:'',q:true},c,{pr:Object.assign({},c.pr)});}
@@ -4039,12 +4039,15 @@ async function unzipFirst(u8){ // NovelAI는 PNG 한 장이 든 zip을 돌려준
 let NAI_TP_OFF=false;
 async function naiDraw(input,portrait,o){o=o||{};const c=ncfg();if(!c.key.trim())throw new Error('설정(그림)에서 NovelAI 토큰을 먼저 넣어 주세요.');
   const [w,h]=portrait?[832,1216]:[1216,832];let neg=[(c.neg||'').trim()||NAI_NEG,o.negAdd||''].filter(Boolean).join(', '),model=c.model;
+  const refs=(o.refs||[]).filter(r=>r&&r.image);if(refs.length){o.tp=false;if(!/^nai-diffusion-4-5/.test(model))model='nai-diffusion-4-5-full';} // 레퍼런스는 V4.5에서만 된다
   if(o.tp){model=/^nai-diffusion-5/.test(c.model)?c.model:'nai-diffusion-5-full';input=input.split(',').map(t=>t.trim()).filter(t=>t&&!/^(simple|white|grey|gray|gradient|plain|transparent) background$/i.test(t)).concat('transparent background').join(', ');neg+=', drop shadow, cast shadow';}
   const seed=Math.floor(Math.random()*4294967295);
   const P={params_version:3,width:w,height:h,scale:5,sampler:'k_euler_ancestral',steps:28,n_samples:1,ucPreset:0,qualityToggle:true,noise_schedule:'karras',cfg_rescale:0,negative_prompt:neg,seed,
     dynamic_thresholding:false,legacy:false,add_original_image:false,prefer_brownian:true,deliberate_euler_ancestral_bug:false,use_coords:false};
   if(o.tp){P.params_version=4;P.straight_alpha=true;P.tag_hint_transparent_background=true;}
   if(/^nai-diffusion-(4|5)/.test(model)){P.v4_prompt={caption:{base_caption:input,char_captions:[]},use_coords:false,use_order:true};P.v4_negative_prompt={caption:{base_caption:neg,char_captions:[]},legacy_uc:false};}
+  if(refs.length){Object.assign(P,{reference_image_multiple:[],reference_information_extracted_multiple:[],reference_strength_multiple:[],director_reference_images:refs.map(r=>r.image),director_reference_strength_values:refs.map(r=>r.strength??1),director_reference_secondary_strength_values:refs.map(r=>1-(r.fidelity??1)),
+    director_reference_descriptions:refs.map(()=>({caption:{base_caption:'character',char_captions:[]},legacy_uc:false})),director_reference_information_extracted:refs.map(()=>1),controlnet_strength:1,inpaintImg2ImgStrength:1,normalize_reference_strength_multiple:true});}
   const relay=c.relay.trim();const url=relay?relay+(relay.includes('?')?'&':'?')+'u='+encodeURIComponent(NAI_URL):NAI_URL;
   let r;try{r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+c.key.trim()},body:JSON.stringify({input,model,action:'generate',parameters:P})});}
   catch(e){throw new Error(relay?'중계 서버에 연결하지 못했어요. 주소와 중계 서버의 허용 주소(ALLOW_ORIGIN)를 확인해 주세요.':'브라우저가 NovelAI에 바로 연결하지 못했어요. 설정에 중계 서버 주소를 넣어 주세요. (Claude 미리보기 안에서는 외부 연결이 막혀 있어요.)');}
@@ -4194,9 +4197,17 @@ async function storeSlot(k,b){ // 스탠딩은 원본을 raw:로 남기고 배�
   if(k.startsWith('st:')&&ncfg().autoCut!==false&&(await alphaInfo(b)).border<.5){try{await imgPut('raw:'+k,b);b=await cutBg(b,{});}catch(e){toast('배경을 자동으로 지우지 못해 원본을 넣었어요: '+e.message);}}
   else await imgDel('raw:'+k);
   await imgPut(k,b);setImg(k,b);}
+/* 인연 CG는 그 사람의 스탠딩을 캐릭터 레퍼런스로 넣어 얼굴·머리·옷을 맞춘다(가챠 게임 메이커의 스탠딩 레퍼런스와 같은 방식) */
+async function refImage(u){const bm=await createImageBitmap(await (await fetch(u)).blob()),r=bm.width/bm.height;
+  const [W,H]=[[1024,1536],[1536,1024],[1472,1472]].sort((a,b)=>Math.abs(r-a[0]/a[1])-Math.abs(r-b[0]/b[1]))[0];
+  const cv=document.createElement('canvas');cv.width=W;cv.height=H;const x=cv.getContext('2d');x.fillStyle='#000';x.fillRect(0,0,W,H);const z=Math.min(W/bm.width,H/bm.height),dw=bm.width*z,dh=bm.height*z;x.drawImage(bm,(W-dw)/2,(H-dh)/2,dw,dh);
+  return cv.toDataURL('image/png').split(',')[1];}
+const cgRefId=k=>isLoveCg(k)&&ncfg().cgRef!==false?k.slice(8):null;
+async function cgRefs(k){const id=cgRefId(k),src=id&&imgSrc('st:'+id);if(!src)return null;try{return [{image:await refImage(src.u),strength:1,fidelity:1}];}catch(e){toast('스탠딩을 레퍼런스로 읽지 못해 레퍼런스 없이 그려요.');return null;}}
 async function drawSlot(k,prompt,portrait,quiet){if(BUSY.has(k))return '이미 그리는 중';BUSY.add(k);if(modal&&modal.k===k){modal.err='';}render();
   try{let b;const tp=k.startsWith('st:')&&ncfg().v5tp!==false&&!NAI_TP_OFF;
-    const go=async t=>{try{return await naiDraw(fullPrompt(k,prompt),portrait,{tp:t,negAdd:/^wp:/.test(k)?WP_NEG:isLoveCg(k)?CG_NEG+', '+CG_LOVE_NEG:/^cg:/.test(k)?CG_NEG:''});}catch(e){if(!/잦아요/.test(e.message))throw e;await new Promise(r=>setTimeout(r,8000));return await naiDraw(fullPrompt(k,prompt),portrait,{tp:t,negAdd:/^wp:/.test(k)?WP_NEG:isLoveCg(k)?CG_NEG+', '+CG_LOVE_NEG:/^cg:/.test(k)?CG_NEG:''});}};
+    const refs=await cgRefs(k);
+    const go=async t=>{try{return await naiDraw(fullPrompt(k,prompt),portrait,{tp:t,refs,negAdd:/^wp:/.test(k)?WP_NEG:isLoveCg(k)?CG_NEG+', '+CG_LOVE_NEG:/^cg:/.test(k)?CG_NEG:''});}catch(e){if(!/잦아요/.test(e.message))throw e;await new Promise(r=>setTimeout(r,8000));return await naiDraw(fullPrompt(k,prompt),portrait,{tp:t,refs,negAdd:/^wp:/.test(k)?WP_NEG:isLoveCg(k)?CG_NEG+', '+CG_LOVE_NEG:/^cg:/.test(k)?CG_NEG:''});}};
     if(tp){try{b=await go(true);}catch(e){if(/토큰|Anlas|연결/.test(e.message))throw e;NAI_TP_OFF=true;toast('투명 배경으로 그리지 못해 흰 배경으로 그렸어요. 다시 켜기 전까지는 흰 배경으로 그려요.');b=await go(false);}}else b=await go(false);
     await storeSlot(k,b);if(modal&&modal.k===k)modal.err='';return true;}
   catch(e){if(modal&&modal.k===k)modal.err=e.message;else if(!quiet)toast(e.message);return e.message;}
@@ -4381,6 +4392,7 @@ function modalHTML(){if(!modal)return '';
    <label for="n_relay">중계 서버 주소 (선택)</label><input type="text" id="n_relay" value="${esc(c.relay)}" placeholder="https://내-워커.workers.dev" autocomplete="off">
    <p class="muted small">브라우저가 NovelAI에 바로 연결하지 못하면 중계 서버가 필요하다. 저장소의 proxy/worker.js를 Cloudflare Workers에 올리고 그 주소를 넣는다(README 참고).</p>
    <label class="row"><input type="checkbox" id="n_autoEv" ${c.autoEv?'checked':''}> 새 사건 장면을 자동으로 그린다 (사건마다 한 번)</label>
+   <label class="row"><input type="checkbox" id="n_cgRef" ${c.cgRef!==false?'checked':''}> 인연 CG는 그 사람의 스탠딩을 캐릭터 레퍼런스로 넣는다 (V4.5로 그림, Anlas가 더 들 수 있음)</label>
    <label class="row"><input type="checkbox" id="n_autoPc" ${c.autoPc?'checked':''}> 태어날 때 주인공 초상을 자동으로 그린다</label>
    ${aiCfgHTML(c.ai||acfg())}
    <div class="row" style="justify-content:space-between"><button class="ghost" data-a="mclose">닫기</button><button class="go" data-a="nsave">저장</button></div></div></div>`;}
@@ -4396,6 +4408,7 @@ function modalHTML(){if(!modal)return '';
    ${src?`<p class="small muted" style="margin:0">${local?'내 그림 · 이 브라우저에 저장됨':'저장소 그림 · img 폴더'}</p>`:''}
    <label for="n_prompt">그릴 대상 (영어 태그)</label><textarea id="n_prompt">${esc(modal.prompt)}</textarea>
    ${custom?'<div><button class="ghost" data-a="nreset">기본 프롬프트로 되돌리기</button></div>':''}
+   ${cgRefId(k)?`<p class="small muted" style="margin:0">${imgURL('st:'+cgRefId(k))?`<img src="${imgURL('st:'+cgRefId(k))}" alt="" style="height:48px;vertical-align:middle;margin-right:6px">${esc(NPCS[cgRefId(k)].n)}의 스탠딩을 캐릭터 레퍼런스로 넣어 그린다 (V4.5 모델로 그림)`:`${esc(NPCS[cgRefId(k)].n)}의 스탠딩이 없어 레퍼런스 없이 그린다. 스탠딩을 먼저 그리면 얼굴이 맞춰진다.`}</p>`:''}
    <p class="grp-t" style="margin:0">실제로 쓰는 프롬프트 (그림체 포함)</p><p class="ppv" id="n_full">${esc(fullPrompt(k,modal.prompt))}</p>
    <div class="row wrap"><button class="ghost" data-a="gcopy" data-w="full">프롬프트 복사</button><button class="ghost" data-a="gcopy" data-w="neg">네거티브 복사</button>${u&&port&&!k.startsWith('pc:')?'<button class="ghost" data-a="ncut">배경 지우기</button>':''}</div>
    ${modal.err?`<p class="status">${esc(modal.err)}</p>`:''}${busy?'<p class="status">그리는 중… 창을 닫아도 계속 그린다.</p>':''}
@@ -4662,7 +4675,7 @@ function render(){
   const eh1=document.getElementById('edhost');if(eh1&&ED&&ED.cv){eh1.appendChild(ED.cv);eh1.scrollLeft=ED.sl||0;eh1.scrollTop=ED.st||0;}
   if(fid){const el=document.getElementById(fid);if(el){el.focus({preventScroll:true});if(sel)try{el.setSelectionRange(sel[0],sel[1]);}catch(e){}}}}
 function closeModal(){modal=modal&&modal.back||null;render();} // 하위 창은 부모 창으로 돌아간다
-function readNaiForm(){const c=modal.c;c.key=document.getElementById('n_key').value;c.model=document.getElementById('n_model').value;c.relay=document.getElementById('n_relay').value.trim();c.autoEv=document.getElementById('n_autoEv').checked;c.autoPc=document.getElementById('n_autoPc').checked;c.vn=document.getElementById('n_vn').checked;c.useRepo=document.getElementById('n_repo').checked;
+function readNaiForm(){const c=modal.c;c.key=document.getElementById('n_key').value;c.model=document.getElementById('n_model').value;c.relay=document.getElementById('n_relay').value.trim();c.autoEv=document.getElementById('n_autoEv').checked;c.autoPc=document.getElementById('n_autoPc').checked;c.vn=document.getElementById('n_vn').checked;c.cgRef=document.getElementById('n_cgRef').checked;c.useRepo=document.getElementById('n_repo').checked;
   c.ai=readAiForm(c.ai||acfg());}
 function slotTitle(k){const [t,id]=k.split(/:(.+)/);if(t==='bg')return `인연 배경 · ${NPCS[id]?NPCS[id].n:id}`;if(t==='cg')return `CG · ${cgName(id)}`;if(t==='wp')return `병기 · ${WP_LABEL[WP_KO[id]]||id}`;if(t==='st')return `스탠딩 · ${safe(()=>npcNick(id,S))} ${NPCS[id].n}`;return t==='map'?'중원 지도':t==='reg'?`지역 · ${REG_KO[id]||id}`:t==='pc'?`${S.name}의 초상`:t==='npc'?`${safe(()=>npcNick(id,S))} ${NPCS[id].n}`:`장면 · ${safe(()=>evTitle(S,EVM[id]))||id}`;}
 app.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b||b.disabled)return;const a=b.dataset.a;
@@ -4712,7 +4725,7 @@ app.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b||b
   else if(a==='wname'){commitWpn(S,document.getElementById('wname').value);S.res.chips.push({t:'병기 얻음',up:true});save();render();}
   else if(a==='equip'){S.wpn={...S.wpns[+b.dataset.i]};save();render();}
   else if(a==='nai'){modal={t:'nai',c:ncfg()};render();}
-  else if(a==='nsave'){readNaiForm();const c=ncfg();['key','model','relay','autoEv','autoPc','useRepo','vn'].forEach(x=>c[x]=modal.c[x]);nsave(c);if(modal.c.ai)asave(modal.c.ai);modal=modal.back||null;render();toast('설정을 저장했어요.');}
+  else if(a==='nsave'){readNaiForm();const c=ncfg();['key','model','relay','autoEv','autoPc','useRepo','vn','cgRef'].forEach(x=>c[x]=modal.c[x]);nsave(c);if(modal.c.ai)asave(modal.c.ai);modal=modal.back||null;render();toast('설정을 저장했어요.');}
   else if(a==='draw'){const k=b.dataset.k;modal={t:'draw',k,title:slotTitle(k),prompt:slotPrompt(k),err:''};render();}
   else if(a==='ngen'){modal.prompt=document.getElementById('n_prompt').value;savePr(modal.k,modal.prompt);drawSlot(modal.k,modal.prompt,isPort(modal.k));}
   else if(a==='gal'){modal={t:'gal',tab:'style',back:modal};render();}
