@@ -474,7 +474,9 @@ function matUse(S,m){const u=MATS[m]&&MAT_USE[MATS[m].use];if(!u||!(S.mats[m]>0)
 const WP_EN={검:'sword',도:'saber',권:'gauntlet',창:'spear',봉:'staff',암기:'dart',음공:'zither',선:'fan'};
 const WP_KO=Object.fromEntries(Object.entries(WP_EN).map(([k,v])=>[v,k]));
 const WP_LABEL={검:'검(劍) · 곧은 양날',도:'도(刀) · 휜 외날',권:'권갑(拳甲) · 주먹에 끼는',창:'창(槍) · 긴 자루',봉:'봉(棍) · 곤봉',암기:'암기(暗器) · 비도·비침',음공:'금(琴) · 소리로 싸운다',선:'철선(鐵扇) · 쇠 부채'};
-const WPN_IMG_TAGS={sword:'single chinese straight sword, jian, double-edged, red tassel on pommel, ornate guard, scabbard beside',saber:'single chinese saber, dao, curved single-edged broad blade, ring pommel',gauntlet:'pair of iron martial arts gauntlets, knuckle guards, leather straps',spear:'chinese spear, qiang, long wooden shaft, leaf-shaped spearhead, red horsehair tassel',staff:'long wooden martial arts staff, iron caps at both ends',dart:'set of throwing knives and needles, flying daggers, on cloth',zither:'chinese guqin zither, seven strings, lacquered wood',fan:'iron war fan, folding fan with metal ribs, half open'};
+const WPN_IMG_TAGS={sword:'one chinese straight sword (jian), double-edged blade, simple crossguard, wrapped grip, round pommel, no scabbard',saber:'one chinese saber (dao), single curved broad blade, ring pommel, wrapped grip, no scabbard',gauntlet:'one iron martial arts gauntlet, single glove, knuckle plates, leather straps',spear:'one chinese spear (qiang), long wooden shaft, leaf-shaped steel spearhead, small red tassel',staff:'one long wooden fighting staff, iron caps on both ends',dart:'one throwing dagger (biao), small leaf-shaped blade, short handle with red cloth tail',zither:'one chinese guqin zither, seven strings, dark lacquered wood',fan:'one iron war fan, folded shut, steel ribs'};
+const WP_STYLE='single object, only one item, solo item, lying diagonally across the frame from bottom left to top right, entire object visible, flat lay, top-down view, plain dark grey textured stone surface, no humans, no hands, clean composition, sharp focus, highly detailed, realistic, product photography lighting';
+const WP_NEG='multiple weapons, two, pair, set, many, duplicate, collection, rack, display stand, scabbard, person, hands, text, watermark';
 const WP_SVG={검:'<path d="M4 20 L17 7 M15 5 l4 4 M13 9 l2 2 M3 21 l2-2"/>',도:'<path d="M5 19 C9 15 14 8 19 4 C18 9 13 15 7 20 Z M4 20 l2-2"/>',권:'<path d="M7 11 v-3 a1.5 1.5 0 0 1 3 0 v2 v-3 a1.5 1.5 0 0 1 3 0 v3 v-2 a1.5 1.5 0 0 1 3 0 v6 c0 3-2 5-5 5 h-1 c-2 0-4-2-4-4 v-3 Z"/>',
  창:'<path d="M3 21 L18 6 M18 6 l3-3 l-1 4 l-3 1 Z M14 10 l-2-3 M14 10 l3 2"/>',봉:'<path d="M3 21 L21 3 M5 19 l2 2 M17 3 l4 4"/>',암기:'<path d="M5 5 l6 6 M5 5 l2 0 M5 5 l0 2 M12 3 v8 M12 3 l-1 2 M12 3 l1 2 M19 5 l-6 6 M19 5 l-2 0 M19 5 l0 2 M8 16 h8 M8 19 h8"/>',
  음공:'<path d="M3 9 h18 v6 h-18 Z M5 10.5 h14 M5 12 h14 M5 13.5 h14 M7 15 v3 M17 15 v3"/>',선:'<path d="M12 20 L3 9 A12 12 0 0 1 21 9 Z M12 20 L7 6 M12 20 L12 4.5 M12 20 L17 6"/>'};
@@ -3813,7 +3815,7 @@ async function unzipFirst(u8){ // NovelAI는 PNG 한 장이 든 zip을 돌려준
   throw new Error('그림 응답을 풀지 못했어요.');}
 let NAI_TP_OFF=false;
 async function naiDraw(input,portrait,o){o=o||{};const c=ncfg();if(!c.key.trim())throw new Error('설정(그림)에서 NovelAI 토큰을 먼저 넣어 주세요.');
-  const [w,h]=portrait?[832,1216]:[1216,832];let neg=(c.neg||'').trim()||NAI_NEG,model=c.model;
+  const [w,h]=portrait?[832,1216]:[1216,832];let neg=[(c.neg||'').trim()||NAI_NEG,o.negAdd||''].filter(Boolean).join(', '),model=c.model;
   if(o.tp){model=/^nai-diffusion-5/.test(c.model)?c.model:'nai-diffusion-5-full';input=input.split(',').map(t=>t.trim()).filter(t=>t&&!/^(simple|white|grey|gray|gradient|plain|transparent) background$/i.test(t)).concat('transparent background').join(', ');neg+=', drop shadow, cast shadow';}
   const seed=Math.floor(Math.random()*4294967295);
   const P={params_version:3,width:w,height:h,scale:5,sampler:'k_euler_ancestral',steps:28,n_samples:1,ucPreset:0,qualityToggle:true,noise_schedule:'karras',cfg_rescale:0,negative_prompt:neg,seed,
@@ -3971,7 +3973,7 @@ async function storeSlot(k,b){ // 스탠딩은 원본을 raw:로 남기고 배�
   await imgPut(k,b);setImg(k,b);}
 async function drawSlot(k,prompt,portrait,quiet){if(BUSY.has(k))return '이미 그리는 중';BUSY.add(k);if(modal&&modal.k===k){modal.err='';}render();
   try{let b;const tp=k.startsWith('st:')&&ncfg().v5tp!==false&&!NAI_TP_OFF;
-    const go=async t=>{try{return await naiDraw(fullPrompt(k,prompt),portrait,{tp:t});}catch(e){if(!/잦아요/.test(e.message))throw e;await new Promise(r=>setTimeout(r,8000));return await naiDraw(fullPrompt(k,prompt),portrait,{tp:t});}};
+    const go=async t=>{try{return await naiDraw(fullPrompt(k,prompt),portrait,{tp:t,negAdd:/^wp:/.test(k)?WP_NEG:''});}catch(e){if(!/잦아요/.test(e.message))throw e;await new Promise(r=>setTimeout(r,8000));return await naiDraw(fullPrompt(k,prompt),portrait,{tp:t,negAdd:/^wp:/.test(k)?WP_NEG:''});}};
     if(tp){try{b=await go(true);}catch(e){if(/토큰|Anlas|연결/.test(e.message))throw e;NAI_TP_OFF=true;toast('투명 배경으로 그리지 못해 흰 배경으로 그렸어요. 다시 켜기 전까지는 흰 배경으로 그려요.');b=await go(false);}}else b=await go(false);
     await storeSlot(k,b);if(modal&&modal.k===k)modal.err='';return true;}
   catch(e){if(modal&&modal.k===k)modal.err=e.message;else if(!quiet)toast(e.message);return e.message;}
@@ -3996,7 +3998,7 @@ const STYLE_PRESETS=[['무협 일러스트','wuxia, ancient china, hanfu, detail
  ['무협 웹툰','korean webtoon style, murim, wuxia, sharp lineart, dramatic shading, dynamic composition'],
  ['반실사 유화','semi-realistic, oil painting, painterly, wuxia, ancient china, dramatic lighting, rich texture']];
 const isPort=k=>/^(pc|npc|st):/.test(k);
-function fullPrompt(k,p){const c=ncfg();if(p==null)p=slotPrompt(k);const cg=/^cg:/.test(k),kt=cg?'':k==='map'?c.tmap:isPort(k)?c.tnpc:c.tev;return [p,kt,cg?CG_INK:c.style,c.q?NAI_Q[c.model]:''].filter(x=>x&&String(x).trim()).join(', ');}
+function fullPrompt(k,p){const c=ncfg();if(p==null)p=slotPrompt(k);const cg=/^cg:/.test(k),wp=/^wp:/.test(k),kt=cg||wp?'':k==='map'?c.tmap:isPort(k)?c.tnpc:c.tev;return [p,kt,cg?CG_INK:wp?WP_STYLE:c.style,c.q?NAI_Q[c.model]:''].filter(x=>x&&String(x).trim()).join(', ');}
 const REG_EN={북해:'beihai',신강:'xinjiang',하북:'hebei',산동:'shandong',섬서:'shaanxi',하남:'henan',청해:'qinghai',안휘:'anhui',호북:'hubei',사천:'sichuan',강남:'jiangnan',호남:'hunan',귀주:'guizhou',운남:'yunnan',광동:'guangdong'};
 const REG_KO=Object.fromEntries(Object.entries(REG_EN).map(([a,b])=>[b,a]));
 const REG_TAGS={beihai:'frozen northern sea, ice palace, snowstorm, glaciers',xinjiang:'vast desert mountains, demonic cult fortress, dark clouds, red banners',hebei:'imperial capital, massive city walls, northern plains',shandong:'mount tai, bandit fortress on cliffs, pine trees',
@@ -4141,7 +4143,7 @@ function traitsHTML(s,full){const t=s.traits.map(k=>`<span class="chip t" title=
   ['극양지체','극음지체'].forEach(k=>{if(s.flags[k])t.push(`<span class="chip t">${k}</span>`);});if(s.flags.hwangol)t.push('<span class="chip t">환골탈태</span>');
   return t.length?`<div class="chips">${t.join('')}</div>${full?`<div class="muted small">${s.traits.map(k=>`<b>${TRAITS[k].n}</b> ${esc(TRAITS[k].d)} <span style="color:var(--seal)">제약: ${esc(TCON[k]||'없음')}</span>`).join('<br>')}</div>`:''}`:'';}
 function portrait(k,label,cls){const u=imgURL(k)||(k.startsWith('st:')?imgURL('npc:'+k.slice(3)):null);return `<button class="portrait ${u?'has':''} ${cls||''}" data-a="draw" data-k="${esc(k)}" aria-label="${esc(label)} 그림">${u?`<img src="${u}" alt="">`:BUSY.has(k)?'그리는 중':'그림'}</button>`;}
-function basePrompt(k){const [t,id]=k.split(/:(.+)/);if(t==='st'){const g=NPC_TAGS[id];return (typeof g==='function'?g(S):g)+', cowboy shot, standing, white background';}return t==='bg'?loveBgPrompt(id):t==='wp'?(WPN_IMG_TAGS[id]||'chinese weapon')+', single item, still life, no humans, displayed on dark wooden stand, simple background':t==='cg'?cgPrompt(id):t==='pc'?pcPrompt(S):t==='npc'?npcPrompt(id,S):t==='map'?MAP_TAG:t==='reg'?(REG_TAGS[id]||'ancient chinese landscape')+', scenery, wide shot, cinematic composition, no humans':evPrompt(id);}
+function basePrompt(k){const [t,id]=k.split(/:(.+)/);if(t==='st'){const g=NPC_TAGS[id];return (typeof g==='function'?g(S):g)+', cowboy shot, standing, white background';}return t==='bg'?loveBgPrompt(id):t==='wp'?(WPN_IMG_TAGS[id]||'one chinese weapon'):t==='cg'?cgPrompt(id):t==='pc'?pcPrompt(S):t==='npc'?npcPrompt(id,S):t==='map'?MAP_TAG:t==='reg'?(REG_TAGS[id]||'ancient chinese landscape')+', scenery, wide shot, cinematic composition, no humans':evPrompt(id);}
 function slotPrompt(k){const p=ncfg().pr[k];return p&&p.trim()?p:basePrompt(k);}
 function modalHTML(){if(!modal)return '';
   if(modal.t==='nai'){const c=modal.c;return `<div class="modal" data-a="mbg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mt"><h3 id="mt">설정</h3>${S.phase!=='birth'&&S.phase!=='end'?`<div class="row" style="justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:10px"><span class="small muted">이번 생을 접고 처음으로 돌아간다.</span><button class="ghost" data-a="quit">${modal.sure?'정말 포기한다':'처음으로'}</button></div>`:''}<p class="grp-t" style="margin:0">그림</p>
