@@ -258,6 +258,15 @@ button.chip.on{background:var(--jade);color:var(--card);border-color:var(--jade)
 .bep{margin:0;line-height:1.6}.bch b{font-family:var(--f-disp)}.bch p{margin:2px 0 0;line-height:1.7}
 .brev{display:flex;gap:8px;align-items:flex-start;border-top:1px solid var(--line);padding-top:8px}.brev p{margin:0;line-height:1.7}
 @media (max-width:420px){.book{grid-template-columns:76px 1fr}.bcover .bt{font-size:1.15rem}}
+.wpn{display:flex;align-items:center;gap:8px;min-width:0}
+.wpt{flex:none;width:44px;height:44px;border:1px solid var(--line);border-radius:6px;background:var(--paper);display:grid;place-items:center;overflow:hidden}
+.wpt img{width:100%;height:100%;object-fit:cover}
+.wpi{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.wchip{display:inline-flex;align-items:center;gap:4px}.wchip .wpi{width:18px;height:18px}
+.wplist{display:flex;flex-direction:column;gap:6px}
+.wp>.chip,.wp>button.chip{white-space:nowrap;flex:none}
+.wpb{display:flex;align-items:center;gap:8px;text-align:left;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font:inherit}
+.wpb.on{border-color:var(--jade);box-shadow:0 0 0 1px var(--jade) inset}
 </style>
 </head><body>
 <div id="app"></div>
@@ -406,17 +415,17 @@ const REG={
  신강:{x:48,y:84,adj:['북해','청해','섬서'],d:'십만대산. 천마신교의 땅.',mat:'화린석'},
  하북:{x:262,y:68,adj:['북해','산동','하남','섬서'],d:'황도 북경과 하북팽가.',mat:'현철'},
  산동:{x:330,y:100,adj:['하북','하남','안휘','강남'],d:'태산과 녹림맹의 산채.',mat:'현철'},
- 섬서:{x:180,y:112,adj:['신강','청해','하북','하남','사천','호북'],d:'화산. 백 년 전 천마와 검성이 사라진 곳.',mat:null},
- 하남:{x:254,y:124,adj:['하북','산동','섬서','호북','안휘'],d:'숭산 소림사와 낙양. 개방 총타.',mat:null},
- 청해:{x:100,y:148,adj:['신강','섬서','사천'],d:'곤륜산과 혈교의 붉은 호수.',mat:'한철'},
- 안휘:{x:312,y:158,adj:['산동','하남','호북','강남'],d:'남궁세가의 본가.',mat:null},
- 호북:{x:226,y:168,adj:['섬서','하남','안휘','사천','호남','강남'],d:'무당산.',mat:null},
+ 섬서:{x:180,y:112,adj:['신강','청해','하북','하남','사천','호북'],d:'화산. 백 년 전 천마와 검성이 사라진 곳.',mat:'청강석'},
+ 하남:{x:254,y:124,adj:['하북','산동','섬서','호북','안휘'],d:'숭산 소림사와 낙양. 개방 총타.',mat:'오금'},
+ 청해:{x:100,y:148,adj:['신강','섬서','사천'],d:'곤륜산과 혈교의 붉은 호수.',mat:'혈옥'},
+ 안휘:{x:312,y:158,adj:['산동','하남','호북','강남'],d:'남궁세가의 본가.',mat:'청강석'},
+ 호북:{x:226,y:168,adj:['섬서','하남','안휘','사천','호남','강남'],d:'무당산.',mat:'백옥'},
  사천:{x:142,y:194,adj:['청해','섬서','호북','귀주','운남','호남'],d:'사천당가와 아미산.',mat:'독철'},
- 강남:{x:330,y:208,adj:['산동','안휘','호북','호남','광동'],d:'항주의 물길. 하오문과 만화궁.',mat:null},
- 호남:{x:240,y:216,adj:['호북','사천','귀주','강남','광동'],d:'동정호. 살막이 숨어 있다.',mat:null},
+ 강남:{x:330,y:208,adj:['산동','안휘','호북','호남','광동'],d:'항주의 물길. 하오문과 만화궁.',mat:'백옥'},
+ 호남:{x:240,y:216,adj:['호북','사천','귀주','강남','광동'],d:'동정호. 살막이 숨어 있다.',mat:'묵철'},
  귀주:{x:172,y:240,adj:['사천','호남','운남','광동'],d:'독충의 땅. 귀영루의 근거지.',mat:'독철'},
  운남:{x:104,y:262,adj:['사천','귀주'],d:'남만의 밀림과 불타는 화산.',mat:'화린석'},
- 광동:{x:280,y:262,adj:['강남','호남','귀주'],d:'바다와 상선.',mat:null}};
+ 광동:{x:280,y:262,adj:['강남','호남','귀주'],d:'바다와 상선.',mat:'오금'}};
 const TRAITS={
   heaven:{n:'천무지체',d:'천골지체라고도 한다. 하늘이 내린 무골로, 무엇을 익히든 이해가 남달라 빨리 대성하고, 체질을 가리지 않아 못 익히는 무공이 없다. 역사에 몇 없다.',p:.012},
   gongryeong:{n:'공령지체',d:'천지의 자연지기를 끌어다 쓰는 몸. 단전이 바닥나도 외기가 흘러들어 내력이 마르지 않는다.',p:.02},
@@ -440,7 +449,39 @@ const TCON={heaven:'하늘이 시기한다. 원한 1을 안고 태어나고 수�
 const TCOST={heaven:30,gongryeong:18,slaughter:15,eumyang:14,dokche:12,manduk:12,geumgang:12,seongol:12,taeyang:10,taeeum:10,cheonan:10,geomgol:10,sinryeok:8,yin:2};
 const MATS={정철:{cap:2,kw:null,d:'흔한 쇠. 언제든 구한다.'},현철:{cap:3,kw:'강',d:'검고 단단한 쇠. 굳센 병기가 된다.'},한철:{cap:4,kw:'음',d:'만년설 속에서 자란 차가운 쇠. 음한의 기운이 깃든다.'},
   화린석:{cap:4,kw:'양',d:'화산 속에서 붉게 달아오른 돌. 양강의 기운이 깃든다.'},독철:{cap:3,kw:'독',d:'독룡의 굴에서 나온 쇠. 날에 독이 스민다.'},운석:{cap:5,kw:'강기',d:'별에서 떨어진 쇠. 신병이기의 재료.'}};
-const WNAME={검:'검',도:'도',권:'수갑',창:'창',봉:'봉',암기:'비도',음공:'금',선:'선'};
+
+// 광물의 쓰임: aff 잘 맞는 병기(최대 등급 +1) · use 품거나 삼켜 쓰기 · price 시세
+Object.assign(MATS.정철,{price:10});Object.assign(MATS.현철,{aff:['도','창'],price:60});Object.assign(MATS.한철,{aff:['검'],use:'yin',price:90});
+Object.assign(MATS.화린석,{aff:['도','권'],use:'yang',price:90});Object.assign(MATS.독철,{aff:['암기'],price:80});Object.assign(MATS.운석,{aff:['검','도','권','창','봉','암기','음공','선'],price:600});
+Object.assign(MATS,{
+ 청강석:{cap:3,kw:'쾌',aff:['검','도'],price:80,d:'푸른빛이 도는 가볍고 날카로운 쇠. 검과 도에 잘 맞는다.'},
+ 오금:{cap:4,kw:'중',aff:['봉','창','권'],price:120,d:'다섯 가지 쇠가 섞인 무거운 금속. 봉·창·권갑에 잘 맞는다.'},
+ 묵철:{cap:4,kw:'암',aff:['암기'],price:120,d:'빛을 먹는 검은 쇠. 암기로 벼리면 날이 보이지 않는다.'},
+ 백옥:{cap:4,kw:'율',aff:['음공','선'],use:'cult',price:150,d:'두드리면 맑은 소리가 나는 흰 옥. 금(琴)과 철선에 잘 맞고, 품고 있으면 마음이 가라앉는다.'},
+ 혈옥:{cap:4,kw:'혈',aff:['도','권'],use:'ng',price:150,d:'붉은 호수 바닥에서 나는 핏빛 옥. 삼키면 내공이 늘지만 마음이 탁해진다.'},
+ 만년한철:{cap:5,kw:'음',aff:['검','창'],use:'yin',price:400,d:'북해 빙하 가장 깊은 곳의 쇠. 신병이기의 재료. 품고 있으면 음기가 오른다.'},
+ 자금:{cap:5,kw:'호신',aff:['권','봉','선'],price:500,d:'황실 보고에나 있다는 자줏빛 금. 몸을 지키는 기운이 깃든다.'}});
+const MAT_USE={yin:['품고 운기한다','음기 +20 · 음과 양이 치우친 무공을 쓰려 할 때',S=>{A(S,{yy:-20});return '차가운 기운이 단전으로 스며들었다. 음기가 올랐다.';}],
+ yang:['품고 운기한다','양기 +20',S=>{A(S,{yy:20});return '뜨거운 기운이 경맥을 달렸다. 양기가 올랐다.';}],
+ ng:['삼킨다','내공 +6년 · 도덕−2 · 살기+3',S=>{A(S,{ng:6,moral:-2,salgi:3});return '핏빛 옥이 목을 넘어가자 단전이 끓었다. 내공이 늘었다. 꿈자리가 사나워졌다.';}],
+ cult:['품고 명상한다','수양 +4 · 심상↑',S=>{A(S,{cult:4,mood:12});return '옥을 두드리자 맑은 소리가 났다. 그 소리를 따라 마음이 가라앉았다.';}]};
+const ORE_POOL=['현철','한철','화린석','독철','청강석','오금','묵철','백옥','혈옥'];
+const oreRand=S=>{if(S&&chance(.04+(S.t?S.t.luck*.006:0)))return pick(['운석','자금','만년한철']);return pick(ORE_POOL);};
+const matCap=(m,w)=>Math.min(5,MATS[m].cap+(MATS[m].aff&&MATS[m].aff.includes(w)&&m!=='운석'?1:0));
+function matSell(S,m){if(!(S.mats[m]>0))return;const g=Math.round(MATS[m].price*(S.job==='smith'?1.3:1));S.mats[m]--;if(!S.mats[m])delete S.mats[m];A(S,{gold:g});addLog(S,`${m} 한 덩이를 은자 ${g}냥에 팔았다.`,0);return g;}
+function matUse(S,m){const u=MATS[m]&&MAT_USE[MATS[m].use];if(!u||!(S.mats[m]>0))return;S.mats[m]--;if(!S.mats[m])delete S.mats[m];const t=u[2](S);addLog(S,`${m}: ${t}`,0);return t;}
+// 병기 종류: 알아보기 쉬운 이름과 그림(그림이 없으면 선 그림)
+const WP_EN={검:'sword',도:'saber',권:'gauntlet',창:'spear',봉:'staff',암기:'dart',음공:'zither',선:'fan'};
+const WP_KO=Object.fromEntries(Object.entries(WP_EN).map(([k,v])=>[v,k]));
+const WP_LABEL={검:'검(劍) · 곧은 양날',도:'도(刀) · 휜 외날',권:'권갑(拳甲) · 주먹에 끼는',창:'창(槍) · 긴 자루',봉:'봉(棍) · 곤봉',암기:'암기(暗器) · 비도·비침',음공:'금(琴) · 소리로 싸운다',선:'철선(鐵扇) · 쇠 부채'};
+const WPN_IMG_TAGS={sword:'single chinese straight sword, jian, double-edged, red tassel on pommel, ornate guard, scabbard beside',saber:'single chinese saber, dao, curved single-edged broad blade, ring pommel',gauntlet:'pair of iron martial arts gauntlets, knuckle guards, leather straps',spear:'chinese spear, qiang, long wooden shaft, leaf-shaped spearhead, red horsehair tassel',staff:'long wooden martial arts staff, iron caps at both ends',dart:'set of throwing knives and needles, flying daggers, on cloth',zither:'chinese guqin zither, seven strings, lacquered wood',fan:'iron war fan, folding fan with metal ribs, half open'};
+const WP_SVG={검:'<path d="M4 20 L17 7 M15 5 l4 4 M13 9 l2 2 M3 21 l2-2"/>',도:'<path d="M5 19 C9 15 14 8 19 4 C18 9 13 15 7 20 Z M4 20 l2-2"/>',권:'<path d="M7 11 v-3 a1.5 1.5 0 0 1 3 0 v2 v-3 a1.5 1.5 0 0 1 3 0 v3 v-2 a1.5 1.5 0 0 1 3 0 v6 c0 3-2 5-5 5 h-1 c-2 0-4-2-4-4 v-3 Z"/>',
+ 창:'<path d="M3 21 L18 6 M18 6 l3-3 l-1 4 l-3 1 Z M14 10 l-2-3 M14 10 l3 2"/>',봉:'<path d="M3 21 L21 3 M5 19 l2 2 M17 3 l4 4"/>',암기:'<path d="M5 5 l6 6 M5 5 l2 0 M5 5 l0 2 M12 3 v8 M12 3 l-1 2 M12 3 l1 2 M19 5 l-6 6 M19 5 l-2 0 M19 5 l0 2 M8 16 h8 M8 19 h8"/>',
+ 음공:'<path d="M3 9 h18 v6 h-18 Z M5 10.5 h14 M5 12 h14 M5 13.5 h14 M7 15 v3 M17 15 v3"/>',선:'<path d="M12 20 L3 9 A12 12 0 0 1 21 9 Z M12 20 L7 6 M12 20 L12 4.5 M12 20 L17 6"/>'};
+const wpIcon=w=>`<svg class="wpi" viewBox="0 0 24 24" aria-hidden="true">${WP_SVG[w]||WP_SVG['검']}</svg>`;
+const wpThumb=w=>{const u=WP_EN[w]&&imgURL('wp:'+WP_EN[w]);return `<span class="wpt" title="${esc(WP_LABEL[w]||w)}">${u?`<img src="${u}" alt="">`:wpIcon(w)}</span>`;};
+
+const WNAME={검:'검',도:'도',권:'권갑',창:'창',봉:'봉',암기:'비도',음공:'금',선:'철선'};
 const EPIC=['청명','무흔','파천','월하','태아','용천','한광','적소','유성','천외','현월','단심'];
 
 /* 핵심 인물. lv(S)가 있으면 주인공 나이에 맞춰 자란다. hide: 숨긴 비율, hs: 꿰뚫어 보는 데 필요한 안목 */
@@ -751,7 +792,7 @@ E({id:'order',t:'명검 주문',a:[18,80],w:2,cd:4,if:S=>S.flags.smith||S.forge>
  x:'이름난 무인이 대장간을 찾아왔다. 자신에게 맞는 병기 한 자루를 주문한다. 값은 부르는 대로 주겠다고 한다.',
  ch:[{t:'혼을 담아 벼린다',h:'단조가 높을수록 좋은 칼이 나온다.',go:S=>{const q=S.forge+R(-10,20);A(S,{forge:4});if(q>=60){A(S,{gold:300,fame:8});return '석 달 만에 나온 검은 바람을 갈랐다. 무인은 은자 삼백 냥을 내고 절을 했다.';}
       if(q>=30){A(S,{gold:100,fame:2});return '쓸 만한 검이 나왔다. 은자 백 냥을 받았다.';}A(S,{mood:-8});return '검이 담금질 중에 갈라졌다. 무인은 혀를 차며 돌아갔다.';}},
-  {t:'값 대신 귀한 쇠를 받는다',h:'병기를 벼릴 재료',go:S=>{const m=pick(['현철','한철','화린석','독철']);S.mats[m]=(S.mats[m]||0)+2;A(S,{forge:3});return `무인은 은자 대신 ${m} 두 덩이를 놓고 갔다. ${MATS[m].d}`;}}]});
+  {t:'값 대신 귀한 쇠를 받는다',h:'병기를 벼릴 재료',go:S=>{const m=oreRand(S);S.mats[m]=(S.mats[m]||0)+2;A(S,{forge:3});return `무인은 은자 대신 ${m} 두 덩이를 놓고 갔다. ${MATS[m].d}`;}}]});
 E({id:'divine',t:'별에서 온 쇠',a:[28,90],w:3,if:S=>S.forge>=70&&!S.flags.divine,
  x:'운석 한 덩이가 손에 들어왔다. 별에서 떨어진 쇠. 평생 한 번 올 기회다. 신병이기를 벼릴 수 있다.',
  ch:[{t:'내 손으로 벼리겠다',h:'풀무 앞에서 운석으로 벼리면 5등급 신병이 나올 수 있다.',go:S=>{S.flags.divine=1;S.mats.운석=(S.mats.운석||0)+1;A(S,{forge:5});return '운석을 품에 안고 대장간으로 돌아왔다. 이제 풀무 앞에 설 때다.';}},
@@ -1251,10 +1292,10 @@ E({id:'dokin',t:'독인 수련',a:[14,40],w:2,if:S=>S.org==='tang'&&!has(S,'dokc
  ch:[{t:'독지에 몸을 담근다',h:'항독이 높을수록 산다.',go:S=>{S.flags.dokin=1;if(chance(.3+S.rp/150)){S.traits.push('dokche');A(S,{rp:20,ng:15});deed(S,'독인 수련 끝에 만독지체가 되었다');return '아흐레 뒤 독지에서 걸어 나왔다. 손끝이 보랏빛이다. 만독지체가 되었다.';}hurt(S,60,'독인 수련');A(S,{rp:10});return '사흘째 정신을 잃었다. 원로가 당신을 끌어냈다.';}},
   {t:'거절한다',go:S=>{S.flags.dokin=1;return '원로는 아무 말 없이 문을 닫았다.';}}]});
 E({id:'oreFind',t:'이상한 광석',a:[14,90],w:S=>.4+(S.forge>=20?.8:0),cd:6,
- prep:S=>{const loc=REG[S.loc]&&REG[S.loc].mat;S.tmp.m=chance(.08+S.t.luck*.01)?'운석':loc&&chance(.6)?loc:pick(['현철','한철','화린석','독철']);},
+ prep:S=>{const loc=REG[S.loc]&&REG[S.loc].mat;S.tmp.m=chance(.06+S.t.luck*.01)?'운석':S.loc==='북해'&&chance(.15)?'만년한철':loc&&chance(.6)?loc:oreRand(S);},
  x:S=>S.tmp.m==='운석'?'한밤중 하늘에서 불덩이가 떨어졌다. 아침에 찾아간 구덩이 바닥에서 검은 쇳덩이가 아직 뜨겁다. 별에서 온 쇠, 운석이다.':`깊은 산 동굴에서 ${jo(S.tmp.m,'을','를')} 찾았다. ${MATS[S.tmp.m].d}`,
  ch:[{t:'챙겨 둔다',h:'풀무 앞에서 병기로 벼릴 수 있다.',go:S=>{S.mats[S.tmp.m]=(S.mats[S.tmp.m]||0)+1;return `${S.tmp.m} 한 덩이를 얻었다.`;}},
-  {t:'팔아 버린다',go:S=>{A(S,{gold:S.tmp.m==='운석'?600:120});return '대장장이가 반색하며 은자를 쳐주었다.';}}]});
+  {t:'팔아 버린다',h:'시세대로 판다',go:S=>{A(S,{gold:MATS[S.tmp.m].price});return '대장장이가 반색하며 은자를 쳐주었다.';}}]});
 
 /* ── 대회와 보물 ── */
 E({id:'grand',t:'천하제일 비무대회',a:[20,60],w:1.3,cd:10,if:S=>S.realm>=3,
@@ -1933,7 +1974,7 @@ function jobChoices(S){const b=S.biz,L=[],mult=1+.25*(b.lv-1);
     L.push({t:'주문을 받아 벼린다',h:'은자·단조·평판',go:S=>{const g=15+b.lv*15+Math.floor(S.forge/2);A(S,{gold:g,forge:3*mult});b.orders++;b.rep+=2;return pick(['호미 마흔 자루와 표국의 도 열 자루.','관아에서 창날 백 개를 주문했다.','떠돌이 검객의 이 빠진 검을 다시 살렸다.'])+` 은자 ${g}냥.`;}});
     if(S.forge>=15)L.push({t:'이름을 새길 병기를 벼린다',h:'재료와 병기를 골라 이름을 새긴다.',craft:'forge'});
     L.push({t:'쇠를 접는다',h:'단조',go:S=>{A(S,{forge:6*mult});return '쇠를 접고 또 접었다. 천 번 접은 쇠는 비단처럼 결이 났다.';}});
-    L.push({t:'광석을 찾아 나선다',h:'재료',go:S=>{const m=(REG[S.loc]&&REG[S.loc].mat)||pick(['현철','한철','정철']);if(chance(.2)){hurt(S,12,'광산의 낙석');return '갱도가 무너졌다. 겨우 기어 나왔다.';}if(m!=='정철'){S.mats[m]=(S.mats[m]||0)+1;return `${jo(m,'을','를')} 한 덩이 캐 왔다.`;}return '쓸 만한 광석은 없었다.';}});
+    L.push({t:'광석을 찾아 나선다',h:'재료',go:S=>{const m=(REG[S.loc]&&REG[S.loc].mat&&chance(.7)?REG[S.loc].mat:null)||oreRand(S);if(chance(.2)){hurt(S,12,'광산의 낙석');return '갱도가 무너졌다. 겨우 기어 나왔다.';}if(m!=='정철'){S.mats[m]=(S.mats[m]||0)+1;return `${jo(m,'을','를')} 한 덩이 캐 왔다.`;}return '쓸 만한 광석은 없었다.';}});
     if(b.lv<4)L.push({t:`대장간을 키운다 (${SMITH_LV[b.lv+1]})`,h:`은자 ${b.lv*120}냥 · 단조가 더 빨리 는다`,if:S=>S.gold>=b.lv*120,go:S=>{A(S,{gold:-b.lv*120});b.lv++;return `${SMITH_LV[b.lv]}. 쇠가 더 뜨겁게, 더 고르게 달아오른다.`;}});}
   if(S.job==='doctor'){
     L.push({t:'환자를 본다',h:'의술·치료·은자',go:S=>{const n=3+b.lv*2,g=10+b.lv*10;b.cures+=n;b.rep+=2;A(S,{med:2*mult,gold:g});return pick(['열병 앓는 아이, 다리 부러진 나무꾼, 상사병 걸린 선비.','장터 싸움에 칼 맞은 사내의 배를 꿰맸다.','밤마다 기침하는 노파에게 배즙을 달여 주었다.'])+` 환자 ${n}명.`;}});
@@ -2034,7 +2075,7 @@ E({id:'smithOrg',tag:'job',job:'smith',t:'전속 대장장이',a:[18,75],w:2.5,i
  ch:S=>[...S.tmp.o.map(o=>({t:`${ORGS[o].n}의 대장장이가 된다`,h:'해마다 일감과 은자가 들어온다',go:S=>{S.flags.smithOrg=1;S.biz.backer=o;S.biz.rep+=10;A(S,{gold:100});deed(S,`${ORGS[o].n}의 전속 대장장이가 되었다`);return SMITH_ORG_T[o];}})),
   {t:'홀로 망치를 든다',go:S=>{S.flags.smithOrg=1;A(S,{cult:3});S.biz.rep+=3;return '“내 쇠는 내가 고른 사람에게 간다.” 둘 다 돌려보냈다.';}}]});
 E({id:'smithOre',tag:'job',job:'smith',t:'의뢰인의 광석',a:[18,95],w:3,cd:4,if:S=>S.forge>=25,
- prep:S=>{S.tmp.m=pick(['현철','한철','운석','화린석']);S.tmp.c=pick(['젊은 협객','늙은 표두','복면의 여인','세가의 공자','살기 어린 사내']);},
+ prep:S=>{S.tmp.m=chance(.25)?pick(['운석','자금','만년한철']):oreRand(S);S.tmp.c=pick(['젊은 협객','늙은 표두','복면의 여인','세가의 공자','살기 어린 사내']);},
  x:S=>`${jo(S.tmp.c,'이','가')} 보자기를 풀었다. 주먹만 한 ${S.tmp.m}. “이걸로 내 칼을 벼려 주시오. 값은 부르는 대로.”`,
  ch:[{t:'혼을 담아 벼린다',h:'단조·대장간',go:S=>{const q=clamp(Math.floor(1+S.forge/25+S.biz.lv*.4+Math.random()),1,5);S.biz.made++;S.biz.orders++;S.biz.rep+=q*4;A(S,{gold:q*60,forge:3,fame:q>=4?q*3:0});const n=smithName(S,S.tmp.m);S.biz.last=n;if(q>=4)deed(S,`명검 「${n}」을 벼렸다`);return `아흐레 밤낮 화로 앞을 떠나지 않았다. 「${n}」, 등급 ${q}. ${jo(S.tmp.c,'이','가')} 칼을 받아 들고 한참 말이 없었다.`;}},
   {t:'빨리 벼려 넘긴다',h:'은자',go:S=>{A(S,{gold:60,forge:2});S.biz.orders++;S.biz.rep+=1;return '사흘 만에 넘겼다. 쓸 만한 칼이었다. 그뿐이었다.';}},
@@ -2624,7 +2665,7 @@ const VISIT_LINE={geolwang:'“국수 얻어먹으러 왔다. 공짜로.”',gum
 const visitCands=S=>Object.keys(NPCS).filter(id=>S.met[id]&&!S.dead_npc[id]&&(S.rel[id]||0)>=40&&!loveBlocked(S,id)&&S.spouse!==id&&!(S.harem&&S.harem.includes(id)));
 function visitHelp(S,id){const nm=NPCS[id].n,same=NPCS[id].org&&NPCS[id].org===S.org,lead=same&&LEADER[S.org]===id&&!retired(S,id)&&S.rank<4;
   if(S.job==='inn'){S.biz.patrons+=3;S.biz.rep+=8;return `${nm}${bat(nm)?'이':'가'} 다녀간 뒤로 그를 아는 무림인들이 객잔을 찾아오기 시작했다.`;}
-  if(S.job==='smith'){const m=pick(['현철','한철','화린석','운석']);S.mats[m]=(S.mats[m]||0)+1;A(S,{forge:3});S.biz.rep+=5;return `떠나며 보자기 하나를 두고 갔다. 안에 ${m} 한 덩이가 있었다. “좋은 칼 하나 벼려라.”`;}
+  if(S.job==='smith'){const m=oreRand(S);S.mats[m]=(S.mats[m]||0)+1;A(S,{forge:3});S.biz.rep+=5;return `떠나며 보자기 하나를 두고 갔다. 안에 ${m} 한 덩이가 있었다. “좋은 칼 하나 벼려라.”`;}
   if(S.job==='doctor'){S.biz.herbs+=6;A(S,{med:2});S.biz.rep+=5;return '떠나며 약초 꾸러미를 두고 갔다. 깊은 산에서나 나는 것들이었다.';}
   if(lead){const nx=[0,1,2,3].map(i=>S.org+'_'+i).find(a=>ARTS[a]&&!S.arts.includes(a));const r=nx&&chance(.5)?learn(S,nx):'';A(S,{contrib:20,exp:tb(S)*.5});return `${hd(S)}${bat(hd(S))?'이':'가'} 직접 찾아온 것을 보고 사형제들이 수군댔다. 그날 밤 ${hd(S)}${bat(hd(S))?'은':'는'} 한 수를 가르쳐 주었다. `+(r||'익힌 초식의 막힌 곳이 풀렸다.');}
   if(same){A(S,{contrib:15,exp:tb(S)*.4});return '사문 일로 곤란한 게 있으면 말하라며 장로들에게 한마디 넣어 주었다.';}
@@ -3565,13 +3606,21 @@ EVM.bt={id:'bt',title:S=>`${REALMS[S.realm+1].n}의 벽`,
 /* 단조와 병기 */
 function addWeapon(S,wp){S.wpns.push(wp);if(!S.wpn||wpVal(S,wp)>wpVal(S,S.wpn))S.wpn={...wp};}
 function commitWpn(S,name){const p=S.pendingWpn;if(!p)return;const n=(name||'').trim()||p.def;addWeapon(S,{n,w:p.w,q:p.q,kw:p.kw||null});addLog(S,`${jo(n,'을','를')} 얻었다. (${p.w} · 등급 ${p.q})`,1);S.pendingWpn=null;}
-const forgeRange=(S,m)=>{const b=S.flags.smith?1:0,cap=MATS[m].cap;return [clamp(Math.floor(S.forge/20)+b,1,cap),clamp(Math.floor((S.forge+25)/20)+b,1,cap)];};
-const forgeDefault=(S,f)=>{const [lo,hi]=forgeRange(S,f.m);return (hi>=4?pick(EPIC):f.m)+WNAME[f.w];};
-function doForge(){const f=S.tmp.forge;if(!f)return;const before=SNAP(S);const [lo,hi]=forgeRange(S,f.m);const q=R(lo,hi);
+const forgeRange=(S,m,w)=>{const b=S.flags.smith?1:0,cap=w?matCap(m,w):MATS[m].cap;return [clamp(Math.floor(S.forge/20)+b,1,cap),clamp(Math.floor((S.forge+25)/20)+b,1,cap)];};
+const forgeDefault=(S,f)=>{const [lo,hi]=forgeRange(S,f.m,f.w);return (hi>=4?pick(EPIC):f.m)+WNAME[f.w];};
+function doForge(){const f=S.tmp.forge;if(!f)return;if(f.mode==='refine')return doRefine();const before=SNAP(S);const [lo,hi]=forgeRange(S,f.m,f.w);const q=R(lo,hi);
   if(f.m!=='정철'){S.mats[f.m]--;if(!S.mats[f.m])delete S.mats[f.m];}
   const n=(f.name||'').trim()||f.def;const wp={n,w:f.w,q,kw:MATS[f.m].kw,made:1};addWeapon(S,wp);if(S.job==='smith'){S.biz.made++;S.biz.rep+=q*3;S.biz.last=n;}A(S,{forge:4,fame:q>=4?q*5:0});
   if(q>=5)deed(S,`신병이기 ${jo(n,'을','를')} 벼려 냈다`);else if(q>=4)deed(S,`명병 ${jo(n,'을','를')} 벼려 냈다`);
   finish(S,'병기를 벼리다',`${n} (${f.m} · ${f.w})`,q>=5?`칼이 화로에서 나오던 밤 하늘에서 별똥이 떨어졌다. 강호 사람들은 구야자가 돌아왔다고 했다. ${n}, 병기 등급 5.`:`${q>=4?'석 달 밤낮을 망치질했다. ':''}${jo(n,'이','가')} 모습을 드러냈다. 병기 등급 ${q}${wp.kw?` · ${wp.kw}의 결이 깃들었다`:''}.`,before,true);}
+
+function doRefine(){const f=S.tmp.forge,w=S.wpns[f.i];if(!w||f.m==='정철'||!(S.mats[f.m]>0))return;const before=SNAP(S),cap=matCap(f.m,w.w);
+ S.mats[f.m]--;if(!S.mats[f.m])delete S.mats[f.m];let t;
+ if(w.q>=cap)t=`${f.m}${bat(f.m)?'으로':'로'}는 ${jo(w.n,'을','를')} 더 끌어올릴 수 없었다. 쇠의 결만 조금 바뀌었다.`;
+ else if(S.forge+R(0,40)>=25+w.q*12){const was=w.q;w.q++;if(!w.kw&&MATS[f.m].kw)w.kw=MATS[f.m].kw;w.made=1;t=`날을 풀고 ${jo(f.m,'을','를')} 덧대어 다시 벼렸다. ${jo(w.n,'이','가')} 등급 ${was}에서 ${w.q}${w.q===3||w.q===6?'으로':'로'} 올랐다.${w.kw?` 결: ${w.kw}.`:''}`;if(w.q>=5)deed(S,`${jo(w.n,'을','를')} 신병이기로 다시 벼렸다`);}
+ else t=`망치질이 어긋났다. ${f.m} 한 덩이만 날아갔다. ${jo(w.n,'은','는')} 그대로다.`;
+ if(S.wpn&&S.wpn.n===w.n)S.wpn={...w};A(S,{forge:3});if(S.job==='smith'){S.biz.rep+=w.q*2;}
+ finish(S,'병기를 다듬다',`${w.n} · ${f.m}`,t,before,true);}
 
 /* 무공 창안 */
 const craftOk=S=>S.realm>=4&&S.mu>=40&&allKw(S).size>=3&&S.age-(S.last.craft??-99)>=5;
@@ -3583,6 +3632,7 @@ function craftWeapons(S){const ws=WEAPONS.filter(w=>S.sk[w]>=10);return ws.lengt
 /* ══ 한 해의 흐름 ═══════════════════════════════════ */
 function passive(S){
   S.age++;
+  (S.wpns||[]).forEach(w=>{if(w.w==='권'&&/수갑$/.test(w.n))w.n=w.n.replace(/수갑$/,'권갑');});if(S.wpn&&S.wpn.w==='권'&&/수갑$/.test(S.wpn.n))S.wpn.n=S.wpn.n.replace(/수갑$/,'권갑');
   if(S.org)sectMeet(S);
   if(S.org||S.arts.length)A(S,{exp:tb(S)*.35});
   A(S,{ng:ngRate(S)});heartPush(S);
@@ -3947,10 +3997,10 @@ const MAP_TAG='ancient map of china, ink wash painting, mountains, rivers, parch
 const safe=f=>{try{return f()||'';}catch(e){return '';}};
 function fileName(k){return (k==='map'?'map':k.replace(':','_'))+'.png';}
 function keyFromName(n){n=n.replace(/\.[^.]+$/,'').trim();const lo=n.toLowerCase();if(lo==='map'||n==='지도')return 'map';
-  const m=/^(npc|st|ev|reg|cg)[_\-:](.+)$/i.exec(n);if(m){const t=m[1].toLowerCase(),id=m[2];if(t==='cg')return cgSlots().includes('cg:'+id)?'cg:'+id:null;if((t==='npc'||t==='st')&&NPCS[id])return 'st:'+id;if(t==='ev'&&EVM[id])return 'ev:'+id;if(t==='reg'&&(REG_KO[id.toLowerCase()]||REG_EN[id]))return 'reg:'+(REG_EN[id]||id.toLowerCase());return null;}
+  const m=/^(npc|st|ev|reg|cg|wp)[_\-:](.+)$/i.exec(n);if(m){const t=m[1].toLowerCase(),id=m[2];if(t==='wp')return WP_KO[id.toLowerCase()]?'wp:'+id.toLowerCase():null;if(t==='cg')return cgSlots().includes('cg:'+id)?'cg:'+id:null;if((t==='npc'||t==='st')&&NPCS[id])return 'st:'+id;if(t==='ev'&&EVM[id])return 'ev:'+id;if(t==='reg'&&(REG_KO[id.toLowerCase()]||REG_EN[id]))return 'reg:'+(REG_EN[id]||id.toLowerCase());return null;}
   if(NPCS[n])return 'st:'+n;if(EVM[n])return 'ev:'+n;if(REG_EN[n])return 'reg:'+REG_EN[n];if(REG_KO[lo])return 'reg:'+lo;return null;}
-function galKeys(t){if(t==='cg')return cgSlots();if(t==='map')return ['map',...Object.keys(REG).map(r=>'reg:'+REG_EN[r])];if(t==='npc'||t==='st')return Object.keys(NPC_TAGS).filter(id=>NPCS[id]).map(id=>t+':'+id);return EV.filter(e=>e.id!=='focus'&&e.id!=='bt').map(e=>'ev:'+e.id);}
-function slotName(k){const [t,id]=k.split(/:(.+)/);if(t==='st')return NPCS[id].n;if(t==='cg')return cgName(id);return t==='map'?'중원 지도':t==='reg'?REG_KO[id]||id:t==='npc'?NPCS[id].n:(safe(()=>evTitle(S,EVM[id]))||id);}
+function galKeys(t){if(t==='cg')return cgSlots();if(t==='wp')return Object.values(WP_EN).map(x=>'wp:'+x);if(t==='map')return ['map',...Object.keys(REG).map(r=>'reg:'+REG_EN[r])];if(t==='npc'||t==='st')return Object.keys(NPC_TAGS).filter(id=>NPCS[id]).map(id=>t+':'+id);return EV.filter(e=>e.id!=='focus'&&e.id!=='bt').map(e=>'ev:'+e.id);}
+function slotName(k){const [t,id]=k.split(/:(.+)/);if(t==='st')return NPCS[id].n;if(t==='cg')return cgName(id);if(t==='wp')return WP_LABEL[WP_KO[id]]||id;return t==='map'?'중원 지도':t==='reg'?REG_KO[id]||id:t==='npc'?NPCS[id].n:(safe(()=>evTitle(S,EVM[id]))||id);}
 function savePr(k,p){const c=ncfg();if(!p.trim()||p.trim()===basePrompt(k).trim())delete c.pr[k];else c.pr[k]=p;nsave(c);}
 function copyText(t){const fb=()=>{const a=document.createElement('textarea');a.value=t;a.setAttribute('readonly','');a.style.position='fixed';a.style.opacity='0';document.body.appendChild(a);a.select();let ok=false;try{ok=document.execCommand('copy');}catch(e){}a.remove();toast(ok?'복사했어요.':'복사하지 못했어요. 글자를 길게 눌러 복사해 주세요.');};
   if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(t).then(()=>toast('복사했어요.'),fb);else fb();}
@@ -4081,7 +4131,7 @@ function traitsHTML(s,full){const t=s.traits.map(k=>`<span class="chip t" title=
   ['극양지체','극음지체'].forEach(k=>{if(s.flags[k])t.push(`<span class="chip t">${k}</span>`);});if(s.flags.hwangol)t.push('<span class="chip t">환골탈태</span>');
   return t.length?`<div class="chips">${t.join('')}</div>${full?`<div class="muted small">${s.traits.map(k=>`<b>${TRAITS[k].n}</b> ${esc(TRAITS[k].d)} <span style="color:var(--seal)">제약: ${esc(TCON[k]||'없음')}</span>`).join('<br>')}</div>`:''}`:'';}
 function portrait(k,label,cls){const u=imgURL(k)||(k.startsWith('st:')?imgURL('npc:'+k.slice(3)):null);return `<button class="portrait ${u?'has':''} ${cls||''}" data-a="draw" data-k="${esc(k)}" aria-label="${esc(label)} 그림">${u?`<img src="${u}" alt="">`:BUSY.has(k)?'그리는 중':'그림'}</button>`;}
-function basePrompt(k){const [t,id]=k.split(/:(.+)/);if(t==='st'){const g=NPC_TAGS[id];return (typeof g==='function'?g(S):g)+', cowboy shot, standing, white background';}return t==='cg'?cgPrompt(id):t==='pc'?pcPrompt(S):t==='npc'?npcPrompt(id,S):t==='map'?MAP_TAG:t==='reg'?(REG_TAGS[id]||'ancient chinese landscape')+', scenery, wide shot, cinematic composition, no humans':evPrompt(id);}
+function basePrompt(k){const [t,id]=k.split(/:(.+)/);if(t==='st'){const g=NPC_TAGS[id];return (typeof g==='function'?g(S):g)+', cowboy shot, standing, white background';}return t==='wp'?(WPN_IMG_TAGS[id]||'chinese weapon')+', single item, still life, no humans, displayed on dark wooden stand, simple background':t==='cg'?cgPrompt(id):t==='pc'?pcPrompt(S):t==='npc'?npcPrompt(id,S):t==='map'?MAP_TAG:t==='reg'?(REG_TAGS[id]||'ancient chinese landscape')+', scenery, wide shot, cinematic composition, no humans':evPrompt(id);}
 function slotPrompt(k){const p=ncfg().pr[k];return p&&p.trim()?p:basePrompt(k);}
 function modalHTML(){if(!modal)return '';
   if(modal.t==='nai'){const c=modal.c;return `<div class="modal" data-a="mbg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mt"><h3 id="mt">설정</h3>${S.phase!=='birth'&&S.phase!=='end'?`<div class="row" style="justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:10px"><span class="small muted">이번 생을 접고 처음으로 돌아간다.</span><button class="ghost" data-a="quit">${modal.sure?'정말 포기한다':'처음으로'}</button></div>`:''}<p class="grp-t" style="margin:0">그림</p>
@@ -4116,7 +4166,7 @@ function modalHTML(){if(!modal)return '';
    <div class="row wrap" style="justify-content:space-between"><span class="row wrap"><button class="ghost" data-a="mclose">${modal.back?'← 목록으로':'닫기'}</button><label class="ghost btnl" for="n_file">파일에서 넣기</label><input type="file" id="n_file" accept="image/*" hidden>${local?'<button class="ghost" data-a="nsavefile">파일로 저장</button><button class="ghost" data-a="ndel">내 그림 지우기</button>':''}</span>
    <button class="go" data-a="ngen" ${busy?'disabled':''}>${u?'NovelAI로 다시 그리기':'NovelAI로 그리기'}</button></div>
    <p class="muted small">${port?'세로 832×1216':'가로 1216×832'} · 다른 곳에서 그렸다면 프롬프트를 복사해 쓰고, 받은 그림을 '파일에서 넣기'로 넣는다.${k.startsWith('pc:')?'':` 여러 장 넣기용 파일 이름: <b>${fileName(k)}</b>`}${local?' · 내 그림을 지우면 저장소 그림이 있을 때 그것으로 돌아간다.':''}</p></div></div>`;}
-function galHTML(){const g=modal,c=ncfg(),T=[['style','그림체'],['map','지도'],['st','인물'],['ev','사건'],['cg','CG']];
+function galHTML(){const g=modal,c=ncfg(),T=[['style','그림체'],['map','지도'],['st','인물'],['ev','사건'],['wp','병기'],['cg','CG']];
   const head=`<div class="row" style="justify-content:space-between"><h3 id="mt" style="margin:0">그림 관리</h3><button class="ghost" data-a="mclose">닫기</button></div>
    <div class="chips" role="tablist">${T.map(([v,l])=>`<button class="chip ${g.tab===v?'on':''}" data-a="gtab" data-v="${v}" role="tab" aria-selected="${g.tab===v}">${l}</button>`).join('')}</div>`;
   let body;
@@ -4163,8 +4213,8 @@ function tabHTML(t){const s=S;
    return `<div><p class="grp-t">주 심법</p>${h?`<div class="art"><span class="an">${esc(h.n)}</span><span class="am">${'★'.repeat(h.t)}${h.made?' · 창안':''} · ${heartDesc(h)}${usable(s,h)?'':' · 지금 몸으로는 제 힘을 내지 못한다'}</span>${kwChips(h.kw)}${h.d?`<span class="muted small">${esc(h.d)}</span>`:''}</div>`:'<p class="muted">없음</p>'}</div>
    <div><p class="grp-t">무공</p>${as.filter(a=>a.k!=='심').map(a=>`<div class="art ${usable(s,a)?'':'off'}"><span class="an">${esc(a.n)}</span><span class="am">${a.k==='신'?'신법':a.w} · ${'★'.repeat(a.t)}${a.made?' · 창안':''}${!usable(s,a)?` · ${a.yy[0]>0?'양기 '+a.yy[0]+' 이상':'음기 '+(-a.yy[1])+' 이상'} 필요`:''}</span>${kwChips(a.kw)}</div>`).join('')||'<p class="muted">없음</p>'}
    ${(hs=>hs.length?`<p class="grp-t">익힌 다른 심법</p>${hs.map(a=>`<div class="art ${usable(s,a)?'':'off'}"><span class="an">${esc(a.n)} <button class="chip" data-a="mainh" data-id="${a.id}">주 심법으로</button></span><span class="am">${'★'.repeat(a.t)}${a.made?' · 창안':''} · ${heartDesc(a)}</span>${kwChips(a.kw)}</div>`).join('')}<p class="muted small">주 심법을 바꾸면 쌓인 내공의 1할이 흩어진다.</p>`:'')(as.filter(a=>a.k==='심'&&a.id!==s.heart))}</div>
-   <div><p class="grp-t">병기</p>${s.wpns.length?s.wpns.map((w,i)=>`<div class="wp"><span>${esc(w.n)} <span class="muted small">${w.w} · 등급 ${w.q}${w.kw?' · '+w.kw:''}${w.made?' · 손수 벼림':''}</span></span>${s.wpn&&s.wpn.n===w.n&&s.wpn.q===w.q?'<span class="chip t">장착</span>':`<button class="chip" data-a="equip" data-i="${i}">장착</button>`}</div>`).join(''):'<p class="muted">없음</p>'}
-   ${Object.keys(s.mats).length?`<p class="muted small">재료: ${Object.entries(s.mats).map(([m,n])=>`${m} ${n}`).join(' · ')}</p>`:''}<p class="muted small">주무기와 같은 종류의 병기만 제 위력을 낸다.</p></div>
+   <div><p class="grp-t">병기</p>${s.wpns.length?s.wpns.map((w,i)=>`<div class="wp"><span class="wpn">${wpThumb(w.w)}<span>${esc(w.n)}<br><span class="muted small">${esc(WP_LABEL[w.w]||w.w)} · 등급 ${w.q}${w.kw?' · 결 '+w.kw:''}${w.made?' · 손수 벼림':''}</span></span></span>${s.wpn&&s.wpn.n===w.n&&s.wpn.q===w.q?'<span class="chip t">장착</span>':`<button class="chip" data-a="equip" data-i="${i}">장착</button>`}</div>`).join(''):'<p class="muted">없음</p>'}
+   ${Object.keys(s.mats).length?`<p class="grp-t" style="margin-top:10px">광물</p>${Object.entries(s.mats).filter(([m,n])=>n>0&&MATS[m]).map(([m,n])=>`<div class="wp"><span>${m} <b>${n}</b><br><span class="muted small">${esc(MATS[m].d)}${MATS[m].aff&&m!=='운석'?` 잘 맞는 병기: ${MATS[m].aff.map(w=>WNAME[w]).join('·')}.`:''}</span></span><span class="row" style="gap:4px;flex:none">${MATS[m].use&&MAT_USE[MATS[m].use]?`<button class="chip" data-a="muse" data-m="${m}" title="${esc(MAT_USE[MATS[m].use][1])}">${MAT_USE[MATS[m].use][0]}</button>`:''}<button class="chip" data-a="msell" data-m="${m}">팔기 ${Math.round(MATS[m].price*(s.job==='smith'?1.3:1))}냥</button></span></div>`).join('')}<p class="muted small">광물은 풀무 앞에서 새 병기를 벼리거나 가진 병기를 다듬는 데 쓴다. 대장장이는 30% 비싸게 판다.</p>`:''}<p class="muted small">주무기와 같은 종류의 병기만 제 위력을 낸다.</p></div>
    ${ws.length>1?`<div><p class="grp-t">주무기</p><div class="chips">${ws.map(w=>`<button class="chip ${w===s.mainW?'on':''}" data-a="mainw" data-w="${w}">${w}</button>`).join('')}</div></div>`:''}
    <div><p class="grp-t">지금 펼치는 결</p>${ks.length?kwChips(ks)+`<p class="muted small">${ks.map(k=>`${k}: ${KW[k].d}`).join('<br>')}</p>`:'<p class="muted">없음</p>'}</div>`;}
   if(t==='pp'){const rows=[];
@@ -4189,10 +4239,18 @@ function scrollCard(){const e=EVM[S.cur];
      <div><label for="cname">이름 (비우면 ${auto?`'${esc(auto)}'`:'자동으로 짓는다'})</label><input id="cname" maxlength="12" value="${esc(c.name)}" placeholder="${esc(auto)}" autocomplete="off"></div>
      <p class="muted small">${tier}성 무공 · 성공률 약 ${Math.round(craftOdds(S,Math.max(2,c.sel.length))*100)}%</p>
      <div class="rowbtn"><button class="ghost" data-a="cback">그만둔다</button><button class="go" data-a="craft" ${c.sel.length<2?'disabled':''}>창안한다</button></div></section>`;}
-  if(S.phase==='forge'){const f=S.tmp.forge;const ms=['정철',...Object.keys(S.mats).filter(m=>S.mats[m]>0)];const [lo,hi]=forgeRange(S,f.m);
-    return `<section class="scroll craft"><div class="yr">${S.age}세의 해</div><h2>병기를 벼리다</h2><p>재료와 병기를 고르고 이름을 새긴다. 재료가 좋을수록, 단조가 높을수록 높은 등급이 나온다. 재료의 결이 병기에 깃든다.</p>
-     <div><label>재료</label><div class="chips">${ms.map(m=>`<button class="chip ${f.m===m?'on':''}" data-a="fm" data-m="${m}" title="${esc(MATS[m].d)}">${m}${m==='정철'?'':' '+S.mats[m]}</button>`).join('')}</div><p class="muted small">${esc(MATS[f.m].d)} 최대 등급 ${MATS[f.m].cap}${MATS[f.m].kw?` · 결 ${MATS[f.m].kw}`:''}</p></div>
-     <div><label>병기</label><div class="chips">${WEAPONS.map(w=>`<button class="chip ${f.w===w?'on':''}" data-a="fw" data-w="${w}">${w}</button>`).join('')}</div></div>
+  if(S.phase==='forge'){const f=S.tmp.forge;const ms=['정철',...Object.keys(S.mats).filter(m=>S.mats[m]>0)];const [lo,hi]=forgeRange(S,f.m,f.w);
+    const modes=`<div class="chips"><button class="chip ${f.mode!=='refine'?'on':''}" data-a="fmode" data-m="new">새로 벼리기</button><button class="chip ${f.mode==='refine'?'on':''}" data-a="fmode" data-m="refine" ${S.wpns.length?'':'disabled'}>가진 병기 다듬기</button></div>`;
+    const matInfo=m=>`${esc(MATS[m].d)} 최대 등급 ${MATS[m].cap}${MATS[m].aff&&m!=='운석'?` · 잘 맞는 병기 ${MATS[m].aff.map(w=>WNAME[w]).join('·')}(+1)`:''}${MATS[m].kw?` · 결 ${MATS[m].kw}`:''}`;
+    if(f.mode==='refine'){const rm=ms.filter(m=>m!=='정철'),w=S.wpns[f.i]||S.wpns[0];if(!S.wpns[f.i])f.i=0;if(!rm.includes(f.m))f.m=rm[0]||'정철';const cap=f.m!=='정철'?matCap(f.m,w.w):0;
+      return `<section class="scroll craft"><div class="yr">${S.age}세의 해</div><h2>병기를 다듬다</h2>${modes}<p>가진 병기에 광물을 덧대어 다시 벼린다. 성공하면 등급이 하나 오르고, 결이 없던 병기에는 광물의 결이 깃든다. 광물마다 끌어올릴 수 있는 한계가 있다.</p>
+       <div><label>병기</label><div class="wplist">${S.wpns.map((x,i)=>`<button class="wpb ${f.i===i?'on':''}" data-a="fri" data-i="${i}">${wpThumb(x.w)}<span>${esc(x.n)}<span class="muted small"> · ${WNAME[x.w]} · 등급 ${x.q}${x.kw?' · '+x.kw:''}</span></span></button>`).join('')}</div></div>
+       <div><label>덧댈 광물</label>${rm.length?`<div class="chips">${rm.map(m=>`<button class="chip ${f.m===m?'on':''}" data-a="fm" data-m="${m}">${m} ${S.mats[m]}</button>`).join('')}</div><p class="muted small">${matInfo(f.m)}</p>`:'<p class="muted small">가진 광물이 없다.</p>'}</div>
+       <p class="muted small">${rm.length?(w.q>=cap?`${f.m}${bat(f.m)?'으로':'로'}는 ${jo(WNAME[w.w],'을','를')} 등급 ${cap}까지만 끌어올릴 수 있다. 지금 ${w.q}.`:`성공률 약 ${clamp(Math.round((S.forge+20-(25+w.q*12))/40*100+50),5,95)}% · 실패해도 병기는 그대로, 광물만 사라진다.`):''}</p>
+       <div class="rowbtn"><button class="ghost" data-a="fback">그만둔다</button><button class="go" data-a="forge" ${rm.length&&w.q<cap?'':'disabled'}>다듬는다</button></div></section>`;}
+    return `<section class="scroll craft"><div class="yr">${S.age}세의 해</div><h2>병기를 벼리다</h2>${modes}<p>재료와 병기를 고르고 이름을 새긴다. 재료가 좋을수록, 단조가 높을수록 높은 등급이 나온다. 재료의 결이 병기에 깃들고, 재료와 잘 맞는 병기는 한 등급 더 높이 오를 수 있다.</p>
+     <div><label>재료</label><div class="chips">${ms.map(m=>`<button class="chip ${f.m===m?'on':''}" data-a="fm" data-m="${m}" title="${esc(MATS[m].d)}">${m}${m==='정철'?'':' '+S.mats[m]}</button>`).join('')}</div><p class="muted small">${matInfo(f.m)}</p></div>
+     <div><label>병기</label><div class="chips">${WEAPONS.map(w=>`<button class="chip wchip ${f.w===w?'on':''}" data-a="fw" data-w="${w}" title="${esc(WP_LABEL[w])}">${wpIcon(w)}${WNAME[w]}${MATS[f.m].aff&&MATS[f.m].aff.includes(w)&&f.m!=='운석'?' ↑':''}</button>`).join('')}</div><p class="muted small">${esc(WP_LABEL[f.w])}</p></div>
      <div><label for="fname">이름 (비우면 '${esc(f.def)}')</label><input id="fname" maxlength="10" value="${esc(f.name)}" placeholder="${esc(f.def)}" autocomplete="off"></div>
      <p class="muted small">단조 ${Math.round(S.forge)} · 예상 등급 ${lo===hi?lo:lo+'~'+hi}${S.flags.smith?' · 구야자의 제자 +1':''}</p>
      <div class="rowbtn"><button class="ghost" data-a="fback">그만둔다</button><button class="go" data-a="forge">벼린다</button></div></section>`;}
@@ -4202,7 +4260,7 @@ function scrollCard(){const e=EVM[S.cur];
   const r=S.res;const dead=!!S.dead;
   return `<section class="scroll fade" aria-live="polite"><div class="yr">${S.age}세의 해${S.cur&&EVM[S.cur]&&S.phase==='result'?tagChips(EVM[S.cur]):''}</div><h2>${esc(r.title)}</h2>${r.pick?`<div class="picked">${esc(r.pick)}</div>`:''}<p>${esc(r.text)}</p>
    ${r.chips.length?`<div class="delta">${r.chips.map(c=>`<span class="chip ${c.up?'up':'dn'}">${esc(c.t)}</span>`).join('')}</div>`:''}
-   ${S.pendingWpn?`<div class="craft"><label for="wname">새 병기 · ${S.pendingWpn.w} · 등급 ${S.pendingWpn.q}${S.pendingWpn.kw?' · 결 '+S.pendingWpn.kw:''} — 이름을 새긴다</label><div class="field"><input id="wname" maxlength="10" placeholder="${esc(S.pendingWpn.def)}" autocomplete="off"><button class="ghost" data-a="wname">새긴다</button></div></div>`:''}
+   ${S.pendingWpn?`<div class="craft"><label for="wname">새 병기 · ${esc(WP_LABEL[S.pendingWpn.w]||S.pendingWpn.w)} · 등급 ${S.pendingWpn.q}${S.pendingWpn.kw?' · 결 '+S.pendingWpn.kw:''} — 이름을 새긴다</label><div class="field"><input id="wname" maxlength="10" placeholder="${esc(S.pendingWpn.def)}" autocomplete="off"><button class="ghost" data-a="wname">새긴다</button></div></div>`:''}
    ${dead&&S.phase==='result'?`<p class="muted">${esc(S.dead==='우화등선'?'당신의 이야기는 여기서 하늘로 이어진다.':`그리고 그것이 마지막이었다. (${S.dead})`)}</p>`:''}
    <button class="go ${dead?'seal-btn':''}" data-a="next">${dead?'생을 돌아본다':S.chain?'계속 →':'한 해를 보낸다'}</button></section>`;}
 function hallHTML(){const h=loadHall();if(!h.length)return '';
@@ -4318,7 +4376,7 @@ function render(){
 function closeModal(){modal=modal&&modal.back||null;render();} // 하위 창은 부모 창으로 돌아간다
 function readNaiForm(){const c=modal.c;c.key=document.getElementById('n_key').value;c.model=document.getElementById('n_model').value;c.relay=document.getElementById('n_relay').value.trim();c.autoEv=document.getElementById('n_autoEv').checked;c.autoPc=document.getElementById('n_autoPc').checked;c.useRepo=document.getElementById('n_repo').checked;
   c.ai=readAiForm(c.ai||acfg());}
-function slotTitle(k){const [t,id]=k.split(/:(.+)/);if(t==='cg')return `CG · ${cgName(id)}`;if(t==='st')return `스탠딩 · ${safe(()=>npcNick(id,S))} ${NPCS[id].n}`;return t==='map'?'중원 지도':t==='reg'?`지역 · ${REG_KO[id]||id}`:t==='pc'?`${S.name}의 초상`:t==='npc'?`${safe(()=>npcNick(id,S))} ${NPCS[id].n}`:`장면 · ${safe(()=>evTitle(S,EVM[id]))||id}`;}
+function slotTitle(k){const [t,id]=k.split(/:(.+)/);if(t==='cg')return `CG · ${cgName(id)}`;if(t==='wp')return `병기 · ${WP_LABEL[WP_KO[id]]||id}`;if(t==='st')return `스탠딩 · ${safe(()=>npcNick(id,S))} ${NPCS[id].n}`;return t==='map'?'중원 지도':t==='reg'?`지역 · ${REG_KO[id]||id}`:t==='pc'?`${S.name}의 초상`:t==='npc'?`${safe(()=>npcNick(id,S))} ${NPCS[id].n}`:`장면 · ${safe(()=>evTitle(S,EVM[id]))||id}`;}
 app.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b||b.disabled)return;const a=b.dataset.a;
   if(a==='reroll'){S=newFate(document.getElementById('nm').value.trim(),S.sex,{...S.yc,remove:[]});render();}
   else if(a==='yt'){S.yc.t[b.dataset.k]+=+b.dataset.d;S=buildFate(S.base,S.yc);render();}
@@ -4356,6 +4414,10 @@ app.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b||b
   else if(a==='fw'){S.tmp.forge.w=b.dataset.w;S.tmp.forge.def=forgeDefault(S,S.tmp.forge);render();}
   else if(a==='fback'){S.phase='event';S.tmp.forge=null;render();}
   else if(a==='forge')doForge();
+  else if(a==='fmode'){const f=S.tmp.forge;f.mode=b.dataset.m;if(f.mode==='refine'){f.i=f.i||0;}else{if(!(f.m in MATS)||(f.m!=='정철'&&!(S.mats[f.m]>0)))f.m='정철';f.def=forgeDefault(S,f);}render();}
+  else if(a==='fri'){S.tmp.forge.i=+b.dataset.i;render();}
+  else if(a==='msell'){const g=matSell(S,b.dataset.m);if(g){save();render();toast(`은자 ${g}냥을 받았다.`);}}
+  else if(a==='muse'){const t=matUse(S,b.dataset.m);if(t){save();render();toast(t);}}
   else if(a==='wname'){commitWpn(S,document.getElementById('wname').value);S.res.chips.push({t:'병기 얻음',up:true});save();render();}
   else if(a==='equip'){S.wpn={...S.wpns[+b.dataset.i]};save();render();}
   else if(a==='nai'){modal={t:'nai',c:ncfg()};render();}
