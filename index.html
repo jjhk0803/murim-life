@@ -3390,8 +3390,10 @@ const LOVE={
  plain:{st:[],
   wed:'이웃 고을에서 온 반려는 무공을 모른다. 그래서 당신이 피 묻은 옷을 입고 돌아와도 묻지 않는다. 대신 늘 따뜻한 물을 데워 둔다. 강호의 누구도 해 주지 않던 일이다.',
   old:'반려가 먼저 늙었다. 무공을 모르는 사람은 빨리 늙는다. 당신은 처음으로 내공을 원망했다. 함께 늙지 못하게 하는 그 힘을.'}};
+/* 첫 만남 이야기는 아직 짝이 없을 때만: 이미 그 사람과 맺어졌거나(혼인·연인) 다른 사람과 혼인·연애 중이면 열리지 않는다(수라장 끝에 모두 품은 경우는 예외) */
+const firstMeetOk=(S,id)=>S.spouse!==id&&S.lover!==id&&!(S.harem&&S.harem.includes(id))&&((!S.spouse&&!lover(S))||!!(S.harem&&S.harem.length));
 Object.entries(LOVE).forEach(([id,L])=>L.st.forEach((st,i)=>E({id:`lv_${id}_${i}`,tag:'love',t:typeof st.t==='string'?st.t:'인연',title:typeof st.t==='function'?st.t:undefined,a:[15,80],w:3.5,
-  if:S=>loveList(S).includes(id)&&S.met[id]&&!S.dead_npc[id]&&!loveBlocked(S,id)&&(S.rel[id]||0)>=[18,42,65][i]&&(i===0||S.seen[`lv_${id}_${i-1}`])&&(i===0||!S.spouse||S.spouse===id||(S.harem&&S.harem.includes(id))),
+  if:S=>loveList(S).includes(id)&&S.met[id]&&!S.dead_npc[id]&&!loveBlocked(S,id)&&(S.rel[id]||0)>=[18,42,65][i]&&(i===0||S.seen[`lv_${id}_${i-1}`])&&(i===0?firstMeetOk(S,id):!S.spouse||S.spouse===id||(S.harem&&S.harem.includes(id))),
   x:st.x,ch:st.ch})));
 /* 이야기가 없던 인연들(LOVE_X)의 이야기 세 장. 호감 18·42·65에서 하나씩 열린다 */
 const LOVE_ARC={
@@ -7911,7 +7913,7 @@ const LOVE_ARC={
   wed:'칠영은 혼인한 뒤 산 아래 절 근처에 집을 얻었다. 칼은 들지 않는다. 대신 늘 우산을 들고 다닌다. 비 오는 날이면 당신 쪽으로 기울인다. 자기 어깨가 젖어도. 그 아이는 이제 어른이 되어 가끔 형을 찾아온다.'},
 };
 Object.entries(LOVE_ARC).forEach(([id,L])=>L.st.forEach((st,i)=>E({id:`lv_${id}_${i}`,tag:'love',t:typeof st.t==='string'?st.t:'인연',title:typeof st.t==='function'?st.t:undefined,a:[15,95],w:3.5,
-  if:S=>romList(S).includes(id)&&!loveList(S).includes(id)&&S.met[id]&&!S.dead_npc[id]&&!loveBlocked(S,id)&&(S.rel[id]||0)>=[18,42,65][i]&&(i===0||S.seen[`lv_${id}_${i-1}`])&&(i===0||!S.spouse||S.spouse===id||(S.harem&&S.harem.includes(id))),
+  if:S=>romList(S).includes(id)&&!loveList(S).includes(id)&&S.met[id]&&!S.dead_npc[id]&&!loveBlocked(S,id)&&(S.rel[id]||0)>=[18,42,65][i]&&(i===0||S.seen[`lv_${id}_${i-1}`])&&(i===0?firstMeetOk(S,id):!S.spouse||S.spouse===id||(S.harem&&S.harem.includes(id))),
   x:st.x,ch:st.ch})));
 const loveStory=id=>LOVE[id]&&LOVE[id].st&&LOVE[id].st.length?LOVE[id]:LOVE_ARC[id]||null;
 const fatePending=S=>Object.keys(LOVE).filter(id=>NPCS[id]&&LOVE[id].fate&&S.spouse!==id&&!S.flags['fate_'+id]&&!S.dead_npc[id]&&(id==='ha'?S.met.ha&&(S.rel.ha||0)>=40:S.seen[`lv_${id}_1`])&&(S.spouse||S.age>=42));
@@ -9721,7 +9723,7 @@ Object.assign(SECT_FIRST,{gongmyeong:{x:'소림 산문 아래 만둣집, 나한�
 /* ══ 역천: 능력치·전생의 인연·장수 ══ */
 const YC_STAT=[['lore','학문'],['med','의술'],['forge','단조'],['tongue','구력'],['savvy','처세'],['mind','심계'],['cult','수양'],['qing','경공'],['ng','내공']];
 const ycBondList=S=>[...new Set([...romList(S),'geolwang','geomseon','muhwang','gwangma','guya','pyeon'])].filter(id=>NPCS[id]&&id!=='ha');
-E({id:'pastBond',tag:'love',t:'전생의 인연',title:S=>NPCS[S.flags.pastBond]?`전생의 인연 · ${NPCS[S.flags.pastBond].n}`:'전생의 인연',a:[14,30],w:S=>S.flags.pastBond&&NPCS[S.flags.pastBond]&&!S.dead_npc[S.flags.pastBond]?8:0,
+E({id:'pastBond',tag:'love',t:'전생의 인연',title:S=>NPCS[S.flags.pastBond]?`전생의 인연 · ${NPCS[S.flags.pastBond].n}`:'전생의 인연',a:[14,30],w:S=>S.flags.pastBond&&NPCS[S.flags.pastBond]&&!S.dead_npc[S.flags.pastBond]&&firstMeetOk(S,S.flags.pastBond)?8:0,
  x:S=>{const id=S.flags.pastBond,nm=nnm(id,S);return `낯선 거리에서 ${jo(nm,'과','와')} 마주쳤다. 처음 보는 얼굴이다. 그런데 이상하게 낯설지 않다. 상대도 걸음을 멈추고 당신을 오래 보았다.\n\n“…우리, 어디서 본 적 있던가요?”`;},
  ch:S=>{const id=S.flags.pastBond;return [{t:'아주 오래전에',go:S=>{TK(S,id,15);npcMem(S,id,'처음 만났는데 오래 알던 사람 같았다');return '그 말에 상대가 웃었다. 처음 보는데 오래 본 웃음이었다. 그날 밤 같은 꿈을 꾸었다. 전생의 꿈이었다.'+dl(id);}},
   {t:'아니오, 처음입니다',go:S=>{TK(S,id,8);return '“그렇겠지요.” 상대가 고개를 갸웃하며 지나갔다. 몇 걸음 가다 돌아보았다. 당신도 돌아보고 있었다.';}}];}});
@@ -10691,7 +10693,7 @@ function saveHall(h){try{localStorage.setItem(HKEY,JSON.stringify(h));}catch(e){
 const NAI_URL='https://image.novelai.net/ai/generate-image';
 const NAI_MODELS=[['nai-diffusion-4-5-full','V4.5 Full'],['nai-diffusion-4-5-curated','V4.5 Curated'],['nai-diffusion-5-full','V5 Full'],['nai-diffusion-5-curated','V5 Curated'],['nai-diffusion-4-full','V4 Full']];
 const NAI_Q={'nai-diffusion-5-full':'very aesthetic, masterpiece, best quality','nai-diffusion-5-curated':'very aesthetic, masterpiece, best quality','nai-diffusion-4-5-full':'very aesthetic, masterpiece, no text','nai-diffusion-4-5-curated':'location, masterpiece, no text','nai-diffusion-4-full':'no text, best quality, very aesthetic, absurdres'};
-const GAME_VER='2026.10.25-40';
+const GAME_VER='2026.10.25-41';
 const NAI_NEG='nsfw, nude, lowres, bad anatomy, bad hands, missing fingers, extra digits, text, watermark, signature, logo, worst quality, low quality, blurry, modern clothes, glasses, eyewear, jpeg artifacts';
 const NKEY='murim-nai';
 function ncfg(){let c={};try{c=JSON.parse(localStorage.getItem(NKEY)||'{}');}catch(e){}return Object.assign({key:'',relay:'',model:'nai-diffusion-4-5-full',style:'wuxia, ancient china, hanfu, detailed illustration, cinematic lighting',autoEv:false,autoPc:false,vn:true,neg:NAI_NEG,tnpc:'',tev:'',tmap:'',q:true},c,{pr:Object.assign({},c.pr)});}
