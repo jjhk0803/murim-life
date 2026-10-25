@@ -12496,10 +12496,10 @@ ${NN('maehyang')}: “그런데 당신 곁이라면… 둘째 자리라도 처�
 
 const hurtS=(S,n,c)=>hurt(S,Math.min(n,Math.max(0,S.hp-8)),c);
 /* ══ 천마신교: 강자존(強者尊) ══════════════════════════
-   교에 들면 첫 마공을 고른다(소수마공·적사마수·역혈심법). ‘천마’가 붙은 무공은 천마가 되어야 얻는다.
+   교에 들면 첫 마공을 고른다(소수마공·혈수마공·역혈심법). ‘천마’가 붙은 무공은 천마가 되어야 얻는다.
    길: 입문 혈투 → 특별 수련(혈지·마령동·현철마골공·천갈마조·흡성대법)과 영약 → 천마의 탄생(마교 핏줄이면 당신의 피의 비밀) →
        사마 넷을 하나씩 꺾어 규합 → 장로원 숙청 → 혁련 하와 손잡기 → 천마결(천마를 쓰러뜨린다) → 천마의 출정, 마교천하. */
-defA('mkSoso','소수마공','무','권',3,['마','음','유']);defA('mkYeok','역혈심법','심',null,3,['마','혈'],null,{rate:1.35,push:-1});defA('mkGuhwa','적사마수','무','권',3,['마','양','중']);
+defA('mkSoso','소수마공','무','권',3,['마','음','유']);defA('mkYeok','역혈심법','심',null,3,['마','혈'],null,{rate:1.35,push:-1});defA('mkGuhwa','혈수마공','무','권',3,['마','양','중']);
 defA('cmGeom','천마검공','무','검',5,['마','강기','쾌']);defA('cmSingeom','천마신검','무','검',5,['마','강기','변']);
 defA('cmSura','천마수라도','무','도',5,['마','강기','중']);defA('cmPacheon','천마파천도','무','도',5,['마','강기','쾌']);
 defA('cmChang','천마신창','무','창',5,['마','강기','중']);defA('cmGwon','천마멸겁수','무','권',5,['마','강기','유']);defA('cmHeart','천마신공','심',null,5,['마','양','강기'],null,{rate:1.9,push:1});
@@ -12513,10 +12513,10 @@ E({id:'mkGate',tag:'arc',t:'십만대산의 문',a:[10,40],w:S=>inMk(S)&&!S.seen
 대주: “시작.”
 피가 모래를 적시기 시작했다. 해가 질 무렵, 공터에 선 자는 열둘이었다. 당신은 그 열둘 중 하나였다.
 대주가 열둘에게 비급 세 권을 던졌다.
-대주: “첫 마공을 골라라. 소수마공은 맨손을 달빛처럼 창백하게 만든다. 그 손에 맞은 자리에는 멍 대신 손바닥 모양의 서리가 앉는다. 적사마수는 달군 붉은 모래에 손을 꽂아 기른다. 그 손은 칼날을 쥐어도 베이지 않는다. 역혈심법은 피를 거꾸로 돌려 빨리 강해진다. 무엇을 고르든, 천마가 붙은 무공은 천마만 익힌다.”`,
+대주: “첫 마공을 골라라. 소수마공은 맨손을 달빛처럼 창백하게 만든다. 그 손에 맞은 자리에는 멍 대신 손바닥 모양의 서리가 앉는다. 혈수마공은 달군 붉은 모래에 손을 꽂아 기른다. 손이 피처럼 붉어지고, 그 손은 칼날을 쥐어도 베이지 않는다. 역혈심법은 피를 거꾸로 돌려 빨리 강해진다. 무엇을 고르든, 천마가 붙은 무공은 천마만 익힌다.”`,
  ch:[{t:'소수마공(素手魔功)',h:'창백한 손 · 맞은 자리에 서리가 앉는다',go:S=>{const r=learn(S,'mkSoso');A(S,{salgi:6,mu:4,yy:-8});S.flags.mkFirst='soso';return '비급을 펼치자 첫 장에 손바닥 그림 하나와 글귀 한 줄이 있었다. “맨손은 무기가 아니다. 그래서 막을 수 없다.” 한 달 뒤 손끝이 달빛처럼 창백해졌다. 대련 상대의 어깨를 짚자 그 자리에 손바닥 모양의 서리가 앉았다. '+r;}},
   {t:'역혈심법(逆血心法)',h:'내공이 빨리 쌓이지만 음기에 치우친다',go:S=>{const r=learn(S,'mkYeok');A(S,{ng:8,salgi:5});S.flags.mkFirst='yeok';return '피를 거꾸로 돌렸다. 첫날 밤 코피가 멎지 않았다. 사흘째, 단전이 뒤집히듯 뜨거워졌다. 남들의 열 배 속도로 내공이 고였다. 그 대가로 잠이 줄었다. '+r;}},
-  {t:'적사마수(赤砂魔手)',h:'달군 모래로 기른 손 · 칼날을 쥔다',go:S=>{const r=learn(S,'mkGuhwa');A(S,{hp:20,yy:10,temper:4});S.flags.mkFirst='hyeolsu';return '사막 한낮, 달군 붉은 모래 단지에 손을 꽂았다 빼기를 하루 천 번. 손톱이 빠지고 다시 났다. 석 달 뒤 대주가 당신에게 칼을 던졌다. 날을 맨손으로 받았다. 피가 나지 않았다. 손바닥에 붉은 모래 빛이 돌았다. '+r;}}]});
+  {t:'혈수마공(血手魔功)',h:'달군 모래로 기른 손 · 칼날을 쥔다',go:S=>{const r=learn(S,'mkGuhwa');A(S,{hp:20,yy:10,temper:4});S.flags.mkFirst='hyeolsu';return '사막 한낮, 달군 붉은 모래 단지에 손을 꽂았다 빼기를 하루 천 번. 손톱이 빠지고 다시 났다. 석 달 뒤 대주가 당신에게 칼을 던졌다. 날을 맨손으로 받았다. 피가 나지 않았다. 손바닥이 피를 머금은 듯 붉게 물들어 있었다. '+r;}}]});
 E({id:'mkPool',t:'혈지',a:[13,40],w:S=>inMk(S)&&S.seen.mkGate&&!S.seen.mkPool?5:0,
  x:S=>`교의 깊은 곳에 혈지(血池)가 있다. 붉은 물이 부글부글 끓는 연못. 천 년 묵은 혈망(血蟒)의 피가 섞였다고 했다. 이 물에 이레를 버티면 경맥이 넓어지고, 버티지 못하면 경맥이 터진다.
 늙은 호법 하나가 연못가에서 당신을 기다렸다. 눈 하나가 하얗게 멀어 있었다.
@@ -12775,12 +12775,12 @@ ${NN('hongui')}: “…나 때문이지.”
 /* ══ 마공의 계보 (무림인생 고유 설정) ══
    누란사경(樓蘭沙經) → 소림이 봉인한 백납심법(百衲心法) → 화사문(火沙門)의 열사신공(熱沙神功) → 마교의 흡성대법(吸星大法) → 천마신공의 한 갈래.
    갈라져 나간 것: 구천회(九天會)의 천뢰경(天雷經). 구천회는 하룻밤 사이에 사라졌다.
-   마교: 현철마골공(호신) · 천갈마조 · 흡성대법(빨아들인 공력에 죽은 자의 잔념이 묻어 온다) · 흑운단천검/혈월참마도/흑부장/허영마권 · 적뢰마공(천마 혈통의 마공, 층이 오른다)
+   마교: 현철마골공(호신) · 천갈마조 · 흡성대법(빨아들인 공력에 죽은 자의 잔념이 묻어 온다) · 흑운단천검/혈월참마도/흑부장/무형마공 · 적뢰마공(천마 혈통의 마공, 층이 오른다)
    혈교: 홍상장 → 홍상조 · 혈관불사법(불사지체)
    누구나: 누란사경의 목간 세 조각, 이종진기와 백납심법 */
 defA('mkHeuksi','천갈마조','무','권',4,['마','독','쾌']);
 defA('mkCheongang','흑운단천검','무','검',4,['마','강기','변']);defA('mkSura','혈월참마도','무','도',4,['마','강기','중']);
-defA('mkHeuksal','흑부장','무','권',4,['마','독','강기']);defA('mkMuhyeong','허영마권','무','권',4,['마','음','변']);
+defA('mkHeuksal','흑부장','무','권',4,['마','독','강기']);defA('mkMuhyeong','무형마공','무','권',4,['마','음','변']);
 defA('mkJajeon','적뢰마공','심',null,5,['마','양','강기'],null,{rate:1.7,push:2});
 defA('hkEung','홍상장','무','권',4,['혈','음']);defA('hkEungjo','홍상조','무','권',5,['혈','음','쾌']);
 defA('bmBuk','누란사경','심',null,5,['자연','유','강기'],null,{rate:1.65,push:'bal'});defA('bmNoe','천뢰경','무','권',5,['강기','쾌','중']);
@@ -12825,12 +12825,12 @@ E({id:'mkElite',t:'마교의 무고',a:[24,85],w:S=>inMk(S)&&S.rank>=3&&S.realm>
 흑운단천검. 먹구름이 몰려와 해를 가르듯, 검 한 자루가 하늘을 벤다는 검법.
 혈월참마도. 초승에서 시작해 반달을 지나 보름에 이르는 세 단계의 도법. 보름달 초식은 둥근 강기 한 바퀴로 주위를 다 벤다.
 흑부장. 손바닥이 닿은 자리가 검게 삭아 든다. 삭는 것은 살만이 아니라고 했다.
-허영마권. 그림자 없는 주먹. 해가 머리 위에 있을 때 내지르면 상대는 맞고 나서야 주먹을 본다.
+무형마공. 형체도 그림자도 없는 주먹. 해가 머리 위에 있을 때 내지르면 상대는 맞고 나서야 주먹을 본다.
 무고지기: “해골들은 다 끝까지 익힌 자들이오. 끝까지 익히면 저 받침 위로 올라가는 것이 이 무고의 법이지. 무엇을 고르겠소.”`,
  ch:S=>[{t:'흑운단천검',h:'검',go:S=>learn(S,'mkCheongang')+' 첫 초식을 그었을 뿐인데 무고의 등불이 일제히 한쪽으로 쓰러졌다.'},
   {t:'혈월참마도',h:'도',go:S=>learn(S,'mkSura')+' 초승. 가는 붉은 호가 날아가 돌기둥에 머리카락만 한 금을 그었다. 이튿날 그 기둥이 반으로 갈라졌다.'},
   {t:'흑부장',h:'권 · 독',go:S=>{A(S,{salgi:5});return learn(S,'mkHeuksal')+' 손바닥이 닿은 나무 기둥이 하룻밤 사이에 까맣게 삭아 내려앉았다.';}},
-  {t:'허영마권',h:'권 · 기습에 강하다',go:S=>learn(S,'mkMuhyeong')+' 정오에 주먹을 내질렀다. 그림자가 따라오지 않았다. 열 걸음 밖 항아리가 소리도 없이 금이 갔다.'}]});
+  {t:'무형마공',h:'권 · 기습에 강하다',go:S=>learn(S,'mkMuhyeong')+' 정오에 주먹을 내질렀다. 그림자가 따라오지 않았다. 열 걸음 밖 항아리가 소리도 없이 금이 갔다.'}]});
 /* 적뢰마공: 천마 혈통의 마공. 분노를 땔감으로 붉은 벼락을 기른다 */
 E({id:'mkJajeon',tag:'key',t:'적뢰마공',a:[16,80],w:S=>inMk(S)&&(S.flags.mkClaim||S.flags.cmHeir||S.flags.cmMe||S.spouse==='ha')&&!S.arts.includes('mkJajeon')&&!S.seen.mkJajeon?5:0,
  x:S=>`${S.flags.cmMe?'천마의 자리에 오른 날 밤':'늙은 장로가 당신을 ‘소주’라 부르며 밀실로 이끌었다. 그날 밤'}, 붉은 비단에 싼 비급 한 권을 받았다. 표지에 손바닥 모양으로 그을린 자국이 있었다. 적뢰마공(赤雷魔功).
@@ -13301,7 +13301,7 @@ function saveHall(h){try{localStorage.setItem(HKEY,JSON.stringify(h));}catch(e){
 const NAI_URL='https://image.novelai.net/ai/generate-image';
 const NAI_MODELS=[['nai-diffusion-4-5-full','V4.5 Full'],['nai-diffusion-4-5-curated','V4.5 Curated'],['nai-diffusion-5-full','V5 Full'],['nai-diffusion-5-curated','V5 Curated'],['nai-diffusion-4-full','V4 Full']];
 const NAI_Q={'nai-diffusion-5-full':'very aesthetic, masterpiece, best quality','nai-diffusion-5-curated':'very aesthetic, masterpiece, best quality','nai-diffusion-4-5-full':'very aesthetic, masterpiece, no text','nai-diffusion-4-5-curated':'location, masterpiece, no text','nai-diffusion-4-full':'no text, best quality, very aesthetic, absurdres'};
-const GAME_VER='2026.10.25-53';
+const GAME_VER='2026.10.25-54';
 const NAI_NEG='nsfw, nude, lowres, bad anatomy, bad hands, missing fingers, extra digits, text, watermark, signature, logo, worst quality, low quality, blurry, modern clothes, glasses, eyewear, jpeg artifacts';
 const NKEY='murim-nai';
 function ncfg(){let c={};try{c=JSON.parse(localStorage.getItem(NKEY)||'{}');}catch(e){}return Object.assign({key:'',relay:'',model:'nai-diffusion-4-5-full',style:'wuxia, ancient china, hanfu, detailed illustration, cinematic lighting',autoEv:false,autoPc:false,vn:true,neg:NAI_NEG,tnpc:'',tev:'',tmap:'',q:true},c,{pr:Object.assign({},c.pr)});}
