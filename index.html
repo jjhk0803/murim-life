@@ -202,7 +202,37 @@ button.chip.on{background:var(--jade);color:var(--card);border-color:var(--jade)
 @keyframes stin{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translateX(-50%)}}
 .scene .snm{position:absolute;left:8px;bottom:8px;background:rgba(20,24,22,.74);color:#f3efe6;font-family:var(--f-ui);font-size:.8rem;padding:2px 10px;border-radius:4px}
 /* 대화 연출(미연시): 배경 위에 인물들이 서고, 말하는 사람만 밝다 */
-.vntap{cursor:pointer}
+/* 미연시 화면 */
+.main:has(> .vnfull){padding:0;overflow:hidden}
+.vnfull{position:relative;flex:1;min-height:0;overflow:hidden;background:radial-gradient(ellipse at 50% 30%,#4a524d,#1c211f 75%);color:#f3efe6;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
+.vnfull.done{cursor:default}
+.vnfade{animation:vnt .35s ease-out}
+.vnbg{position:absolute;inset:0}.vnbg img{width:100%;height:100%;object-fit:cover;display:block;transition:filter .3s}
+.vnfull.done .vnbg img{filter:brightness(.7)}
+.vnsps{position:absolute;inset:0;pointer-events:none}
+.vnsps .vnsp{position:absolute;bottom:0;top:auto;height:82%;max-width:none;transform:translateX(-50%)}
+.vnsps .vnsp.on{transform:translateX(-50%) translateY(-1.5%)}
+.vntop{position:absolute;left:0;right:0;top:0;z-index:4;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:10px 12px 18px;background:linear-gradient(180deg,rgba(10,12,11,.72),rgba(10,12,11,0))}
+.vnttl{display:flex;flex-direction:column;gap:3px;min-width:0;font-family:var(--f-ui);font-size:.9rem;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+.vnttl .tags{display:inline-flex;gap:4px}.vnttl .chip{background:rgba(243,239,230,.18);color:#f3efe6;border-color:rgba(243,239,230,.4);font-size:.7rem;padding:1px 8px}.vnsub{font-size:.78rem;opacity:.85}
+.vntools{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px;flex:none;max-width:60%}
+.vntool{font:inherit;font-family:var(--f-ui);font-size:.75rem;padding:4px 9px;border-radius:14px;border:1px solid rgba(243,239,230,.35);background:rgba(20,24,22,.55);color:#f3efe6;cursor:pointer;white-space:nowrap}
+.vntool.on{background:#f3efe6;color:#1c211f}
+.vnch{position:absolute;left:12px;right:12px;top:64px;bottom:calc(30% + 20px);z-index:5;overflow-y:auto;display:flex;flex-direction:column;gap:8px;animation:vnt .3s ease-out}
+.vnch>:first-child{margin-top:auto}.vnch>:last-child{margin-bottom:auto}
+.vnch .choice{width:100%;padding-block:10px}
+.vnch .choice{background:rgba(250,247,240,.94);color:#1c211f;box-shadow:0 3px 12px rgba(0,0,0,.35)}
+.vnch .choice.go{background:#1c211f;color:#f3efe6;border:1px solid rgba(243,239,230,.5);justify-content:center;text-align:center}
+.vnpanel{background:rgba(250,247,240,.95);color:#1c211f;border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.vnpanel:empty{display:none}
+.vnfull .vnbox{position:absolute;left:10px;right:10px;bottom:10px;z-index:4;margin:0;min-height:24%;max-height:32%;display:flex;flex-direction:column;background:rgba(14,17,16,.84);border:1px solid rgba(243,239,230,.2);border-radius:10px;padding:24px 16px 20px;box-shadow:0 -4px 20px rgba(0,0,0,.3)}
+.vnbody{flex:1;min-height:0;overflow-y:auto}
+.vnfull .vnt{font-size:1.02rem}
+.vnbox .delta{margin-top:8px}
+.vnlogp{position:absolute;left:10px;right:10px;top:56px;bottom:10px;z-index:7;background:rgba(14,17,16,.94);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;cursor:default}
+.vnlogp .vnlogl{max-height:none;flex:1;overflow-y:auto}
+.vnlogp .vnlogl p{color:#e8e2d4}
+@media (prefers-reduced-motion:reduce){.vnfade,.vnch{animation:none}}
 .vnlogl{max-height:40vh;overflow:auto;display:flex;flex-direction:column;gap:4px;margin-top:6px}.vnlogl p{margin:0;font-size:.9rem}
 .vnbar .ghost.on{background:var(--ink);color:var(--paper)}
 .vn{position:relative;user-select:none;-webkit-tap-highlight-color:transparent;border-radius:6px;outline-offset:3px}
@@ -4003,7 +4033,7 @@ function saveHall(h){try{localStorage.setItem(HKEY,JSON.stringify(h));}catch(e){
 const NAI_URL='https://image.novelai.net/ai/generate-image';
 const NAI_MODELS=[['nai-diffusion-4-5-full','V4.5 Full'],['nai-diffusion-4-5-curated','V4.5 Curated'],['nai-diffusion-5-full','V5 Full'],['nai-diffusion-5-curated','V5 Curated'],['nai-diffusion-4-full','V4 Full']];
 const NAI_Q={'nai-diffusion-5-full':'very aesthetic, masterpiece, best quality','nai-diffusion-5-curated':'very aesthetic, masterpiece, best quality','nai-diffusion-4-5-full':'very aesthetic, masterpiece, no text','nai-diffusion-4-5-curated':'location, masterpiece, no text','nai-diffusion-4-full':'no text, best quality, very aesthetic, absurdres'};
-const GAME_VER='2026.10.25-36';
+const GAME_VER='2026.10.25-37';
 const NAI_NEG='nsfw, nude, lowres, bad anatomy, bad hands, missing fingers, extra digits, text, watermark, signature, logo, worst quality, low quality, blurry, modern clothes, glasses, eyewear, jpeg artifacts';
 const NKEY='murim-nai';
 function ncfg(){let c={};try{c=JSON.parse(localStorage.getItem(NKEY)||'{}');}catch(e){}return Object.assign({key:'',relay:'',model:'nai-diffusion-4-5-full',style:'wuxia, ancient china, hanfu, detailed illustration, cinematic lighting',autoEv:false,autoPc:false,vn:true,neg:NAI_NEG,tnpc:'',tev:'',tmap:'',q:true},c,{pr:Object.assign({},c.pr)});}
@@ -4544,28 +4574,26 @@ function vnBeats(S,text,scene){const NM=vnNames(S),out=[];let last=scene||null;
       out.push({s:sp||'?',t:x.slice(1,-1)});if(sp)last=sp;}}
   return out;}
 function vnCast(S,beats,scene){const c=[];if(scene&&NPCS[scene])c.push(scene);for(const b of beats)if(b.s&&NPCS[b.s]&&!c.includes(b.s))c.push(b.s);return c.slice(0,3);}
-// 마지막 줄이 나오면 선택지(또는 다음 버튼)가 보이게 내린다
-function vnShowEnd(){const c=document.querySelector('.scroll:not(.vntap) .choices, .scroll:not(.vntap) [data-a=next]');if(c)c.scrollIntoView({block:'nearest',behavior:'smooth'});}
-const VN_POS={1:[50],2:[29,71],3:[19,50,81]};
-function vnStage(S,o){// o:{key,text,scene,bg}
-  const beats=vnBeats(S,o.text,o.scene);if(VN.k!==o.key){VN.k=o.key;VN.i=0;}
-  // 대사가 없는 지문뿐이면 한 번에 보여 준다
-  if(!vnOn()||beats.length<=1||!beats.some(b=>b.s))return {vn:false,done:true};
-  const n=beats.length,i=Math.min(VN.i,n-1),b=beats[i],done=i>=n-1;
+const VN_POS={1:[50],2:[30,70],3:[20,50,80]};
+/* 미연시 화면: 배경이 화면을 채우고, 인물이 서고, 아래 대사창에 한 줄씩. 마지막 줄이 나오면 선택지가 위에 뜬다.
+   o:{key,text,scene,bg,title,tags,sub,draw,end(마지막에 대사창 아래 붙일 것),panel(선택지 위 패널),acts(선택지 버튼들)} */
+function vnScreen(S,o){const beats=vnBeats(S,o.text,o.scene);if(!beats.length)beats.push({s:null,t:''});if(VN.k!==o.key){VN.k=o.key;VN.i=0;VN.log=0;}
+  const n=beats.length,i=Math.min(VN.i,n-1),b=beats[i],done=i>=n-1,auto=vnAuto();
   const cast=vnCast(S,beats,o.scene).filter(id=>imgURL('st:'+id)),pos=VN_POS[cast.length]||[];
-  const stage=o.bg||cast.length?`<div class="vnst">${o.bg?`<img class="sbg" src="${o.bg}" alt="">`:''}${cast.map((id,j)=>`<img class="vnsp ${b.s===id?'on':b.s?'':'nar'} ${i===0?'in':''}" style="left:${pos[j]}%" src="${imgURL('st:'+id)}" alt="${esc(NPCS[id].n)}">`).join('')}</div>`:'';
-  const whoOf=s=>s==='me'?{k:S.nick?S.nick.n:'',n:S.name,me:1}:s&&NPCS[s]?{k:safe(()=>npcNick(s,S))||'',n:NPCS[s].n}:s==='?'?{k:'',n:'???'}:null;
+  const whoOf=x=>x==='me'?{k:S.nick?S.nick.n:'',n:S.name,me:1}:x&&NPCS[x]?{k:safe(()=>npcNick(x,S))||'',n:NPCS[x].n}:x==='?'?{k:'',n:'???'}:null;
   const who=whoOf(b.s),line=x=>x.s?'“'+esc(x.t)+'”':esc(x.t);
-  const plate=who?`<div class="vnplate ${who.me?'me':''}">${who.k?`<small>${esc(who.k)}</small>`:''}${esc(who.n)}</div>`:'';
-  const auto=vnAuto();
-  // 자동 넘기기: 글 길이에 맞춰 기다렸다 다음 줄. 창이 열려 있거나 다른 화면이면 기다린다
-  if(auto&&!done&&VN.tk!==o.key+'|'+i){VN.tk=o.key+'|'+i;clearTimeout(VN.t);const key=o.key,at=i,wait=()=>{if(VN.k!==key||VN.i!==at)return;if(modal||view!=='ev'||document.hidden){VN.t=setTimeout(wait,800);return;}VN.i++;render();};VN.t=setTimeout(wait,1400+b.t.length*55);}
-  if(!auto)clearTimeout(VN.t);
-  const log=i>0?`<details class="vnlog"><summary>지난 대사 ${i}줄</summary><div class="vnlogl">${beats.slice(0,i).map(x=>{const w=whoOf(x.s);return `<p>${w?`<b>${esc(w.n)}</b> `:''}${line(x)}</p>`;}).join('')}</div></details>`:'';
-  const html=`<div class="vn ${done?'done':''}">${stage}<div class="vnbox ${stage?'':'solo'}">${plate}<div class="vnt ${b.s?'':'nar'}">${line(b)}</div>${done?'':'<span class="vnar" aria-hidden="true">▼</span>'}</div></div>
-   <div class="vnbar"><span class="muted small">${i+1} / ${n}${done?'':' · 아무 데나 누르면 다음'}</span>${i>0?'<button class="ghost" data-a="vnprev" aria-label="이전 대사">◀</button>':''}${done?'':`<button class="ghost ${auto?'on':''}" data-a="vnauto" aria-pressed="${auto}">자동${auto?' 켜짐':''}</button><button class="ghost" data-a="vnskip">넘기기 ▶▶</button>`}</div>
-   ${log}`;
-  return {vn:true,done,html};}
+  if(auto&&!done&&!VN.log&&VN.tk!==o.key+'|'+i){VN.tk=o.key+'|'+i;clearTimeout(VN.t);const key=o.key,at=i,wait=()=>{if(VN.k!==key||VN.i!==at)return;if(modal||view!=='ev'||document.hidden||VN.log){VN.t=setTimeout(wait,800);return;}VN.i++;render();};VN.t=setTimeout(wait,1400+b.t.length*55);}
+  if(!auto||done)clearTimeout(VN.t);
+  const tool=(a,l,on,lab)=>`<button class="vntool ${on?'on':''}" data-a="${a}" ${lab?`aria-label="${lab}"`:''} ${on!=null?`aria-pressed="${!!on}"`:''}>${l}</button>`;
+  const log=VN.log?`<div class="vnlogp" data-a="vnnop"><div class="row" style="justify-content:space-between"><b>지난 대사</b>${tool('vnlog','닫기')}</div><div class="vnlogl">${beats.slice(0,i+1).map(x=>{const w=whoOf(x.s);return `<p>${w?`<b>${esc(w.n)}</b> `:''}${line(x)}</p>`;}).join('')}</div></div>`:'';
+  return `<section class="vnfull ${done?'done':''} ${VN.i?'':'vnfade'}" ${done||VN.log?'':'data-a="vnnext"'} aria-live="polite">
+   <div class="vnbg">${o.bg?`<img src="${o.bg}" alt="">`:''}</div>
+   <div class="vnsps">${cast.map((id,j)=>`<img class="vnsp ${b.s===id?'on':b.s?'':'nar'} ${i===0?'in':''}" style="left:${pos[j]}%" src="${imgURL('st:'+id)}" alt="${esc(NPCS[id].n)}">`).join('')}</div>
+   <div class="vntop"><div class="vnttl"><b>${S.age}세 · ${esc(o.title)}</b>${o.tags||''}${o.sub?`<span class="vnsub">${esc(o.sub)}</span>`:''}</div>
+    <div class="vntools">${o.draw||''}${i>0?tool('vnprev','◀','','이전 대사'):''}${tool('vnlog','기록')}${done?'':tool('vnauto','자동',auto)+tool('vnskip','넘기기 ▶▶')}</div></div>
+   ${done?`<div class="vnch">${o.panel?`<div class="vnpanel">${o.panel}</div>`:''}${o.acts||''}</div>`:''}
+   <div class="vnbox">${who?`<div class="vnplate ${who.me?'me':''}">${who.k?`<small>${esc(who.k)}</small>`:''}${esc(who.n)}</div>`:''}<div class="vnbody"><div class="vnt ${b.s?'':'nar'}">${line(b)}</div>${done&&o.end?o.end:''}</div>${done?'':'<span class="vnar" aria-hidden="true">▼</span>'}</div>
+   ${log}</section>`;}
 function scrollCard(){const e=EVM[S.cur];
   if(S.phase==='craft'){const c=S.tmp.craft;const ks=[...allKw(S)];const ws=craftWeapons(S);const tier=craftTier(S);const auto=c.sel.length?craftName(c.sel,c.w,tier):'';
     if(c.mode==='heart')return craftHeartHTML(S,c,ks);
@@ -4593,17 +4621,20 @@ function scrollCard(){const e=EVM[S.cur];
      <div class="rowbtn"><button class="ghost" data-a="fback">그만둔다</button><button class="go" data-a="forge">벼린다</button></div></section>`;}
   if(S.phase==='event'){const ch=evChoices(S,e);const nid=sceneNpc(S,e),lvId=nid&&LOVE_BG[nid]&&(e.tag==='love'||/^lv_/.test(S.cur))?nid:null,ek=lvId?'bg:'+lvId:'ev:'+S.cur,eu=imgURL(ek)||(lvId&&!/^lv_/.test(S.cur)?imgURL('ev:'+S.cur):null),su=nid&&imgURL('st:'+nid),bgU=eu||(REG[S.loc]?imgURL('reg:'+REG_EN[S.loc]):null);
     const imgTop=su?`<div class="scene">${bgU?`<img class="sbg" src="${bgU}" alt="">`:''}<img class="sst" src="${su}" alt="${esc(NPCS[nid].n)}"><span class="snm">${esc(safe(()=>npcNick(nid,S)))} ${esc(NPCS[nid].n)}</span></div>`:eu?`<img class="evimg" src="${eu}" alt="">`:'';
-    const tx=evText(S,e),vs=vnStage(S,{key:`${S.lifeId}|${S.age}|e|${S.cur}|${tx.length}`,text:tx,scene:nid,bg:bgU});
+    const tx=evText(S,e);
     const tail=`${e.inp?`<input id="evinp" class="evinp" maxlength="12" placeholder="${esc(typeof e.inp==='function'?e.inp(S):e.inp)}" value="${esc(S.tmp.inp||'')}" aria-label="이름">`:''}${foeBox()}
     <div class="choices">${ch.map((c,i)=>`<button class="choice" data-a="ch" data-i="${i}"><span>${esc(c.t)}</span>${c.h?`<span class="h">${esc(c.h)}</span>`:''}</button>`).join('')}</div>`;
     const head=`<div class="yrrow"><div class="yr">${S.age}세의 해${tagChips(e)}</div><button class="ghost" data-a="draw" data-k="${ek}">${BUSY.has(ek)?'그리는 중':eu?'장면':'장면 그리기'}</button></div>`;
-    if(vs.vn)return `<section class="scroll ${VN.i?'':'fade'} ${vs.done?'':'vntap'}" ${vs.done?'':'data-a="vnnext"'} aria-live="polite">${head}<h2>${esc(evTitle(S,e))}</h2>${vs.html}${vs.done?tail:''}</section>`;
+    if(vnOn()){const inp=e.inp?`<input id="evinp" class="evinp" maxlength="12" placeholder="${esc(typeof e.inp==='function'?e.inp(S):e.inp)}" value="${esc(S.tmp.inp||'')}" aria-label="이름">`:'',fb=foeBox();
+      return vnScreen(S,{key:`${S.lifeId}|${S.age}|e|${S.cur}|${tx.length}`,text:tx,scene:nid,bg:bgU,title:evTitle(S,e),tags:tagChips(e),draw:`<button class="vntool" data-a="draw" data-k="${ek}">${BUSY.has(ek)?'그리는 중':eu?'장면':'장면 그리기'}</button>`,panel:inp+fb,acts:ch.map((c,i)=>`<button class="choice" data-a="ch" data-i="${i}"><span>${esc(c.t)}</span>${c.h?`<span class="h">${esc(c.h)}</span>`:''}</button>`).join('')});}
     return `<section class="scroll fade" aria-live="polite">${imgTop}${head}<h2>${esc(evTitle(S,e))}</h2><p>${esc(tx)}</p>${tail}</section>`;}
   const r=S.res;const dead=!!S.dead;
-  let rv=null;if(S.phase==='result'&&e){const nid=sceneNpc(S,e),lvId=nid&&LOVE_BG[nid]&&(e.tag==='love'||/^lv_/.test(S.cur))?nid:null,eu=imgURL(lvId?'bg:'+lvId:'ev:'+S.cur)||(lvId&&!/^lv_/.test(S.cur)?imgURL('ev:'+S.cur):null),bgU=eu||(REG[S.loc]?imgURL('reg:'+REG_EN[S.loc]):null);
-    rv=vnStage(S,{key:`${S.lifeId}|${S.age}|r|${S.cur}|${String(r.text).length}|${r.title}`,text:r.text,scene:nid,bg:bgU});if(!rv.vn)rv=null;}
-  if(rv&&!rv.done)return `<section class="scroll ${VN.i?'':'fade'} vntap" data-a="vnnext" aria-live="polite"><div class="yr">${S.age}세의 해${tagChips(e)}</div><h2>${esc(r.title)}</h2>${r.pick?`<div class="picked">${esc(r.pick)}</div>`:''}${rv.html}</section>`;
-  return `<section class="scroll ${rv&&VN.i?'':'fade'}" aria-live="polite"><div class="yr">${S.age}세의 해${S.cur&&EVM[S.cur]&&S.phase==='result'?tagChips(EVM[S.cur]):''}</div><h2>${esc(r.title)}</h2>${r.pick?`<div class="picked">${esc(r.pick)}</div>`:''}${rv?rv.html:`<p>${esc(r.text)}</p>`}
+  if(S.phase==='result'&&e&&vnOn()){const nid=sceneNpc(S,e),lvId=nid&&LOVE_BG[nid]&&(e.tag==='love'||/^lv_/.test(S.cur))?nid:null,ek=lvId?'bg:'+lvId:'ev:'+S.cur,eu=imgURL(ek)||(lvId&&!/^lv_/.test(S.cur)?imgURL('ev:'+S.cur):null),bgU=eu||(REG[S.loc]?imgURL('reg:'+REG_EN[S.loc]):null);
+    const chips=r.chips.length?`<div class="delta">${r.chips.map(c=>`<span class="chip ${c.up?'up':'dn'}">${esc(c.t)}</span>`).join('')}</div>`:'';
+    const wp=S.pendingWpn?`<div class="craft"><label for="wname">새 병기 · ${esc(WP_LABEL[S.pendingWpn.w]||S.pendingWpn.w)} · 등급 ${S.pendingWpn.q}${S.pendingWpn.kw?' · 결 '+S.pendingWpn.kw:''} — 이름을 새긴다</label><div class="field"><input id="wname" maxlength="10" placeholder="${esc(S.pendingWpn.def)}" autocomplete="off"><button class="ghost" data-a="wname">새긴다</button></div></div>`:'';
+    const dl=dead?`<p class="muted" style="margin:0">${esc(S.dead==='우화등선'?'당신의 이야기는 여기서 하늘로 이어진다.':`그리고 그것이 마지막이었다. (${S.dead})`)}</p>`:'';
+    return vnScreen(S,{key:`${S.lifeId}|${S.age}|r|${S.cur}|${String(r.text).length}|${r.title}`,text:r.text,scene:nid,bg:bgU,title:r.title,tags:tagChips(e),sub:r.pick?`선택 · ${r.pick}`:'',end:chips,panel:wp+dl,acts:`<button class="choice go ${dead?'seal-btn':''}" data-a="next"><span>${dead?'생을 돌아본다':S.chain?'계속 →':'한 해를 보낸다'}</span></button>`});}
+  return `<section class="scroll fade" aria-live="polite"><div class="yr">${S.age}세의 해${S.cur&&EVM[S.cur]&&S.phase==='result'?tagChips(EVM[S.cur]):''}</div><h2>${esc(r.title)}</h2>${r.pick?`<div class="picked">${esc(r.pick)}</div>`:''}<p>${esc(r.text)}</p>
    ${r.chips.length?`<div class="delta">${r.chips.map(c=>`<span class="chip ${c.up?'up':'dn'}">${esc(c.t)}</span>`).join('')}</div>`:''}
    ${S.pendingWpn?`<div class="craft"><label for="wname">새 병기 · ${esc(WP_LABEL[S.pendingWpn.w]||S.pendingWpn.w)} · 등급 ${S.pendingWpn.q}${S.pendingWpn.kw?' · 결 '+S.pendingWpn.kw:''} — 이름을 새긴다</label><div class="field"><input id="wname" maxlength="10" placeholder="${esc(S.pendingWpn.def)}" autocomplete="off"><button class="ghost" data-a="wname">새긴다</button></div></div>`:''}
    ${dead&&S.phase==='result'?`<p class="muted">${esc(S.dead==='우화등선'?'당신의 이야기는 여기서 하늘로 이어진다.':`그리고 그것이 마지막이었다. (${S.dead})`)}</p>`:''}
@@ -4745,10 +4776,12 @@ app.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b||b
   else if(a==='start'){const c=ycCost(S.yc),v=ycPts();if(c>v.pts)return;v.pts-=c;ycSave(v);S.name=document.getElementById('nm').value.trim()||randName(S.sex);view='ev';resetScroll=true;addLog(S,`${ORIGINS.find(o=>o.id===S.origin).n}로 태어났다.`,1);openEvent(S,chooseEvent(S));save();render();if(ncfg().autoPc)autoDraw('pc:'+S.lifeId,pcPrompt(S),true);}
   else if(a==='ch')choose(+b.dataset.i);
   else if(a==='cgref'){const c=ncfg();c.cgRef=c.cgRef===false;nsave(c);render();}
-  else if(a==='vnnext'){if(ev.target.closest('details,summary,a,input,textarea,select'))return;VN.i++;render();vnShowEnd();}
+  else if(a==='vnnext'){VN.i++;render();}
+  else if(a==='vnlog'){VN.log=VN.log?0:1;render();}
+  else if(a==='vnnop'){}
   else if(a==='vnauto'){try{localStorage.setItem('murim-vnauto',vnAuto()?'0':'1');}catch(e){}VN.tk='';render();}
   else if(a==='vnprev'){VN.i=Math.max(0,VN.i-1);render();}
-  else if(a==='vnskip'){VN.i=1e9;clearTimeout(VN.t);render();vnShowEnd();}
+  else if(a==='vnskip'){VN.i=1e9;clearTimeout(VN.t);render();}
   else if(a==='next'){if(S.pendingWpn){const el=document.getElementById('wname');commitWpn(S,el?el.value:'');}if(S.phase==='death'||S.dead)endLife();else if(S.chain){const c=S.chain;S.chain=null;openEvent(S,c);view='ev';resetScroll=true;save();render();}else nextYear();}
   else if(a==='again'){S=newFate(null,null,{...ycNew()});tab='ab';view='ev';resetScroll=true;save();render();}
   else if(a==='tab'){tab=b.dataset.t;render();}
@@ -4821,7 +4854,7 @@ app.addEventListener('input',ev=>{if(ev.target.id==='evinp'){S.tmp.inp=ev.target
   if(modal&&modal.t==='gal'&&/^g_(style|tnpc|tev|tmap|neg|q)$/.test(ev.target.id)){const c=ncfg(),v=id=>document.getElementById(id).value;c.style=v('g_style');c.tnpc=v('g_tnpc');c.tev=v('g_tev');c.tmap=v('g_tmap');c.neg=v('g_neg');c.q=document.getElementById('g_q').checked;nsave(c);const pv=document.getElementById('g_pv');if(pv)pv.textContent=fullPrompt('st:seorin');}if(modal&&modal.t==='nai'&&ev.target.id.startsWith('n_'))readNaiForm();});
 app.addEventListener('change',ev=>{if(modal&&modal.t==='nai'&&ev.target.id==='a_prov'){readNaiForm();render();return;}if(modal&&modal.t==='gal'){const id=ev.target.id;if(id==='g_miss'){modal.miss=ev.target.checked;render();return;}if(id==='g_webp'){modal.webp=ev.target.checked;return;}if(id==='g_q'){const c=ncfg();c.q=ev.target.checked;nsave(c);render();return;}if(id==='g_files'&&ev.target.files.length){importFiles(modal,[...ev.target.files]);return;}if(id==='g_autocut'){const c=ncfg();c.autoCut=ev.target.checked;nsave(c);return;}if(id==='g_v5tp'){const c=ncfg();c.v5tp=ev.target.checked;nsave(c);NAI_TP_OFF=false;return;}}
   if(modal&&modal.t==='edit'&&ED&&ev.target.id==='e_contig'){ED.contig=ev.target.checked;return;}if(modal&&modal.t==='nai'&&ev.target.id.startsWith('n_'))readNaiForm();if(ev.target.id==='n_file'&&modal&&ev.target.files[0]){const k=modal.k,f=ev.target.files[0];const m=modal;storeSlot(k,f).then(()=>render()).catch(e=>{m.err='그림을 저장하지 못했어요: '+e.message;render();});}});
-document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&modal){ev.preventDefault();closeModal();return;}if(!modal&&(ev.key==='Enter'||ev.key===' ')&&document.querySelector('.vntap')&&!(ev.target.closest&&ev.target.closest('button,input,textarea,select,summary'))){ev.preventDefault();VN.i++;render();vnShowEnd();return;}const g=ev.target.closest&&ev.target.closest('.mn');if(g&&(ev.key==='Enter'||ev.key===' ')){ev.preventDefault();mapSel=g.dataset.r;render();}});
+document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&modal){ev.preventDefault();closeModal();return;}if(!modal&&(ev.key==='Enter'||ev.key===' ')&&document.querySelector('.vnfull[data-a]')&&!(ev.target.closest&&ev.target.closest('button,input,textarea,select'))){ev.preventDefault();VN.i++;render();return;}const g=ev.target.closest&&ev.target.closest('.mn');if(g&&(ev.key==='Enter'||ev.key===' ')){ev.preventDefault();mapSel=g.dataset.r;render();}});
 
 function start(data){
   let s=data&&data.S;
