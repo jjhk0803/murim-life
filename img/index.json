@@ -784,6 +784,15 @@
   "st:seohyeon": "st/seohyeon.webp",
   "st:sobaek": "st/sobaek.webp",
   "st:sowol": "st/sowol.webp",
-  "st:yeonhyang": "st/yeonhyang.webp"
+  "st:yeonhyang": "st/yeonhyang.webp",
+  "cg:love_arang": "cg/love_arang.webp",
+  "cg:love_danhwa": "cg/love_danhwa.webp",
+  "cg:love_eunseol": "cg/love_eunseol.webp",
+  "cg:love_haryeong": "cg/love_haryeong.webp",
+  "cg:love_hongok": "cg/love_hongok.webp",
+  "cg:love_maehyang": "cg/love_maehyang.webp",
+  "cg:love_seohyeon": "cg/love_seohyeon.webp",
+  "cg:love_onso": "cg/love_onso.webp",
+  "cg:love_yeonhyang": "cg/love_yeonhyang.webp"
  }
 }
