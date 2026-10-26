@@ -244,6 +244,7 @@ button.chip.on{background:var(--jade);color:var(--card);border-color:var(--jade)
 .vnsp.on{filter:drop-shadow(0 4px 12px rgba(0,0,0,.4));transform:translateX(-50%) translateY(-2%);z-index:2}
 .vnsp.nar{filter:drop-shadow(0 4px 10px rgba(0,0,0,.35)) brightness(.85)}
 .vnsp.in{animation:vnin .5s ease-out both}
+.vnsp.gone{display:none}
 .sheet.story textarea{width:100%;font:inherit;font-size:.9rem;line-height:1.6;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:inherit;resize:vertical}
 .stlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}.stlist button{width:100%;text-align:left;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:7px 10px;cursor:pointer;font:inherit;color:inherit}.stlist small{display:block;opacity:.65;font-size:.72rem}
 .sheet.story #se_x{min-height:18em}.sheet.story .stch textarea{min-height:6.5em}.sheet.story #st_memo,.sheet.story #se_note{min-height:6em}
@@ -13415,7 +13416,7 @@ const MOB_RULE=[[/엄마|어머니|아낙|주모|아주머니/,'woman'],[/할머
  [/장로|원로|장문인|태상|시험관/,'elder'],[/의원|약상|의녀/,'doctor'],[/관원|포두|포졸|현령|나리/,'official'],[/훈장|설서인|선비|서생/,'scholar'],[/대장장이/,'smith'],[/우두머리|패거리|산적|왈패|무뢰|추격대/,'thug'],
  [/자객|살수/,'assassin'],[/사자$/,'envoy'],[/부문주/,'man'],[/객잔 주인|점소이|장사|상인|짐꾼|엿장수|국숫집|주인/,'merchant'],[/시비|시녀/,'maid'],[/노인|영감|할아버지|노고수|원수|노형/,'old_m'],
  [/아버지|사내|표두/,'man'],[/아이|꼬마|소년|손자|손주/,'kid_m'],[/소녀|계집/,'kid_f'],[/사저|여협|낭자|소저/,'youth_f'],[/검객|무사|무인|사형|제자|표사|형님|도전자|자식/,'youth_m']];
-function mobOf(S,nm){if(!nm)return null;const c=S.flags&&S.flags.cf;
+function mobOf(S,nm){if(!nm)return null;const c=(S.flags&&S.flags.cf)||(S.tmp&&S.tmp.cf&&S.tmp.cf.n?S.tmp.cf:null);
   if(c&&nm===c.n){const a=S.age,f=c.sex==='f';return a<14?(f?'cf_kid_f':'cf_kid_m'):a<50?(f?'cf_f':'cf_m'):(f?'cf_old_f':'cf_old_m');}
   {const o=typeof mobOrg==='function'&&mobOrg(S,nm);if(o&&MOB[o])return o;const r2=typeof MOB_RULE2!=='undefined'&&MOB_RULE2.find(([re])=>re.test(nm));if(r2)return r2[1];}
   if(nm===parentOf(S))return /어머니|할멈/.test(nm)?(S.age>=40?'old_f':'woman'):(S.age>=40?'old_m':'man');
@@ -13740,7 +13741,7 @@ function saveHall(h){try{localStorage.setItem(HKEY,JSON.stringify(h));}catch(e){
 const NAI_URL='https://image.novelai.net/ai/generate-image';
 const NAI_MODELS=[['nai-diffusion-4-5-full','V4.5 Full'],['nai-diffusion-4-5-curated','V4.5 Curated'],['nai-diffusion-5-full','V5 Full'],['nai-diffusion-5-curated','V5 Curated'],['nai-diffusion-4-full','V4 Full']];
 const NAI_Q={'nai-diffusion-5-full':'very aesthetic, masterpiece, best quality','nai-diffusion-5-curated':'very aesthetic, masterpiece, best quality','nai-diffusion-4-5-full':'very aesthetic, masterpiece, no text','nai-diffusion-4-5-curated':'location, masterpiece, no text','nai-diffusion-4-full':'no text, best quality, very aesthetic, absurdres'};
-const GAME_VER='2026.10.26-58';
+const GAME_VER='2026.10.26-59';
 const NAI_NEG='nsfw, nude, lowres, bad anatomy, bad hands, missing fingers, extra digits, text, watermark, signature, logo, worst quality, low quality, blurry, modern clothes, glasses, eyewear, jpeg artifacts';
 const NKEY='murim-nai';
 function ncfg(){let c={};try{c=JSON.parse(localStorage.getItem(NKEY)||'{}');}catch(e){}return Object.assign({key:'',relay:'',model:'nai-diffusion-4-5-full',style:'wuxia, ancient china, hanfu, detailed illustration, cinematic lighting',autoEv:false,autoPc:false,vn:true,neg:NAI_NEG,tnpc:'',tev:'',tmap:'',q:true},c,{pr:Object.assign({},c.pr)});}
@@ -14557,6 +14558,8 @@ function vnSubj(S,t,NM,fromEnd,back){if(!t)return undefined;const hits=[];
   const me=/당신(이|은|도)\s*(\S+\s*)?(말했|답했|물었|외쳤|중얼|대꾸|대답했|불렀|속삭)/g;while((m=me.exec(t)))hits.push([m.index,'me']);
   if(!hits.length)return undefined;hits.sort((a,b)=>a[0]-b[0]);return (fromEnd?hits[hits.length-1]:hits[0])[1];}
 const vnSent=t=>String(t||'').split(/(?<=[.!?…。])\s+/).map(x=>x.trim()).filter(Boolean);
+/* 회상: 지난날 들은 말을 떠올리는 문단. 그 사람은 지금 여기 없다 */
+const VN_MEM=/(했었|었었|였었|떠올랐|떠오른|떠올리|생각났|기억났|기억이 났|하곤 했|말하던|말씀하시던|꿈에서|꿈속|회상)/;
 function vnBeats(S,text,scene){const NM=vnNames(S),out=[];let last=scene||null;
   const lastNpc=()=>last&&last!=='me'?last:scene||null;
   const nar=t=>{let buf='';for(const x of vnSent(t)){if(buf&&(buf+' '+x).length>150){out.push({s:null,t:buf});buf=x;}else buf=buf?buf+' '+x:x;}if(buf)out.push({s:null,t:buf});};
@@ -14565,6 +14568,7 @@ function vnBeats(S,text,scene){const NM=vnNames(S),out=[];let last=scene||null;
     if(m){const id=vnWho(S,m[1],NM),ln=m[2].trim().replace(/^[“"]/,'').replace(/[”"]$/,'');if(id){out.push({s:id,t:ln});last=id;continue;}
       // 인물 목록에 없는 사람(시비·장로 등)도 ‘이름: “대사”’면 그 이름표로
       if(/^“/.test(m[2].trim())&&m[1].trim().length<=8){out.push({s:'@',n:m[1].trim(),t:ln});continue;}}
+    if(VN_MEM.test(p)){nar(p);continue;}
     const parts=p.split(/(“[^”]*”)/).map(x=>x.trim()).filter(Boolean);
     for(let k=0;k<parts.length;k++){const x=parts[k];
       if(x[0]!=='“'){nar(x);continue;}
@@ -14589,20 +14593,21 @@ function vnStep(){const c=VN.cur,root=document.querySelector('.vnfull[data-a="vn
   const n=c.beats.length,i=VN.i;if(i<=0||i>n-1||i>=c.last)return false;const b=c.beats[i],t=root.querySelector('.vnt'),pw=root.querySelector('.vnpw');if(!t||!pw)return false;
   root.classList.remove('vnfade');pw.innerHTML=vnPlate(c.whoOf(b.s,b.n));
   const nt=document.createElement('div');nt.className='vnt'+(b.s?'':' nar');nt.innerHTML=c.line(b);t.replaceWith(nt);
-  const bk=beatKey(S,b);root.querySelectorAll('.vnsp').forEach((el,j)=>{const id=c.cast[j];el.classList.remove('in');el.classList.toggle('on',bk===id);el.classList.toggle('nar',!b.s);});
+  const bk=beatKey(S,b);root.querySelectorAll('.vnsp').forEach((el,j)=>{const id=c.cast[j],f=c.first[id];el.classList.remove('in');if(f>i)el.classList.add('gone');else if(el.classList.contains('gone')){el.classList.remove('gone');void el.offsetWidth;el.classList.add('in');}el.classList.toggle('on',bk===id);el.classList.toggle('nar',!b.s);});
   const pv=root.querySelector('.vnpv');if(pv)pv.hidden=false;vnArm(c.key,i,n,b);return true;}
 function vnScreen(S,o){const beats=vnBeats(S,o.text,o.scene);if(!beats.length)beats.push({s:null,t:''});if(VN.k!==o.key){VN.k=o.key;VN.i=0;VN.log=0;}
   const n=beats.length,one=/data-a="next"/.test(o.acts||''),last=one||!o.acts?n-1:n;/* 선택지가 있으면 마지막 대사를 먼저 보이고, 한 번 더 누르면 선택지 */
   const n0=Math.min(VN.i,last),i=Math.min(n0,n-1),b=beats[i],done=n0>=last,auto=vnAuto();
-  const cast=vnCast(S,beats,o.scene).filter(id=>imgURL(castKey(id))),pos=VN_POS[cast.length]||[],bk=beatKey(S,b);
+  const first={};beats.forEach((x,k)=>{const q=beatKey(S,x);if(q&&first[q]==null)first[q]=k;});
+  const cast=vnCast(S,beats,o.scene).filter(id=>imgURL(castKey(id))&&first[id]!=null),pos=VN_POS[cast.length]||[],bk=beatKey(S,b);
   const whoOf=(x,nm)=>x==='me'?{k:S.nick?S.nick.n:'',n:dispName(S),me:1}:x==='@'?{k:'',n:nm}:x&&NPCS[x]?{k:safe(()=>npcNick(x,S))||'',n:NPCS[x].n}:x==='?'?{k:'',n:'???'}:null;
   const who=whoOf(b.s,b.n),line=x=>x.s?'“'+esc(x.t)+'”':esc(x.t);
-  VN.cur={key:o.key,beats,cast,whoOf,line,last};vnArm(o.key,n0,n,b);
+  VN.cur={key:o.key,beats,cast,whoOf,line,last,first};vnArm(o.key,n0,n,b);
   const tool=(a,l,on,lab)=>`<button class="vntool ${on?'on':''}" data-a="${a}" ${lab?`aria-label="${lab}"`:''} ${on!=null?`aria-pressed="${!!on}"`:''}>${l}</button>`;
   const log=VN.log?`<div class="vnlogp" data-a="vnnop"><div class="row" style="justify-content:space-between"><b>지난 대사</b>${tool('vnlog','닫기')}</div><div class="vnlogl">${beats.slice(0,i+1).map(x=>{const w=whoOf(x.s,x.n);return `<p>${w?`<b>${esc(w.n)}</b> `:''}${line(x)}</p>`;}).join('')}</div></div>`:'';
   return `<section class="vnfull ${done?'done':''} ${VN.i?'':'vnfade'}" ${done||VN.log?'':'data-a="vnnext"'} aria-live="polite">
    <div class="vnbg">${o.bg?`<img src="${o.bg}" alt="" decoding="async">`:''}</div>
-   <div class="vnsps">${cast.map((id,j)=>`<img class="vnsp ${bk===id?'on':b.s?'':'nar'} ${i===0?'in':''}" style="left:${pos[j]}%" decoding="async" src="${imgURL(castKey(id))}" alt="${esc(id.startsWith('mob:')?MOB[id.slice(4)].n:NPCS[id].n)}">`).join('')}</div>
+   <div class="vnsps">${cast.map((id,j)=>`<img class="vnsp ${bk===id?'on':b.s?'':'nar'} ${first[id]>i?'gone':first[id]===i?'in':''}" style="left:${pos[j]}%" decoding="async" src="${imgURL(castKey(id))}" alt="${esc(id.startsWith('mob:')?MOB[id.slice(4)].n:NPCS[id].n)}">`).join('')}</div>
    <div class="vntop"><div class="vnttl"><b>${ageLabel(S)} · ${esc(o.title)}</b>${o.tags||''}${o.sub?`<span class="vnsub">${esc(o.sub)}</span>`:''}</div>
     <div class="vntools">${o.draw||''}<span class="vnpv" ${i>0?'':'hidden'}>${tool('vnprev','◀','','이전 대사')}</span>${tool('vnlog','기록')}${done?'':tool('vnauto','자동',auto)+tool('vnskip','넘기기 ▶▶')}</div></div>
    ${done?`<div class="vnch ${/data-a="next"/.test(o.acts||'')?'one':''}">${o.panel?`<div class="vnpanel">${o.panel}</div>`:''}${o.acts||''}</div>`:''}
