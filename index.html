@@ -344,7 +344,8 @@ button.chip.on{background:var(--jade);color:var(--card);border-color:var(--jade)
 <script>
 'use strict';
 const R=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
-const chance=p=>Math.random()<p;
+let DEV_CTX=null; // 개발 스페이스가 선택지 하나를 실행하는 동안의 확률·전투 덮어쓰기
+const chance=p=>Math.random()<(DEV_CTX?devP(p):p);
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 const shuffle=a=>a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(x=>x[1]);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -681,6 +682,7 @@ function perceive(S,f){if(!f.hide||insight(S,f)>=f.hs)return {v:f.pow,real:true,
   const v=Math.round(f.pow*(1-f.hide));return {v,real:false,realm:guessRealm(v),cue:insight(S,f)>=f.hs*.6};}
 function battle(S,f,o){o=o||{};const k=kwSet(S);const fk=f.kw||[];
   let my=pow(S)*(.85+Math.random()*.3),fo=f.pow*(.85+Math.random()*.3);
+  if(DEV_CTX&&DEV_CTX.bt){const bt=DEV_CTX.bt;if(bt.realm!=null&&bt.realm!==''){const rl=clamp(+bt.realm,0,8);fo=FOEBASE[rl]*(f.q||1)*REALMS[rl].mult*(.85+Math.random()*.3);}if(bt.q)fo*=+bt.q;if(bt.res==='win')my=Math.max(my,fo*1.3);if(bt.res==='lose')my=Math.min(my,fo*.6);}
   if(k.has('쾌')&&fk.includes('중'))my*=1.05; if((k.has('불')||k.has('도'))&&fk.some(x=>x==='마'||x==='혈'))my*=1.1;
   if(k.has('환'))fo*=.96; if(k.has('암'))my*=1.03; if(S.flags.venom&&!fk.includes('독')&&!(f.id&&NPCS[f.id]&&NPCS[f.id].kw.includes('독')))fo*=1-Math.min(.2,S.med/500); if(k.has('율')&&f.group)my*=1.1;
   if(o.ally)my*=o.ally; if(o.weaken)fo*=o.weaken; if(S.flags.hkGangsi&&!o.spar)my*=1.06; if((S.flags.jjS||0)>=6&&!o.spar)my*=S.flags.jjS>=9?1.15:1.08; if(S.flags.hsOver)my*=1+Math.min(S.flags.hsOver,60)/300; if(S.flags.gwihon)my*=.97;
@@ -11544,7 +11546,7 @@ function devLayout(root,depth,back){const G=devGraph(),col={},order=[];col[root]
   for(const c in byc)byc[c].sort((a,b)=>((EVM[a].a||[0])[0]-(EVM[b].a||[0])[0])||a.localeCompare(b));
   const pos={},W=210,H=64,cmin=Math.min(...Object.keys(byc).map(Number));let maxR=0;for(const c in byc){byc[c].forEach((v,i)=>{pos[v]={x:(c-cmin)*W+12,y:i*H+12};});maxR=Math.max(maxR,byc[c].length);}
   const es=G.edges.filter(x=>pos[x.a]&&pos[x.b]);return {pos,es,w:(Math.max(...Object.keys(byc).map(Number))-cmin+1)*W+20,h:maxR*H+20};}
-function devHTML(){const m=modal,G=devGraph(),root=EVM[m.root]?m.root:(G.groups[0]||G.routes[0]||{}).root,depth=m.depth||6;
+function devMapHTML(){const m=modal,G=devGraph(),root=EVM[m.root]?m.root:(G.groups[0]||G.routes[0]||{}).root,depth=m.depth||6;
   const L=devLayout(root,depth,true),q=(m.q||'').trim(),hide=m.hide||{};L.es=L.es.filter(x=>!hide[x.k]);
   const hits=q?EV.filter(e=>e.id!=='focus'&&(e.id.includes(q)||String(stName(e)).includes(q))).slice(0,12):[];
   const node=(id)=>{const e=EVM[id],p=L.pos[id],ed=!!STORY.ev[id],nt=ed&&STORY.ev[id].note;const t=String(stName(e)).slice(0,13);
@@ -11555,7 +11557,7 @@ function devHTML(){const m=modal,G=devGraph(),root=EVM[m.root]?m.root:(G.groups[
     const d=same?`M${x1} ${y1} C${x1+28} ${y1},${x1+28} ${y2},${x1} ${y2}`:back?`M${a.x} ${y1} C${a.x-40} ${y1},${b.x+224} ${y2},${b.x+193} ${y2}`:`M${x1} ${y1} C${mx} ${y1},${mx} ${y2},${x2} ${y2}`;
     return `<path d="${d}" fill="none" stroke="${DEV_COL[x.k]}" stroke-width="1.6" ${x.k==='seen'?'stroke-dasharray="5 4"':x.k==='flag'?'stroke-dasharray="2 3"':x.k==='order'?'stroke-dasharray="1 4" stroke-width="1.2"':''} marker-end="url(#dvar-${x.k})"><title>${esc({go:'바로 이어짐',seen:'본 뒤에 열림',flag:'표시: '+x.l,step:'다음 단계',order:'같은 길, 나이순'}[x.k])}</title></path>`;};
   return `<div class="modal" data-a="mbg"><div class="sheet story dev" role="dialog" aria-modal="true" aria-labelledby="mt" style="max-width:min(1100px,96vw);width:96vw">
-   <div class="row" style="justify-content:space-between"><h3 id="mt" style="margin:0">개발 스페이스</h3><div class="row"><button class="ghost" data-a="story">사건 목록</button><button class="ghost" data-a="mclose">닫기</button></div></div>
+   ${devHead(m)}
    <p class="muted small" style="margin:0">사건이 어떻게 이어지는지 보인다. 상자를 누르면 그 사건의 스크립트를 열어 고친다(저장하면 게임에 바로 쓰인다). ⊕를 누르면 그 사건을 가운데에 두고 다시 펼친다. 초록 테두리는 고친 사건, ✎는 메모가 있는 사건.</p>
    <div class="row wrap small" style="gap:10px"><span style="color:${DEV_COL.go}">━ 바로 이어짐</span><span style="color:${DEV_COL.seen}">╍ 본 뒤에 열림</span><span style="color:${DEV_COL.flag}">┈ 앞 사건이 세운 표시</span><span style="color:${DEV_COL.step}">━ 다음 단계(마디·장)</span><span style="color:${DEV_COL.order}">··· 같은 길, 나이순</span></div>
    <div class="row wrap small" style="gap:10px">이음 보기 ${[['go','바로'],['seen','본 뒤'],['flag','표시'],['step','단계'],['order','나이순']].map(([k,l])=>`<label class="row small"><input type="checkbox" data-dvk="${k}" ${(m.hide||{})[k]?'':'checked'}> ${l}</label>`).join('')}</div>
@@ -11622,7 +11624,7 @@ function stCollect(){const m=modal,sm=m.bs||m.sm,g=id=>{const el=document.getEle
   (sm.ch||[]).forEach((c,i)=>{const ct=g('se_ct'+i),chh=g('se_ch'+i),cr=g('se_cr'+i),v={};if(ct&&ct.trim()&&ct!==c.t)v.t=ct;if(chh!=null&&chh!==(c.h||''))v.h=chh;if(cr&&cr.trim()&&cr!==c.r)v.r=cr;if(Object.keys(v).length)rec.ch[c.t]=v;});
   if(!Object.keys(rec.ch).length)delete rec.ch;return rec;}
 function stExport(){const ev={};for(const id in STORY.ev){const e=EVM[id],o=STORY.ev[id];ev[id]=Object.assign({이름:e?stName(e):id},o);}
-  return JSON.stringify({형식:'murim-story/1',판:GAME_VER,때:new Date().toISOString(),전체메모:STORY.memo||'',사건:ev},null,1);}
+  return JSON.stringify({형식:'murim-story/2',판:GAME_VER,때:new Date().toISOString(),전체메모:STORY.memo||'',사건:ev,새사건:STORY.add||{}},null,1);}
 async function stPush(){const m=modal,c=ncfg(),repo=(c.ghRepo||ghDefault()).trim().replace(/^https?:\/\/github\.com\//,'').replace(/\.git$/,'').replace(/\/$/,''),br=(c.ghBranch||'main').trim(),tok=(c.ghToken||'').trim();
   if(!tok){m.msg='저장소 설정에 깃허브 토큰을 넣어 주세요.';render();return;}if(!/^[\w.-]+\/[\w.-]+$/.test(repo)){m.msg='저장소는 아이디/이름 꼴로 적어 주세요.';render();return;}
   m.busy=1;m.msg='';render();const path='story/edits.json',url=`https://api.github.com/repos/${repo}/contents/${path}`,H={Authorization:'Bearer '+tok,Accept:'application/vnd.github+json'};
@@ -13638,6 +13640,167 @@ function metTrack(S,src){const f=S.flags;if(!f)return;const k=f.metK||(f.metK={}
     if(by[id]!=='old'&&!FM_SRC.has(by[id])&&!/^lv_/.test(by[id])){if(typeof LOVE_ARC!=='undefined'&&(LOVE_ARC[id]||LOVE[id])&&!S.seen[`lv_${id}_0`])S.seen[`lv_${id}_0`]='skip';if(typeof TALK!=='undefined'&&TALK[id]&&TALK[id].length>1&&!f['tk_'+id]&&!sameOrg(S,id))f['tk_'+id]=1;}}}
 /* 첫 만남 장은 처음 알게 된 지 세 해 안에만 */
 const fmFresh=(S,id)=>{const by=(S.flags.metBy||{})[id];if(by&&by!=='old'&&!FM_SRC.has(by))return false;const a=(S.flags.fmAt||{})[id];return a!=null&&a>=0&&S.age-a<=3;};
+/* ══ 개발 스페이스 2: 모든 사건을 보고, 글·확률·조건·효과·보상·전투까지 고친다 ══
+   고친 것은 이 기기(STORY)에 저장되고 게임에 바로 쓰인다. ‘저장소에 올리기’로 보내면 개발 쪽이 코드에 반영한다.
+   사건: 나이, 확률(가중치·배율), 쿨다운, 반드시 일어남/안 일어남, 끄기, 추가 조건(JS)
+   선택지: 글, 숨기기, 보이는 조건(JS), 성공 확률(고정·배율), 전투(적 경지·강도·결과), 추가 효과(보상·대가), 추가 실행(JS), 다음 사건 */
+const devOv=e=>STORY.on!==false&&e&&STORY.ev[e.id]||null;
+const DEV_FN={};function devFn(code){if(!code)return null;if(DEV_FN[code]!==undefined)return DEV_FN[code];try{DEV_FN[code]=new Function('S','A','TK','learn','chance','R','pick','NPCS','ORGS','return ('+code+');');}catch(e){DEV_FN[code]=null;}return DEV_FN[code];}
+function devCond(code,S){const f=devFn(code);if(!f)return true;try{return !!f(S,A,TK,learn,chance,R,pick,NPCS,ORGS);}catch(e){return true;}}
+const DEV_RUN={};function devRun(code,S){if(!code)return;let f=DEV_RUN[code];if(f===undefined){try{f=new Function('S','A','TK','learn','chance','R','pick','NPCS','ORGS',code);}catch(e){f=null;toast('추가 실행 코드 오류: '+e.message);}DEV_RUN[code]=f;}if(f)try{f(S,A,TK,learn,chance,R,pick,NPCS,ORGS);}catch(e){toast('추가 실행 중 오류: '+e.message);}}
+function devP(p){const c=DEV_CTX;if(!c)return p;if(c.p!=null&&c.p!=='')return clamp(+c.p/100,0,1);if(c.pm)return clamp(p*+c.pm,0,1);return p;}
+/* 능력치 이름 */
+const DEV_STAT={fame:'명성',moral:'도덕',gold:'은자',ng:'내공',hp:'체력',mood:'심상',salgi:'살기',cult:'수양',temper:'성정',mind:'심계',savvy:'처세',tongue:'구력',lore:'학문',med:'의술',forge:'단조',rp:'항독',rm:'항마',contrib:'공헌',exp:'경험',enemies:'원한',mu:'무학',qing:'경공',yy:'음양'};
+const DEV_STATR=Object.fromEntries(Object.entries(DEV_STAT).map(([k,v])=>[v,k]));
+/* ‘명성+10, 은자-50, ng+5’ → [{k,v}] */
+function devFxParse(t){return String(t||'').split(/[,，\n]/).map(x=>x.trim()).filter(Boolean).map(x=>{const m=/^([가-힣a-zA-Z]+)\s*([+\-]?\s*\d+)$/.exec(x);if(!m)return null;const k=DEV_STAT[m[1]]?m[1]:DEV_STATR[m[1]];return k?{k,v:+m[2].replace(/\s/g,'')}:null;}).filter(Boolean);}
+const devFxText=L=>(L||[]).map(f=>`${DEV_STAT[f.k]||f.k}${f.v>=0?'+':''}${f.v}`).join(', ');
+/* 코드에서 선택지의 효과를 읽어 사람 말로 */
+function devFxRead(src){src=String(src||'');const out=[];let m;
+  for(m of src.matchAll(/\bA\(S,\{([^}]*)\}\)/g))for(const kv of m[1].split(',')){const q=/^\s*(\w+)\s*:\s*(.+)$/.exec(kv);if(q)out.push(`${DEV_STAT[q[1]]||q[1]} ${/^-?\d+(\.\d+)?$/.test(q[2].trim())?(+q[2]>=0?'+':'')+q[2].trim():'('+q[2].trim().slice(0,24)+')'}`);}
+  for(m of src.matchAll(/\b(?:TK|rel)\(S,\s*'(\w+)',\s*(-?\d+)\)/g))out.push(`${NPCS[m[1]]?NPCS[m[1]].n:m[1]} 호감 ${+m[2]>=0?'+':''}${m[2]}`);
+  for(m of src.matchAll(/\blearn\(S,\s*'(\w+)'\)/g))out.push(`무공: ${ARTS[m[1]]?ARTS[m[1]].n:m[1]}`);
+  for(m of src.matchAll(/\bbattle\(S,\s*([^;]{0,60})/g))out.push(`전투 (${m[1].replace(/\)\s*$/,'').slice(0,50)})`);
+  for(m of src.matchAll(/\bhurtS?\(S,\s*([^,]+),/g))out.push(`부상 ${m[1].trim()}`);
+  for(m of src.matchAll(/\bchance\(([^)]{0,60})\)/g))out.push(`확률 판정 (${m[1].trim()})`);
+  for(m of src.matchAll(/S\.flags\.(\w+)\s*=(?!=)/g))out.push(`표시 ${m[1]}`);
+  for(m of src.matchAll(/(?:S\.chain|nextEv)\s*=\s*'(\w+)'/g))out.push(`→ ${EVM[m[1]]?stName(EVM[m[1]]):m[1]}`);
+  for(m of src.matchAll(/\bjoin\(S,\s*'(\w+)'/g))out.push(`입문: ${ORGS[m[1]]?ORGS[m[1]].n:m[1]}`);
+  if(/leaveOrg\(S\)/.test(src))out.push('문파를 떠남');for(m of src.matchAll(/\bsTitle\(S,\s*'([^']+)'/g))out.push(`칭호: ${m[1]}`);
+  for(m of src.matchAll(/S\.spouse\s*=\s*'?(\w+)'?/g))out.push(`혼인: ${NPCS[m[1]]?NPCS[m[1]].n:m[1]}`);for(m of src.matchAll(/dead_npc\.(\w+)\s*=\s*1/g))out.push(`죽음: ${NPCS[m[1]]?NPCS[m[1]].n:m[1]}`);
+  return [...new Set(out)].slice(0,24);}
+/* 원래 선택지 목록(코드)과 그 효과 */
+function devChoices(e){const base=stChoicesSrc(e);const srcs=Array.isArray(e.ch)?e.ch.map(c=>String(c.go)+' '+String(c.if||'')):null;const all=String(e.ch||'');
+  return base.map((c,i)=>{let s=srcs?srcs[i]:'';if(!srcs){const at=all.indexOf(c.t.slice(0,8));const nx=all.indexOf('{t:',at+5);s=at>=0?all.slice(at,nx>at?nx:at+1500):'';}return {...c,src:s,fx:devFxRead(s)};});}
+/* 선택지에 고친 것 입히기: 숨김·조건·확률·전투·보상·추가 실행·다음 사건 */
+function stChoices(S,e,list){const o=stOv(e.id);if(!o||!o.ch)return list;const out=[];
+  for(const c of list){const v=o.ch[c.t];if(!v){out.push(c);continue;}if(v.hide)continue;if(v.req&&!devCond(v.req,S))continue;const n={...c};
+    if(v.t)n.t=stFill(S,v.t);if(v.h!=null&&v.h!=='')n.h=stFill(S,v.h);
+    const g=c.go;if(g)n.go=S=>{const prev=DEV_CTX;DEV_CTX={p:v.p,pm:v.pm,bt:v.bt};let r;try{r=g(S);}finally{DEV_CTX=prev;}
+      if(v.fx&&v.fx.length){const fx={};v.fx.forEach(f=>{if(f.k==='hp'&&f.v<0)hurtS(S,-f.v,e.t||'사건');else fx[f.k]=(fx[f.k]||0)+f.v;});A(S,fx);}
+      if(v.js)devRun(v.js,S);if(v.next&&EVM[v.next])S.chain=v.next;
+      return v.r&&typeof r==='string'?stFill(S,v.r):r;};
+    out.push(n);}
+  return out;}
+/* 새 사건: STORY.add[id] = {t,x,a,w,cd,tag,ch:[{t,h,r,fx,next}]} */
+function devAddAll(){for(const id in (STORY.add||{})){const d=STORY.add[id];let e=EVM[id];
+  if(!e){e={id,t:d.t||'새 사건',a:d.a||[10,90],w:d.w!=null?+d.w:1,cd:d.cd||0,tag:d.tag||'side',user:1};E(e);EVM[id]=e;DEVG=null;}
+  Object.assign(e,{t:d.t||'새 사건',a:d.a||[10,90],w:d.w!=null?+d.w:1,cd:+d.cd||0,tag:d.tag||'side',x:S=>stFill(S,d.x||''),
+    ch:(d.ch&&d.ch.length?d.ch:[{t:'고개를 끄덕인다',r:''}]).map(c=>({t:c.t||'…',h:c.h||'',go:S=>{if(c.fx&&c.fx.length){const fx={};c.fx.forEach(f=>{if(f.k==='hp'&&f.v<0)hurtS(S,-f.v,d.t||'사건');else fx[f.k]=(fx[f.k]||0)+f.v;});A(S,fx);}if(c.js)devRun(c.js,S);if(c.next&&EVM[c.next])S.chain=c.next;return stFill(S,c.r||'');}}))});}}
+/* ── 화면 ── */
+const DEV_TABS=[['map','지도'],['list','모든 사건'],['send','메모·보내기']];
+function devHead(m,title){return `<div class="row" style="justify-content:space-between"><h3 id="mt" style="margin:0">${esc(title||'개발 스페이스')}</h3><div class="row"><button class="ghost" data-a="mclose">닫기</button></div></div>
+  <div class="chips" style="display:flex;gap:4px">${DEV_TABS.map(([k,l])=>`<button class="chip ${(m.tab||'map')===k?'on':''}" data-a="dvtab" data-v="${k}">${l}</button>`).join('')}<button class="chip" data-a="dvnew">+ 새 사건</button></div>`;}
+function devHTML(){const m=modal;if(m.tab==='list')return devListHTML();if(m.tab==='send')return devSendHTML();return devMapHTML();}
+function devListHTML(){const m=modal,q=(m.q2||'').trim(),f=m.f||'all',G=devGraph();
+  let L=EV.filter(e=>e.id!=='focus');
+  if(f==='edit')L=L.filter(e=>STORY.ev[e.id]||(STORY.add||{})[e.id]);else if(f==='user')L=L.filter(e=>e.user);else if(f.startsWith('g:'))L=L.filter(e=>devGroup(e)===f.slice(2));else if(f!=='all')L=L.filter(e=>f==='lv'?/^lv_/.test(e.id):e.tag===f&&!/^lv_/.test(e.id));
+  if(q)L=L.filter(e=>{if(!e._hay){let h=e.id+' '+stName(e)+' '+(e._src||String(e.x||''));try{h+=' '+String(e.ch);}catch(x){}e._hay=h;}return e._hay.includes(q)||(STORY.ev[e.id]&&JSON.stringify(STORY.ev[e.id]).includes(q));});
+  const n=m.n||80,tags=[['all','전체'],['edit','고친 것'],['user','새로 만든 것'],['lv','인연 이야기'],['love','연애'],['talk','인물'],['side','곁가지'],['key','천하대세'],['job','생업'],['family','가족'],['trait','체질']];
+  return `<div class="modal" data-a="mbg"><div class="sheet story dev" role="dialog" aria-modal="true" aria-labelledby="mt" style="max-width:min(1100px,96vw);width:96vw">${devHead(m)}
+   <input id="dv_q2" class="evinp" style="width:100%" placeholder="찾기: 사건 이름, 글귀, id" value="${esc(m.q2||'')}">
+   <div class="chips" style="display:flex;flex-wrap:wrap;gap:4px">${tags.map(([k,l])=>`<button class="chip ${f===k?'on':''}" data-a="stf" data-v="${k}">${l}${k==='edit'?` ${Object.keys(STORY.ev).length}`:''}</button>`).join('')}</div>
+   <div class="chips" style="display:flex;flex-wrap:wrap;gap:4px">${G.groups.map(r=>`<button class="chip ${f==='g:'+r.g?'on':''}" data-a="stf" data-v="g:${esc(r.g)}">${esc(devGName(r.g))} ${r.n}</button>`).join('')}</div>
+   <p class="small muted" style="margin:0">${L.length}개 사건</p>
+   <ul class="stlist">${L.slice(0,n).map(e=>{const w=typeof e.w==='function'?'조건부':e.w!=null?'가중치 '+e.w:'이어서만';return `<li><button data-a="stopen" data-id="${esc(e.id)}"><b>${esc(stName(e))}</b>${STORY.ev[e.id]?' <span class="chip g">고침</span>':''}${e.user?' <span class="chip">새 사건</span>':''}<small>${esc(e.id)} · ${esc(stInfo(e))} · ${w}${e.cd?' · 쿨다운 '+e.cd+'해':''}${e.force?' · 반드시 일어남':''}${devGroup(e)?' · '+esc(devGName(devGroup(e))):''}</small></button></li>`;}).join('')||'<li class="muted small">찾는 사건이 없다.</li>'}</ul>
+   ${L.length>n?`<button class="ghost" data-a="stmore">더 보기 (${L.length-n}개 남음)</button>`:''}</div></div>`;}
+function devSendHTML(){const m=modal;return `<div class="modal" data-a="mbg"><div class="sheet story dev" role="dialog" aria-modal="true" aria-labelledby="mt" style="max-width:min(900px,96vw);width:96vw">${devHead(m)}
+   <label class="row small"><input type="checkbox" id="st_on" ${STORY.on!==false?'checked':''}> 고친 것을 게임에 쓴다 (끄면 원래대로 돌아간다)</label>
+   <p class="grp-t">전체 메모 (이야기 전반에 바라는 것 · AI 다듬기에도 쓰인다)</p>
+   <textarea id="st_memo" rows="6" placeholder="예) 선택지는 좋기만·나쁘기만 하지 않게. 서린은 좀 더 장난스럽게.">${esc(STORY.memo||'')}</textarea>
+   <p class="grp-t">보내기</p>
+   <p class="muted small" style="margin:0">고친 글·설정·새 사건·메모가 깃허브 저장소의 story/edits.json으로 올라간다. 개발 쪽이 읽고 코드에 반영하면, 반영된 것은 이 기기에서 저절로 지워진다.</p>
+   <div class="row wrap"><button class="go" data-a="stpush" ${m.busy?'disabled':''}>${m.busy?'올리는 중…':'저장소에 올리기'}</button><button class="ghost" data-a="stdl">파일로 받기</button><label class="ghost" style="cursor:pointer;padding:6px 10px">파일 불러오기<input type="file" id="st_file" accept=".json,application/json" hidden></label></div>
+   <details><summary class="small">저장소 설정 (그림 관리의 깃허브 설정과 같다)</summary><div class="col" style="gap:6px;margin-top:6px"><input id="st_repo" class="evinp" style="width:100%" placeholder="아이디/저장소 (예: jjhk0803/murim-life)" value="${esc(ncfg().ghRepo||ghDefault())}"><input id="st_branch" class="evinp" style="width:100%" placeholder="브랜치 (main)" value="${esc(ncfg().ghBranch||'main')}"><input id="st_tok" class="evinp" style="width:100%" type="password" placeholder="깃허브 토큰 (Contents 쓰기 권한)" value="${esc(ncfg().ghToken||'')}"></div></details>
+   ${m.msg?`<p class="small" style="margin:0">${esc(m.msg)}</p>`:''}</div></div>`;}
+function storyListHTML(){modal.t='dev';modal.tab='list';return devHTML();}
+/* 사건 편집 */
+function storyEvHTML(){const m=modal,e=EVM[m.id],add=(STORY.add||{})[m.id];
+  /* 새 사건은 원문 자체가 편집 대상이다 */
+  if(add){m.bs=m.bs||{title:add.t,x:add.x||'',ch:(add.ch||[]).map(c=>({t:c.t,h:c.h||'',r:c.r||''}))};m.dc=m.dc||(add.ch||[]).map(c=>({t:c.t,h:c.h||'',r:c.r||'',fx:[],src:''}));}
+  const o=add?{a:add.a,w:add.w,cd:add.cd,cond:add.cond,force:add.force,off:add.off,note:add.note,ch:Object.fromEntries((add.ch||[]).map(c=>[c.t,{fx:c.fx,js:c.js,next:c.next,req:c.req}]))}:STORY.ev[m.id]||{},sm=m.sm||(m.sm=stSample(m.id)),bs=m.bs||(m.bs=safe(()=>stScript(m.id))||{title:e.t||m.id,x:'',ch:[]}),d=m.d||(m.d={});
+  const dc=m.dc||(m.dc=safe(()=>devChoices(e))||[]);const val=(k,def)=>d[k]!=null?d[k]:def;const ok=safe(()=>eligible(S,e))===true;
+  const w0=typeof e.w==='function'?'조건에 따라 (코드)':e.w!=null?String(e.w):'이어서만 열림';const cond0=[e._o&&e._o.w,e._o&&e._o.if,e._o&&e._o.force].filter(f=>typeof f==='function').map(String).join('\n');
+  const inp=(id,v,ph,wd)=>`<input id="se_${id}" class="evinp" style="width:${wd||'100%'}" value="${esc(v==null?'':v)}" placeholder="${esc(ph||'')}">`;
+  const G=devGraph(),pv=(G.bw[m.id]||[]).map(x=>x.a),nx=(G.fw[m.id]||[]).map(x=>x.b),btn=id=>`<button class="chip" data-a="dvopen" data-id="${esc(id)}">${esc(stName(EVM[id]))}</button>`;
+  return `<div class="modal" data-a="mbg"><div class="sheet story dev" role="dialog" aria-modal="true" aria-labelledby="mt" style="max-width:min(900px,96vw);width:96vw">
+   <div class="row" style="justify-content:space-between"><h3 id="mt" style="margin:0">${esc(stName(e))}</h3><div class="row"><button class="ghost" data-a="dvai" ${m.aiBusy?'disabled':''}>${m.aiBusy?'AI가 다듬는 중…':'AI로 다듬기'}</button><button class="ghost" data-a="mclose">돌아가기</button></div></div>
+   <p class="muted small" style="margin:0">${esc(e.id)} · ${esc(stInfo(e))}${devGroup(e)?' · '+esc(devGName(devGroup(e))):''} · 지금 삶에서 ${ok?'일어날 수 있다':'조건이 맞지 않는다'}</p>
+   ${m.aiMsg?`<p class="small" style="margin:0;color:${m.aiErr?'#a33':'#2f6b4f'}">${esc(m.aiMsg)}</p>`:''}
+   ${pv.length||nx.length?`<div class="small">${pv.length?`앞: ${pv.map(btn).join(' ')}`:''} ${nx.length?`<br>뒤: ${nx.map(btn).join(' ')}`:''}</div>`:''}
+   <details open><summary class="grp-t" style="cursor:pointer">사건 설정 · 나이 · 확률 · 조건</summary>
+    <div class="grid2" style="gap:6px;margin-top:6px">
+     <label class="small">나이 (원래 ${esc(stAge(e))})<div class="row">${inp('a0',val('a0',o.a?o.a[0]:''),e.a?e.a[0]:'','46%')} ~ ${inp('a1',val('a1',o.a?o.a[1]:''),e.a?e.a[1]:'','46%')}</div></label>
+     <label class="small">확률 가중치 (원래: ${esc(w0)})${inp('w',val('w',o.w),'비우면 원래대로. 다른 사건은 대개 1~6')}</label>
+     <label class="small">확률 배율 (×)${inp('wm',val('wm',o.wm),'예: 2 는 두 배, 0.5 는 절반')}</label>
+     <label class="small">쿨다운 (원래: ${e.cd?e.cd+'년':'한 번만'})${inp('cd',val('cd',o.cd),'비우면 원래대로 · 0은 한 번만')}</label>
+     <label class="small">반드시 일어남<select id="se_force"><option value="">원래대로 (${e.force?'조건이 맞으면 반드시':'확률로'})</option><option value="on" ${val('force',o.force)==='on'?'selected':''}>조건이 맞으면 반드시</option><option value="off" ${val('force',o.force)==='off'?'selected':''}>반드시 일어나지 않음(확률로만)</option></select></label>
+     <label class="small row" style="align-items:center"><input type="checkbox" id="se_off" ${val('off',o.off)?'checked':''}> 이 사건 끄기</label></div>
+    <label class="small">추가 조건 (JS 식 · S가 지금 삶. 예: <code>S.realm>=4 && S.org==='wudang'</code>)</label><textarea id="se_cond" rows="2">${esc(val('cond',o.cond||''))}</textarea>
+    ${cond0?`<details><summary class="small">원래 조건 코드 보기</summary><pre class="small" style="white-space:pre-wrap;max-height:30vh;overflow:auto">${esc(cond0)}</pre></details>`:''}
+   </details>
+   ${sm.err?'':`<details><summary class="small">지금 삶에서 본 예시${sm.fake?' (조건을 임시로 채운 가상의 삶)':''}</summary><pre class="small" style="white-space:pre-wrap;margin:6px 0">${esc(sm.x||'')}</pre></details>`}
+   ${DEV_TABLES[m.id]?`<details><summary class="small">인물마다 따로 있는 글</summary><pre class="small" style="white-space:pre-wrap;margin:6px 0;max-height:40vh;overflow:auto">${esc(devTableText(m.id))}</pre></details>`:''}
+   <p class="grp-t">제목</p>${inp('title',val('title',o.t||bs.title||''))}
+   <p class="grp-t">본문 <span class="muted small" style="font-weight:400">‘이름: “대사”’ 줄은 그 사람의 대사. 〔이것 │ 저것〕은 조건에 따라 갈리는 글, {이름}·{동무}·{상대}·{반려}·{부모}는 바뀌는 자리</span></p>
+   <textarea id="se_x" rows="14">${esc(val('x',o.x||bs.x||''))}</textarea>
+   <p class="grp-t">선택지</p>
+   ${(dc.length?dc:bs.ch||[]).map((c,i)=>{const v=(o.ch||{})[c.t]||{},bt=v.bt||{};return `<div class="stch"><div class="row wrap" style="justify-content:space-between"><small class="muted">원래: ${esc(c.t)}${c.cond?' (조건이 있는 선택지)':''}</small><label class="small row"><input type="checkbox" id="se_chide${i}" ${val('chide'+i,v.hide)?'checked':''}> 숨기기</label></div>
+     ${c.fx&&c.fx.length?`<div class="chips small" style="display:flex;flex-wrap:wrap;gap:3px">${c.fx.map(x=>`<span class="chip">${esc(x)}</span>`).join('')}</div>`:''}
+     ${inp('ct'+i,val('ct'+i,v.t||c.t),'선택지 이름')}${inp('ch'+i,val('ch'+i,v.h!=null?v.h:c.h),'힌트 (비워 두면 원래대로)')}
+     <textarea id="se_cr${i}" rows="5" placeholder="고른 뒤의 결과 글">${esc(val('cr'+i,v.r||c.r))}</textarea>
+     <details ${v.p!=null||v.pm||v.bt||v.fx||v.js||v.req||v.next?'open':''}><summary class="small">효과·확률·전투·보상 고치기</summary><div class="grid2" style="gap:6px;margin-top:6px">
+      <label class="small">성공 확률 고정 (%)${c.src&&!/chance\(/.test(c.src)?' <span class="muted">· 이 선택지는 확률이 아니라 능력치로 판정한다</span>':''}${inp('cp'+i,val('cp'+i,v.p),'비우면 원래 계산대로')}</label>
+      <label class="small">성공 확률 배율 (×)${inp('cpm'+i,val('cpm'+i,v.pm),'예: 1.5')}</label>
+      <label class="small">전투: 적 경지 (0~8)${inp('cbr'+i,val('cbr'+i,bt.realm),'비우면 원래대로')}</label>
+      <label class="small">전투: 적 강도 배율 (×)${inp('cbq'+i,val('cbq'+i,bt.q),'예: 0.8 은 약하게')}</label>
+      <label class="small">전투 결과<select id="se_cbres${i}"><option value="">원래대로 (실력대로)</option><option value="win" ${val('cbres'+i,bt.res)==='win'?'selected':''}>반드시 이긴다</option><option value="lose" ${val('cbres'+i,bt.res)==='lose'?'selected':''}>반드시 진다</option></select></label>
+      <label class="small">다음에 바로 이어질 사건 (id)${inp('cnext'+i,val('cnext'+i,v.next),'예: iA3')}</label></div>
+      <label class="small">추가 효과 · 보상 · 대가 (예: <code>명성+10, 은자-50, 내공+5, 체력-20</code>)</label>${inp('cfx'+i,val('cfx'+i,devFxText(v.fx)),'')}
+      <label class="small">보이는 조건 (JS 식)</label>${inp('creq'+i,val('creq'+i,v.req),'예: S.gold>=100')}
+      <label class="small">추가 실행 (JS · 고른 뒤 실행)</label><textarea id="se_cjs${i}" rows="2" placeholder="예: S.flags.myFlag=1; TK(S,'seorin',10);">${esc(val('cjs'+i,v.js||''))}</textarea>
+      ${c.src?`<details><summary class="small">원래 코드 보기</summary><pre class="small" style="white-space:pre-wrap;max-height:30vh;overflow:auto">${esc(c.src.slice(0,4000))}</pre></details>`:''}</details></div>`;}).join('')}
+   ${e.user?'<button class="ghost" data-a="dvaddch">+ 선택지 더하기</button>':''}
+   <p class="grp-t">메모 (개발 쪽에 남기는 말 · AI 다듬기에도 쓰인다)</p>
+   <textarea id="se_note" rows="3" placeholder="예) 이 장면에서 동무가 울지 말고 화를 냈으면.">${esc(val('note',o.note||''))}</textarea>
+   <div class="row wrap" style="justify-content:space-between"><div class="row wrap"><button class="go" data-a="stsave">저장</button>${STORY.ev[m.id]?'<button class="ghost" data-a="stdel">원래대로</button>':''}${e.user?'<button class="ghost" data-a="dvdelev">이 새 사건 지우기</button>':''}</div><button class="ghost" data-a="sttry" title="다음 해에 이 사건이 열린다">다음 해에 열어 보기</button></div>
+   ${m.msg?`<p class="small" style="margin:0">${esc(m.msg)}</p>`:''}</div></div>`;}
+/* 편집 칸을 읽어 고친 것만 남긴다 */
+function stCollect(){const m=modal,e=EVM[m.id],bs=m.bs||{},dc=(m.dc&&m.dc.length?m.dc:bs.ch)||[],g=id=>{const el=document.getElementById(id);return el?(el.type==='checkbox'?el.checked:el.value):null;};const rec={ch:{}};const num=x=>x!=null&&String(x).trim()!==''?+x:null;
+  const t=g('se_title'),x=g('se_x'),n=g('se_note');if(t!=null&&t.trim()&&t!==bs.title)rec.t=t;if(x!=null&&x.trim()&&x!==bs.x)rec.x=x;if(n&&n.trim())rec.note=n;
+  const a0=num(g('se_a0')),a1=num(g('se_a1'));if(a0!=null||a1!=null)rec.a=[a0!=null?a0:(e.a?e.a[0]:0),a1!=null?a1:(e.a?e.a[1]:130)];
+  const w=num(g('se_w')),wm=num(g('se_wm')),cd=num(g('se_cd'));if(w!=null)rec.w=w;if(wm!=null&&wm!==1)rec.wm=wm;if(cd!=null)rec.cd=cd;
+  const fo=g('se_force');if(fo)rec.force=fo;if(g('se_off'))rec.off=1;const cond=g('se_cond');if(cond&&cond.trim())rec.cond=cond.trim();
+  dc.forEach((c,i)=>{const v={};const ct=g('se_ct'+i),chh=g('se_ch'+i),cr=g('se_cr'+i);if(ct&&ct.trim()&&ct!==c.t)v.t=ct;if(chh!=null&&chh!==(c.h||''))v.h=chh;if(cr&&cr.trim()&&cr!==c.r)v.r=cr;
+    if(g('se_chide'+i))v.hide=1;const p=num(g('se_cp'+i)),pm=num(g('se_cpm'+i));if(p!=null)v.p=p;if(pm!=null&&pm!==1)v.pm=pm;
+    const br=num(g('se_cbr'+i)),bq=num(g('se_cbq'+i)),bres=g('se_cbres'+i);if(br!=null||(bq!=null&&bq!==1)||bres)v.bt={realm:br,q:bq,res:bres||''};
+    const fx=devFxParse(g('se_cfx'+i));if(fx.length)v.fx=fx;const req=g('se_creq'+i);if(req&&req.trim())v.req=req.trim();const js=g('se_cjs'+i);if(js&&js.trim())v.js=js.trim();const nx=g('se_cnext'+i);if(nx&&nx.trim())v.next=nx.trim();
+    if(Object.keys(v).length)rec.ch[c.t]=v;});
+  if(!Object.keys(rec.ch).length)delete rec.ch;return rec;}
+/* 새 사건은 원문 자체를 고친다 */
+function devSaveUser(){const m=modal,d=STORY.add[m.id],g=id=>{const el=document.getElementById(id);return el?(el.type==='checkbox'?el.checked:el.value):null;};const num=x=>x!=null&&String(x).trim()!==''?+x:null;
+  d.t=g('se_title')||d.t;d.x=g('se_x')||'';d.note=g('se_note')||'';const a0=num(g('se_a0')),a1=num(g('se_a1'));d.a=[a0!=null?a0:(d.a||[10,90])[0],a1!=null?a1:(d.a||[10,90])[1]];
+  const w=num(g('se_w'));if(w!=null)d.w=w;const cd=num(g('se_cd'));if(cd!=null)d.cd=cd;d.cond=(g('se_cond')||'').trim();d.force=g('se_force')||'';d.off=!!g('se_off');
+  d.ch=(d.ch||[]).map((c,i)=>({t:g('se_ct'+i)||c.t,h:g('se_ch'+i)||'',r:g('se_cr'+i)||'',fx:devFxParse(g('se_cfx'+i)),js:(g('se_cjs'+i)||'').trim(),next:(g('se_cnext'+i)||'').trim(),req:(g('se_creq'+i)||'').trim()}));
+  STORY.ev[m.id]={...(d.cond?{cond:d.cond}:{}),...(d.force?{force:d.force}:{}),...(d.off?{off:1}:{}),ch:Object.fromEntries(d.ch.filter(c=>c.req).map(c=>[c.t,{req:c.req}]))};if(!Object.keys(STORY.ev[m.id].ch).length)delete STORY.ev[m.id].ch;if(!Object.keys(STORY.ev[m.id]).length)delete STORY.ev[m.id];
+  devAddAll();ssave();m.bs=null;m.dc=null;m.d={};}
+/* ── AI로 다듬기: 앞뒤 사건과 갈래, 전체 메모까지 읽고 글을 다듬는다 ── */
+const DEV_AI_SCHEMA={type:'object',additionalProperties:false,required:['title','text','choices'],properties:{title:{type:'string'},text:{type:'string'},choices:{type:'array',items:{type:'object',additionalProperties:false,required:['t','h','r'],properties:{t:{type:'string'},h:{type:'string'},r:{type:'string'}}}}}};
+const DEV_AI_SHAPE='\n\n[출력 형식] JSON 하나만: {"title":"제목","text":"본문","choices":[{"t":"선택지","h":"힌트","r":"결과 글"}]} 선택지는 받은 순서와 개수 그대로.';
+function devAiCtx(id){const G=devGraph(),e=EVM[id],sc=x=>{const s=safe(()=>stScript(x));return s?`「${s.title}」 ${String(s.x).replace(/\s+/g,' ').slice(0,420)}`:'';};
+  const pv=(G.bw[id]||[]).map(x=>x.a).slice(0,3),nx=(G.fw[id]||[]).map(x=>x.b).slice(0,3);const grp=devGroup(e);
+  const same=grp?EV.filter(x=>devGroup(x)===grp&&x.id!==id).sort((a,b)=>((a.a||[0])[0]-(b.a||[0])[0])).slice(0,8).map(x=>`${stName(x)}(${stAge(x)})`).join(' → '):'';
+  return [`[게임] 무협 인생 시뮬레이션 「무림인생」. 한국어. 짧고 단단한 문장, 대사는 ‘이름: “대사”’ 줄로.`,grp?`[이 사건이 속한 길] ${devGName(grp)}: ${same}`:'',pv.length?`[앞 사건]\n${pv.map(sc).join('\n')}`:'',nx.length?`[뒤 사건]\n${nx.map(sc).join('\n')}`:'',STORY.memo?`[작가의 전체 메모] ${STORY.memo}`:''].filter(Boolean).join('\n\n');}
+function devAiGo(){const m=modal;if(!m||m.aiBusy)return;const g=id=>{const el=document.getElementById(id);return el?el.value:'';};const dc=(m.dc&&m.dc.length?m.dc:(m.bs||{}).ch)||[];
+  const cur={title:g('se_title'),text:g('se_x'),choices:dc.map((c,i)=>({t:g('se_ct'+i),h:g('se_ch'+i),r:g('se_cr'+i)}))};const note=g('se_note');
+  const sys='너는 「무림인생」의 공동 작가다. 주어진 사건의 글을 다듬는다. 이야기의 사실·흐름·인물 이름·선택지 개수와 순서는 바꾸지 않는다. 〔이것 │ 저것〕 갈래 표시와 {이름}{동무}{상대}{반려}{부모} 자리표시는 그대로 둔다. ‘이름: “대사”’ 형식을 지킨다. 앞뒤 사건과 어긋나지 않게, 문장을 더 생생하고 자연스럽게. 선택지는 좋기만·나쁘기만 하지 않게 득실이 드러나도록 힌트를 다듬는다.';
+  const user=devAiCtx(m.id)+`\n\n[이 사건 메모] ${note||'(없음)'}\n\n[다듬을 사건]\n${JSON.stringify(cur)}`;
+  m.aiBusy=1;m.aiMsg='';m.aiErr=0;render();
+  aiCall(sys,user,{schema:DEV_AI_SCHEMA,shape:DEV_AI_SHAPE}).then(j=>{if(modal!==m)return;const d=m.d||(m.d={});if(j.title)d.title=String(j.title);if(j.text)d.x=String(j.text);(j.choices||[]).slice(0,dc.length).forEach((c,i)=>{if(c.t)d['ct'+i]=String(c.t);if(c.h!=null)d['ch'+i]=String(c.h);if(c.r)d['cr'+i]=String(c.r);});
+    m.aiBusy=0;m.aiMsg='AI가 다듬은 글을 칸에 넣었어요. 읽어 보고 마음에 들면 저장하세요(저장 전에는 게임에 쓰이지 않아요).';render();})
+   .catch(er=>{if(modal!==m)return;m.aiBusy=0;m.aiErr=1;m.aiMsg=(er&&er.message)||String(er);if(/키와 모델/.test(m.aiMsg))m.aiMsg+=' (설정 → AI 이야기꾼)';render();});}
+function devNewEvent(){STORY.add=STORY.add||{};const id='u'+Date.now().toString(36);STORY.add[id]={t:'새 사건',x:'',a:[10,90],w:1,cd:0,tag:'side',ch:[{t:'첫째 선택지',r:''},{t:'둘째 선택지',r:''}]};devAddAll();ssave();return id;}
+
 /* 처음 마주친 인연의 첫 만남 이야기를 순서대로 띄운다 */
 function fmNext(S){const f=S.flags.fmAt||(S.flags.fmAt={});
   if(!S.flags.fmInit){S.flags.fmInit=1;for(const id of romList(S))if(S.met[id])f[id]=-99;}
@@ -13730,6 +13893,7 @@ const beatKey=(S,b)=>b.s==='@'?(mobOf(S,b.n)?'mob:'+mobOf(S,b.n):null):b.s;
 {const e=EV.find(x=>x.id==='wedding');if(e){const ox=e.x;e._src=Object.values(WED_SCENE).map(String).join(' ')+String(ox);e.x=S=>WED_SCENE[S.spouse]?WED_SCENE[S.spouse](S)+'\n\n어떤 혼례를 올릴까?':ox(S);}}
 
 const EVM=Object.fromEntries(EV.map(e=>[e.id,e]));
+try{devAddAll();}catch(e){}
 EVM.ai=AI_EV;
 
 /* 평범한 한 해: 무엇에 마음을 쏟을까 */
@@ -13920,16 +14084,17 @@ function passive(S){
   if(has(S,'yin')&&!S.flags.yinCured&&S.age>=20){S.dead='구음절맥';S.hp=0;}
   const L=lifespan(S);if(!S.dead&&S.age>L&&chance(.2+(S.age-L)*.08))S.dead='천수를 다함';
   if(S.rp>=100&&!has(S,'manduk')){S.traits.push('manduk');addLog(S,'어떤 독도 몸에 들지 않게 되었다. 만독불침.',1);}}
-function eligible(S,e){
+function eligible(S,e){const dv=devOv(e);if(dv&&dv.off)return false;
   if(S.org==='salmak'&&typeof SM_BLOCK!=='undefined'&&SM_BLOCK.has(e.id))return false;
   if(S.job){if(e.job){if(e.job!==S.job)return false;}else if(e.tag!=='family'&&e.tag!=='love'&&!JOB_OK.has(e.id))return false;}else if(e.job)return false;
-  if(e.a&&(S.age<e.a[0]||S.age>e.a[1]))return false;
-  if(e.cd){if(S.age-(S.last[e.id]??-99)<e.cd)return false;}else if(S.seen[e.id])return false;
-  if(e.if&&!e.if(S))return false;return true;}
-const wOf=(S,e)=>typeof e.w==='function'?e.w(S):e.w;
+  const ea=dv&&dv.a||e.a,ecd=dv&&dv.cd!=null?dv.cd:e.cd;
+  if(ea&&(S.age<ea[0]||S.age>ea[1]))return false;
+  if(ecd){if(S.age-(S.last[e.id]??-99)<ecd)return false;}else if(S.seen[e.id])return false;
+  if(e.if&&!e.if(S))return false;if(dv&&dv.cond&&!devCond(dv.cond,S))return false;return true;}
+const wOf=(S,e)=>{const b=typeof e.w==='function'?e.w(S):e.w;const dv=devOv(e);if(!dv||!b)return b;let v=b;if(dv.w!=null&&dv.w!=='')v=+dv.w;if(dv.wm)v*=+dv.wm;return v;};
 function chooseEvent(S){
   if(S.realm<8&&S.realm>=2&&S.exp>=REALMS[S.realm+1].req&&(wallOk(S)||S.age-(S.last.bt??-99)>=3))return 'bt';
-  const f=EV.find(e=>e.force&&eligible(S,e)&&e.force(S));if(f)return f.id;
+  const f=EV.find(e=>{const dv=devOv(e),fo=dv&&dv.force==='off'?null:dv&&dv.force==='on'?(S=>!S.chain&&wOf(S,e)>0):e.force;return fo&&eligible(S,e)&&fo(S);});if(f)return f.id;
   {const fm=fmNext(S);if(fm)return fm;}
   if(S.flags.nextEv){const id=S.flags.nextEv;delete S.flags.nextEv;if(EVM[id])return id;}
   if(S.flags.half||chance(S.age<YOUNG?.8:.6)){const pool=EV.filter(e=>e.w&&eligible(S,e)&&wOf(S,e)>0);
@@ -14045,7 +14210,7 @@ function saveHall(h){try{localStorage.setItem(HKEY,JSON.stringify(h));}catch(e){
 const NAI_URL='https://image.novelai.net/ai/generate-image';
 const NAI_MODELS=[['nai-diffusion-4-5-full','V4.5 Full'],['nai-diffusion-4-5-curated','V4.5 Curated'],['nai-diffusion-5-full','V5 Full'],['nai-diffusion-5-curated','V5 Curated'],['nai-diffusion-4-full','V4 Full']];
 const NAI_Q={'nai-diffusion-5-full':'very aesthetic, masterpiece, best quality','nai-diffusion-5-curated':'very aesthetic, masterpiece, best quality','nai-diffusion-4-5-full':'very aesthetic, masterpiece, no text','nai-diffusion-4-5-curated':'location, masterpiece, no text','nai-diffusion-4-full':'no text, best quality, very aesthetic, absurdres'};
-const GAME_VER='2026.10.26-64';
+const GAME_VER='2026.10.26-65';
 const NAI_NEG='nsfw, nude, lowres, bad anatomy, bad hands, missing fingers, extra digits, text, watermark, signature, logo, worst quality, low quality, blurry, modern clothes, glasses, eyewear, jpeg artifacts';
 const NKEY='murim-nai';
 function ncfg(){let c={};try{c=JSON.parse(localStorage.getItem(NKEY)||'{}');}catch(e){}return Object.assign({key:'',relay:'',model:'nai-diffusion-4-5-full',style:'wuxia, ancient china, hanfu, detailed illustration, cinematic lighting',autoEv:false,autoPc:false,vn:true,neg:NAI_NEG,tnpc:'',tev:'',tmap:'',q:true},c,{pr:Object.assign({},c.pr)});}
@@ -14743,8 +14908,7 @@ function modalHTML(){if(!modal)return '';if(modal.t==='dev')return devHTML();if(
    <label class="row"><input type="checkbox" id="n_repo" ${c.useRepo!==false?'checked':''}> 게임에 들어 있는 기본 그림을 쓴다</label>
    <p class="muted small" style="margin:0">끄면 내가 그린 그림만 쓴다. 내 그림체로 전부 새로 그리고 싶을 때 끈다. 켜 두어도 내가 그리거나 넣은 그림이 있는 칸은 내 그림이 먼저 나온다.</p>
    <button class="ghost" data-a="gal" style="padding:8px 10px">그림체 고르기 · 그림 관리 (지도·인물·사건) →</button>
-   <button class="ghost" data-a="story" style="padding:8px 10px">이야기 편집기 · 사건 글을 열어 보고 고치기 →</button>
-   <button class="ghost" data-a="dev" style="padding:8px 10px">개발 스페이스 · 사건이 이어지는 지도에서 고치기 →</button>
+   <button class="ghost" data-a="dev" style="padding:8px 10px">개발 스페이스 · 모든 사건의 글·확률·조건·효과·보상을 고치기 →</button>
    <label class="row"><input type="checkbox" id="n_vn" ${c.vn!==false?'checked':''}> 대화를 미연시처럼 한 줄씩 보여 준다 (화면을 누르면 다음 대사)</label>
    <p class="grp-t" style="margin:0">NovelAI로 직접 그리기 (선택)</p>
    <p class="muted small">인물 스탠딩과 사건 장면을 NovelAI로 그린다. 토큰은 이 브라우저에만 저장되고, 깃허브에 올리는 파일에는 들어가지 않는다. 그림 한 장마다 구독 등급에 따라 Anlas가 들 수 있다.</p>
@@ -15174,13 +15338,19 @@ app.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b||b
   else if(a==='aigo')aiGo();
   else if(a==='apre'&&modal&&modal.t==='nai'){readNaiForm();const x=OAI_PRE[+b.dataset.i],o=modal.c.ai.p.openai;o.base=x[1];o.model=x[2];render();}
   else if(a==='mclose')closeModal();
-  else if(a==='story'){modal={t:'story',q:'',f:'all',n:60,back:modal};render();}
-  else if(a==='dev'){modal={t:'dev',root:null,depth:4,q:'',back:modal};render();}
+  else if(a==='story'){modal={t:'dev',tab:'list',f:'all',n:80,back:modal};render();}
+  else if(a==='dev'){modal={t:'dev',tab:'map',root:null,depth:6,q:'',f:'all',n:80,back:modal&&modal.t!=='dev'?modal:modal&&modal.back};render();}
+  else if(a==='dvtab'&&modal&&modal.t==='dev'){modal.tab=b.dataset.v;modal.msg='';render();}
+  else if(a==='dvnew'){const id=devNewEvent();modal={t:'storyEv',id,back:modal,openSet:1};render();}
+  else if(a==='dvai'&&modal&&modal.t==='storyEv')devAiGo();
+  else if(a==='dvaddch'&&modal&&modal.t==='storyEv'){const d=STORY.add[modal.id];if(d){devSaveUser();d.ch.push({t:'새 선택지',r:''});devAddAll();ssave();modal.dc=null;modal.bs=null;render();}}
+  else if(a==='dvdelev'&&modal&&modal.t==='storyEv'){if(!modal.sure){modal.sure=1;modal.msg='한 번 더 누르면 이 새 사건을 지웁니다.';render();}else{const id=modal.id;delete STORY.add[id];delete STORY.ev[id];const e=EVM[id];if(e){e.off=1;const i=EV.indexOf(e);if(i>=0)EV.splice(i,1);delete EVM[id];}DEVG=null;ssave();closeModal();}}
   else if(a==='dvopen'){modal={t:'storyEv',id:b.dataset.id,back:modal};render();}
   else if(a==='dvroot'&&modal&&modal.t==='dev'){modal.root=b.dataset.id;modal.q='';render();const w=document.querySelector('.dvwrap');if(w){w.scrollLeft=0;w.scrollTop=0;}}
   else if(a==='stf'){modal.f=b.dataset.v;modal.n=60;render();}
   else if(a==='stmore'){modal.n=(modal.n||60)+60;render();}
   else if(a==='stopen'){const sh=document.querySelector('.sheet');modal.sst=sh?sh.scrollTop:0;modal={t:'storyEv',id:b.dataset.id,back:modal};render();}
+  else if(a==='stsave'&&EVM[modal.id]&&EVM[modal.id].user){devSaveUser();modal.msg='저장했어요. 게임에 바로 쓰입니다.';render();}
   else if(a==='stsave'){const rec=stCollect();if(Object.keys(rec).length)STORY.ev[modal.id]=rec;else delete STORY.ev[modal.id];ssave();modal.msg=Object.keys(rec).length?'저장했어요. 게임에 바로 쓰입니다.':'원문과 같아서 고친 것이 없어요.';render();}
   else if(a==='stdel'){delete STORY.ev[modal.id];ssave();modal.d={};modal.msg='원래 글로 돌렸어요.';render();}
   else if(a==='stresample'){modal.sm=null;render();}
@@ -15190,13 +15360,13 @@ app.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b||b
   else if(a==='mbg'){if(ev.target===b)closeModal();}
   else if(a==='quit'){if(modal&&modal.sure){S=newFate();modal=null;tab='ab';view='ev';resetScroll=true;save();render();}else if(modal){modal.sure=1;render();}}
 });
-let stQT=0;app.addEventListener('input',ev=>{const id=ev.target.id||'';if(modal&&modal.t==='dev'&&id==='dv_q'){modal.q=ev.target.value;clearTimeout(stQT);stQT=setTimeout(()=>{render();const el=document.getElementById('dv_q');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}},250);return;}if(!modal||!/^(st|se)_/.test(id))return;
+let stQT=0;app.addEventListener('input',ev=>{const id=ev.target.id||'';if(modal&&modal.t==='dev'&&id==='dv_q2'){modal.q2=ev.target.value;modal.n=80;clearTimeout(stQT);stQT=setTimeout(()=>{render();const el=document.getElementById('dv_q2');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}},250);return;}if(modal&&modal.t==='dev'&&id==='dv_q'){modal.q=ev.target.value;clearTimeout(stQT);stQT=setTimeout(()=>{render();const el=document.getElementById('dv_q');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}},250);return;}if(!modal||!/^(st|se)_/.test(id))return;
   if(id==='st_q'){modal.q=ev.target.value;modal.n=60;clearTimeout(stQT);stQT=setTimeout(render,200);}
   else if(id==='st_memo'){STORY.memo=ev.target.value;ssave();}
   else if(id==='st_repo'||id==='st_branch'||id==='st_tok'){const c=ncfg();c[{st_repo:'ghRepo',st_branch:'ghBranch',st_tok:'ghToken'}[id]]=ev.target.value.trim();nsave(c);}
-  else if(id.startsWith('se_')&&modal.t==='storyEv'){(modal.d||(modal.d={}))[id.slice(3)]=ev.target.value;}});
-app.addEventListener('change',ev=>{const id=ev.target.id||'';if(id==='dv_depth'&&modal&&modal.t==='dev'){modal.depth=+ev.target.value;render();return;}if(ev.target.dataset&&ev.target.dataset.dvk&&modal&&modal.t==='dev'){(modal.hide||(modal.hide={}))[ev.target.dataset.dvk]=!ev.target.checked;render();return;}if(id==='st_on'){STORY.on=ev.target.checked;ssave();}
-  else if(id==='st_file'&&ev.target.files&&ev.target.files[0]){ev.target.files[0].text().then(t=>{const j=JSON.parse(t),src=j.사건||j.ev||{};let n=0;for(const k in src){if(!EVM[k])continue;const o={...src[k]};delete o.이름;STORY.ev[k]=o;n++;}if(j.전체메모||j.memo)STORY.memo=j.전체메모||j.memo;ssave();modal.msg=`사건 ${n}개를 불러왔어요.`;render();}).catch(e=>{modal.msg='불러오지 못했어요: '+e.message;render();});}});
+  else if(id.startsWith('se_')&&modal.t==='storyEv'){(modal.d||(modal.d={}))[id.slice(3)]=ev.target.type==='checkbox'?ev.target.checked:ev.target.value;}});
+app.addEventListener('change',ev=>{const id=ev.target.id||'';if(modal&&modal.t==='storyEv'&&id.startsWith('se_')){(modal.d||(modal.d={}))[id.slice(3)]=ev.target.type==='checkbox'?ev.target.checked:ev.target.value;}if(id==='dv_depth'&&modal&&modal.t==='dev'){modal.depth=+ev.target.value;render();return;}if(ev.target.dataset&&ev.target.dataset.dvk&&modal&&modal.t==='dev'){(modal.hide||(modal.hide={}))[ev.target.dataset.dvk]=!ev.target.checked;render();return;}if(id==='st_on'){STORY.on=ev.target.checked;ssave();}
+  else if(id==='st_file'&&ev.target.files&&ev.target.files[0]){ev.target.files[0].text().then(t=>{const j=JSON.parse(t),src=j.사건||j.ev||{};let n=0;if(j.새사건){STORY.add=Object.assign(STORY.add||{},j.새사건);devAddAll();}for(const k in src){if(!EVM[k])continue;const o={...src[k]};delete o.이름;STORY.ev[k]=o;n++;}if(j.전체메모||j.memo)STORY.memo=j.전체메모||j.memo;ssave();modal.msg=`사건 ${n}개를 불러왔어요.`;render();}).catch(e=>{modal.msg='불러오지 못했어요: '+e.message;render();});}});
 app.addEventListener('input',ev=>{if(ev.target.id==='evinp'){S.tmp.inp=ev.target.value;return;}if(ED&&modal&&modal.t==='edit'){const id=ev.target.id;if(id==='e_tol'||id==='e_size'){ED[id==='e_tol'?'tol':'size']=+ev.target.value;const v=document.getElementById(id+'v');if(v)v.textContent=ev.target.value;return;}}if(ev.target.id==='nm'&&S.phase==='birth'){S.name=S.base.name=ev.target.value;}if(ev.target.id==='cname'&&S.tmp.craft)S.tmp.craft.name=ev.target.value;if(ev.target.id==='fname'&&S.tmp.forge)S.tmp.forge.name=ev.target.value;if(ev.target.id==='n_prompt'&&modal){modal.prompt=ev.target.value;savePr(modal.k,modal.prompt);const f=document.getElementById('n_full');if(f)f.textContent=fullPrompt(modal.k,modal.prompt);}
   if(modal&&modal.t==='gal'&&/^g_gh/.test(ev.target.id)){const c=ncfg(),v=id=>{const e=document.getElementById(id);return e?e.value.trim():'';};c.ghRepo=v('g_ghRepo');c.ghBranch=v('g_ghBranch')||'main';c.ghToken=v('g_ghToken');nsave(c);return;}
   if(modal&&modal.t==='gal'&&/^g_(style|tnpc|tev|tmap|neg|q)$/.test(ev.target.id)){const c=ncfg(),v=id=>document.getElementById(id).value;c.style=v('g_style');c.tnpc=v('g_tnpc');c.tev=v('g_tev');c.tmap=v('g_tmap');c.neg=v('g_neg');c.q=document.getElementById('g_q').checked;nsave(c);const pv=document.getElementById('g_pv');if(pv)pv.textContent=fullPrompt('st:seorin');}if(modal&&modal.t==='nai'&&ev.target.id.startsWith('n_'))readNaiForm();});
