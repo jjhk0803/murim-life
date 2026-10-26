@@ -793,6 +793,13 @@
   "cg:love_maehyang": "cg/love_maehyang.webp",
   "cg:love_seohyeon": "cg/love_seohyeon.webp",
   "cg:love_onso": "cg/love_onso.webp",
-  "cg:love_yeonhyang": "cg/love_yeonhyang.webp"
+  "cg:love_yeonhyang": "cg/love_yeonhyang.webp",
+  "ev:dscCross": "ev/dscCross.webp",
+  "ev:dscLeave": "ev/dscLeave.webp",
+  "ev:dscDuel": "ev/dscDuel.webp",
+  "ev:dscNews": "ev/dscNews.webp",
+  "ev:dscTake": "ev/dscTake.webp",
+  "ev:umvp4974e": "ev/umvp4974e.webp",
+  "ev:umvp49id9": "ev/umvp49id9.webp"
  }
 }
