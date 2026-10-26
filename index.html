@@ -794,6 +794,132 @@ const EV=[];const E=e=>{e._o={w:e.w,if:e.if,force:e.force,prep:e.prep,x:e.x,ch:e
 const fightText=(b,win,lose)=>(b.win?win:lose)+b.rev;
 const orgHint=id=>{const o=ORGS[id];return `${o.cat}·${o.side} — ${o.d}`;};
 
+/* ══ 문파마다 다른 입문: 사자의 말, 시험, 마지막 시험, 그리고 내문·외문 ══
+   쉬운 문(개방·하오문)과 어려운 문(남궁·당가·팽가)이 있다. 시험의 선택지는 ‘좋기만’ 하거나 ‘나쁘기만’ 하지 않다.
+   점수가 높으면 내문제자(심법·무공·영약을 먼저 받는다), 겨우 붙으면 외문제자(심법 없이 시작해, 첫 승급 때 내문에 든다). */
+const SE_DIFF={beggar:.95,haomun:.9,jangsu:.6,demon:.75,shaolin:.42,wudang:.38,huashan:.4,emei:.42,kunlun:.35,binggung:.3,namgung:.12,paeng:.15,tang:.12};
+/* say: 줄을 섰을 때 사자의 말 / t2: 첫째 시험 장면 / o2: [선택지, 힌트, 판정] / t3: 마지막 시험 장면 / o3 */
+const SECT_ENTRY={
+ shaolin:{say:'회색 승복의 지객승이 합장했다. “소림은 문을 닫지 않는다. 다만 문턱이 높을 뿐이다. 넘는 것은 네 다리다.”',
+  t2:'소림 지객승이 물동이 둘을 내려놓았다. “산문까지 천 개의 계단. 물을 쏟지 말고 올라라.” 옆에서는 다른 승려가 목탁을 두드리며 불경 한 구절을 외우고 있었다.',
+  o2:[['물동이를 지고 계단을 오른다','근골 · 몸이 상한다',S=>({d:chance(.2+S.t.bone*.08)?.25:-.05,hp:-12,txt:'다리가 후들거렸다. 마지막 계단에서 물이 반쯤 남아 있었다.'})],
+      ['불경 구절을 그대로 따라 외운다','오성 · 소림은 몸을 먼저 본다',S=>({d:chance(.25+S.t.wit*.07)?.15:0,cult:4,txt:'승려가 목탁을 멈췄다. “글을 아는 아이로구나. 다만 소림은 머리보다 다리를 먼저 본다.”'})],
+      ['물을 쏟고 다시 길어 온다','끈기 · 늦는다',S=>({d:.08,cult:3,txt:'세 번 쏟고 네 번 길었다. 해가 졌다. 지객승이 처음으로 웃었다. “늦었지만 다 올라왔구나.”'})]],
+  t3:'산문 앞, 탁발을 나섰던 노승이 쓰러져 있었다. 해가 지면 산문이 닫힌다.',
+  o3:[['노승을 업고 오른다','인연 · 시간',S=>({d:.25,moral:5,txt:'노승을 업고 오르니 산문은 이미 닫혀 있었다. 그런데 노승이 등에서 내려와 문을 두드렸다. “계율원 수좌다. 이 아이를 들여라.”'})],
+      ['산문지기에게 알리고 먼저 오른다','영리하다 · 정이 없다',S=>({d:.05,txt:'산문지기가 노승을 데리러 내려갔다. 당신은 해가 지기 전에 닿았다. 계율원 수좌는 그날 밤 당신 이름을 한 번 물었다가 말았다.'})],
+      ['못 본 척 서두른다','빠르다 · 소림은 본다',S=>({d:-.15,moral:-3,txt:'산문에 닿았다. 문지기 승려가 아래를 내려다보고 한숨을 쉬었다.'})]]},
+ wudang:{say:'청백의 도사가 부채로 아이들 머리 위 바람을 갈랐다. “무당은 강한 아이를 찾지 않는다. 부드러운 아이를 찾는다. 물처럼.”',
+  t2:'도사가 사발에 물을 가득 채워 당신 손에 쥐여 주었다. “이 물을 흘리지 말고, 내가 미는 손을 받아 내라.”',
+  o2:[['힘으로 버틴다','근골 · 물이 쏟아진다',S=>({d:chance(.15+S.t.bone*.06)?.1:-.1,txt:'버틸수록 물이 출렁였다. 도사가 웃었다. “강하구나. 그래서 쏟았다.”'})],
+      ['미는 대로 몸을 흘린다','오성 · 지면 우스워 보인다',S=>({d:chance(.25+S.t.wit*.08)?.28:-.02,cult:3,txt:'도사의 손을 따라 몸을 돌렸다. 물이 사발 안에서 원을 그렸다. 한 방울도 넘치지 않았다.'})],
+      ['사발을 내려놓고 절한다','예의 · 시험을 피한다',S=>({d:.03,moral:2,txt:'“물을 흘리느니 들지 않겠습니다.” 도사가 한참 보다가 고개를 끄덕였다. “영리한데, 겁도 많구나.”'})]],
+  t3:'무당산 고갯길. 앞서 가던 아이가 미끄러져 벼랑 끝 소나무에 매달렸다.',
+  o3:[['손을 뻗어 끌어올린다','위험 · 의협',S=>({d:.22,hp:-10,moral:4,txt:'팔이 빠질 것 같았다. 둘이 같이 굴러 길 위로 올라왔다. 지켜보던 도사가 부채를 접었다.'})],
+      ['도사를 부르러 달려간다','안전하다 · 늦는다',S=>({d:.1,txt:'도사가 날아와 아이를 건졌다. “부르러 온 것도 용기다. 다만 다음엔 네 손도 뻗어 봐라.”'})],
+      ['아이를 두고 오른다','첫째로 닿는다 · 무당은 이를 싫어한다',S=>({d:-.2,moral:-4,txt:'첫째로 산문에 닿았다. 뒤에서 도사가 아이를 안고 올라왔다. 도사는 당신을 보지 않았다.'})]]},
+ huashan:{say:'매화 수가 놓인 도포의 검수가 목검을 던져 주었다. “화산의 검은 빠르고 화려하다. 그런데 화려함 아래 뿌리가 없으면 꺾인다. 뿌리를 보여 봐라.”',
+  t2:'매화나무 아래 목검 대련. 상대는 한 해 먼저 들어온 외문제자였다.',
+  o2:[['빠르게 몰아친다','근골 · 거칠다',S=>({d:chance(.2+S.t.bone*.07)?.22:-.05,hp:-8,txt:'세 번 맞고 네 번 쳤다. 검수가 고개를 끄덕였다. “빠르다. 다만 막는 법은 모른다.”'})],
+      ['막기만 하며 틈을 본다','오성 · 지루하다',S=>({d:chance(.25+S.t.wit*.06)?.18:0,txt:'한 시진을 막기만 했다. 상대가 지쳐 검을 내렸다. 구경하던 제자들이 하품을 했다. 검수만 웃었다.'})],
+      ['목검을 거꾸로 쥐고 예를 갖춘다','예의 · 실력을 못 보인다',S=>({d:.05,moral:2,txt:'“선배께 먼저 배우겠습니다.” 상대가 얼굴을 붉혔다. 검수가 말했다. “말은 좋다. 검은 언제 보여 줄 거냐.”'})]],
+  t3:'화산 장공잔도. 절벽에 걸린 널빤지 길. 앞서 가던 아이가 겁에 질려 길 한가운데 주저앉았다.',
+  o3:[['손을 잡고 함께 건넌다','의협 · 느리다',S=>({d:.2,moral:4,txt:'아이 손을 잡고 한 발씩 건넜다. 건너편에서 장문인이 팔짱을 끼고 서 있었다.'})],
+      ['아이를 넘어 먼저 건넌다','빠르다 · 위험',S=>({d:chance(.5)?.12:-.15,hp:-10,txt:'아이 어깨를 짚고 뛰어넘었다. 널빤지가 흔들렸다. 건너긴 건넜다.'})],
+      ['돌아가는 산길을 찾는다','안전하다 · 시험을 피한다',S=>({d:-.05,txt:'반나절을 돌아 산문에 닿았다. 검수가 말했다. “살 줄은 아는구나. 화산답지는 않지만.”'})]]},
+ emei:{say:'금정의 비구니가 아이들 손바닥을 하나씩 펴 보았다. “아미는 여인의 몸으로 칼을 든다. 그 칼이 무엇을 지키는지부터 묻겠다.”',
+  t2:'비구니가 새끼 새가 든 둥지를 내밀었다. “이 둥지를 들고 사흘 동안 금정까지 올라와라. 새가 살아 있어야 한다.”',
+  o2:[['품에 넣고 오른다','정성 · 느리다',S=>({d:.2,moral:3,txt:'밤마다 품에서 새가 짹짹거렸다. 사흘째 금정에 닿았을 때 새가 날개를 폈다.'})],
+      ['새를 날려 보내고 빈 둥지를 들고 간다','영리하다 · 시험관을 속인다',S=>({d:chance(.4+S.t.wit*.04)?.15:-.2,txt:'빈 둥지를 내밀며 말했다. “새는 하늘로 갔습니다.” 비구니가 한참 웃었다. 붙을지 떨어질지 알 수 없는 웃음이었다.'})],
+      ['서둘러 오른다','빠르다 · 새가 약해진다',S=>({d:chance(.3)?.1:-.1,txt:'이틀 만에 올랐다. 새는 숨이 가늘었다.'})]],
+  t3:'금정 앞, 남장한 사내아이 하나가 아미 줄에 끼어 있다가 들켰다. 시험관이 당신에게 물었다. “저 아이를 어찌할까.”',
+  o3:[['함께 받아 달라 청한다','의리 · 시험관의 노여움',S=>({d:chance(.5)?.2:-.05,moral:3,txt:'“여인만 칼을 지킬 까닭은 없습니다.” 시험관이 오래 침묵했다.'})],
+      ['규칙대로 돌려보내자 한다','바르다 · 차갑다',S=>({d:.1,txt:'아이는 울며 내려갔다. 시험관이 고개를 끄덕였다. “규칙을 지키는 것도 칼이다.”'})],
+      ['모른 척한다','무난하다',S=>({d:0,txt:'아무 말도 하지 않았다. 시험관도 당신에게 더는 묻지 않았다.'})]]},
+ kunlun:{say:'설산에서 내려온 도사가 숨을 크게 들이쉬었다. “곤륜은 높다. 높은 곳에서는 숨이 모자라다. 숨을 아낄 줄 아는 아이만 올라온다.”',
+  t2:'눈 덮인 산길. 도사가 앞장서 걸으며 한 번도 뒤를 돌아보지 않았다.',
+  o2:[['도사의 발자국만 밟고 따른다','오성 · 지친다',S=>({d:chance(.25+S.t.wit*.07)?.25:0,hp:-8,txt:'발자국 위로만 걸으니 눈에 빠지지 않았다. 도사가 처음 돌아보았다. “눈치가 있구나.”'})],
+      ['제 길을 내며 앞지른다','근골 · 무모하다',S=>({d:chance(.15+S.t.bone*.07)?.2:-.15,hp:-15,txt:'허리까지 빠지며 길을 냈다. 도사를 앞질렀다. 도사가 말했다. “곤륜에서 앞서 가는 놈은 오래 못 간다. 그런데 너는 살아 있구나.”'})],
+      ['쉬어 가며 숨을 고른다','끈기 · 늦는다',S=>({d:.08,cult:3,txt:'해가 질 무렵 닿았다. 도사가 따뜻한 차를 내밀었다. “늦었지만 숨은 고르구나.”'})]],
+  t3:'설산 중턱, 얼어붙은 학 한 마리가 눈에 파묻혀 있었다.',
+  o3:[['품에 넣어 녹인다','정 · 몸이 언다',S=>({d:.2,hp:-10,txt:'품에서 학이 깨어났다. 학이 당신 앞을 걸어 산문까지 갔다. 문지기 도사가 학을 보고 놀랐다. 그 학은 장문인의 학이었다.'})],
+      ['두고 오른다','몸을 지킨다',S=>({d:0,txt:'학은 눈 속에 남았다. 산문에 닿았다.'})],
+      ['도사에게 알린다','무난하다',S=>({d:.1,txt:'도사가 학을 안아 들며 당신을 한 번 더 보았다.'})]]},
+ beggar:{say:'거지 왕초가 코를 후비며 웃었다. “개방에 시험이 어딨냐. 거지가 되겠다는 놈을 막는 문은 없다. 대신 한번 들어오면 밥은 네가 빌어 먹어야 한다.”',
+  t2:'왕초가 깨진 사발 하나를 던져 주었다. “사흘 동안 이걸로 밥을 빌어 와라. 많이 빈 놈이 아니라, 굶지 않은 놈이 붙는다.”',
+  o2:[['큰 객잔 앞에서 빈다','많이 얻는다 · 쫓겨난다',S=>({d:chance(.5)?.15:0,hp:-6,txt:'점소이에게 두 번 쫓겨났다. 세 번째에 국수 한 그릇을 얻었다.'})],
+      ['얻은 밥을 다른 거지 아이와 나눈다','의리 · 배고프다',S=>({d:.2,moral:4,hp:-6,txt:'반을 나눴다. 배는 고팠다. 왕초가 그걸 보고 있었다. “개방은 그거면 된다.”'})],
+      ['장터 일을 거들고 품삯으로 먹는다','영리하다 · 거지답지 않다',S=>({d:.05,gold:5,txt:'짐을 날라 주고 만두를 얻었다. 왕초가 혀를 찼다. “일해서 먹는 놈이 거지냐? …뭐, 굶진 않았구나.”'})]],
+  t3:'다리 밑 거지 굴. 늙은 거지 하나가 기침을 하며 당신이 얻어 온 마지막 만두를 쳐다보았다.',
+  o3:[['만두를 준다','의리 · 굶는다',S=>({d:.15,moral:4,txt:'노인이 만두를 먹고 당신 손을 잡았다. 그 노인이 개방의 장로였다는 건 나중에 알았다.'})],
+      ['반을 나눈다','무난하다',S=>({d:.1,txt:'반씩 먹었다. 노인이 웃었다. “거지는 반으로도 산다.”'})],
+      ['내가 먹는다','배부르다',S=>({d:0,txt:'만두를 먹었다. 노인은 아무 말도 하지 않았다. 개방은 그걸로 떨어뜨리지는 않는다.'})]]},
+ namgung:{say:'푸른 비단옷의 세가 집사가 아이들을 내려다보았다. “남궁세가는 외부 아이를 거의 받지 않는다. 가주께서 직접 검을 한 번 내리신다. 그 검을 받아 내는 아이만 들인다.”',
+  t2:'연무장. 세가의 소가주가 목검을 들고 서 있었다. 당신보다 두 살 많은, 눈이 날카로운 아이였다.',
+  o2:[['정면으로 받아 낸다','근골 · 크게 다친다',S=>({d:chance(.1+S.t.bone*.07)?.3:-.05,hp:-20,txt:'목검이 팔을 때렸다. 뼈가 울렸다. 그래도 목검을 놓지 않았다. 소가주의 눈이 처음으로 흔들렸다.'})],
+      ['피하며 소가주의 버릇을 읽는다','오성 · 겁쟁이로 보인다',S=>({d:chance(.2+S.t.wit*.06)?.25:-.05,txt:'열 번을 피했다. 열한 번째에 소가주가 같은 발을 내디뎠다. 그 발을 쳤다. 구경하던 세가 사람들이 술렁였다.'})],
+      ['가문의 이름을 대며 예를 갖춘다','처세 · 실력을 못 보인다',S=>({d:S.flags.clanOf==='namgung'?.25:-.05,txt:S.flags.clanOf==='namgung'?'방계의 피라는 말에 집사가 장부를 펼쳤다. 이름이 있었다.':'“남궁에 아는 이름이 없구나.” 집사가 붓을 내려놓았다.'})]],
+  t3:'세가 대문 앞, 하인 아이가 실수로 가주의 찻잔을 깨뜨렸다. 집사가 회초리를 들었다.',
+  o3:[['내가 깼다고 나선다','의협 · 맞는다',S=>({d:.2,hp:-10,moral:4,txt:'회초리 열 대. 하인 아이가 울었다. 그날 밤 가주가 당신 이름을 물었다.'})],
+      ['집사에게 사정을 아뢴다','처세 · 세가의 눈 밖에 난다',S=>({d:.05,txt:'“찻잔 값은 제가 일해서 갚겠습니다.” 집사가 웃었다. “세가에 들기도 전에 빚부터 지는구나.”'})],
+      ['조용히 지켜본다','무난하다 · 세가답다',S=>({d:.08,txt:'회초리 소리를 들으며 섰다. 집사가 당신을 보았다. “세가의 법을 아는 얼굴이구나.”'})]]},
+ tang:{say:'검은 장갑을 낀 당가 사람이 아이들 앞에 찻잔 열 개를 늘어놓았다. “이 가운데 하나에 독이 들었다. 당가는 독을 아는 아이를 들인다. 모르는 아이는… 집에 간다. 살아서 가면 다행이고.”',
+  t2:'찻잔 열 개. 색도 냄새도 같았다.',
+  o2:[['냄새를 맡아 골라낸다','오성 · 틀리면 마신다',S=>{const ok=has(S,'dokche')||chance(.15+S.t.wit*.07);return {d:ok?.3:-.1,hp:ok?0:-20,txt:ok?'아홉째 잔에서 아주 희미한 쓴내가 났다. 당가 사람이 장갑을 벗었다.':'고른 잔이 아니었다. 다른 잔을 마시라 했다. 그 잔이었다. 사흘을 앓았다.'};}],
+      ['모두 마셔 버린다','독에 강하면 · 위험',S=>{const ok=has(S,'dokche')||S.rp>=30;return {d:ok?.35:-.1,hp:ok?-5:-30,rp:5,txt:ok?'열 잔을 다 비웠다. 서 있었다. 당가 사람이 처음으로 웃었다. “이건 들여야겠군.”':'다섯째 잔에서 쓰러졌다. 깨어 보니 해독약 냄새가 났다.'};}],
+      ['“독이 든 잔은 없다”고 말한다','심계 · 맞히면 크다',S=>{const ok=chance(.3+S.t.wit*.04);return {d:ok?.3:-.15,txt:ok?'당가 사람이 손뼉을 쳤다. “맞다. 독은 찻주전자에 있었다. 아직 따르지 않았지.”':'당가 사람이 고개를 저었다. 아홉째 잔에 독이 있었다.'};}]],
+  t3:'당가 약방. 독을 잘못 마신 다른 아이가 거품을 물고 쓰러졌다.',
+  o3:[['해독초를 찾아 먹인다','의술 · 시간',S=>({d:.2,med:3,txt:'약방 선반을 뒤져 감초와 녹두를 찾았다. 아이가 토하고 숨을 쉬었다. 당가 사람이 “당가는 독을 아는 자가 해독도 안다”며 끄덕였다.'})],
+      ['당가 사람을 부른다','안전하다',S=>({d:.05,txt:'당가 사람이 와서 아이를 살렸다. “다음엔 네가 살려라.”'})],
+      ['독의 증상을 지켜본다','냉정하다 · 독을 배운다',S=>({d:.12,rp:5,moral:-3,txt:'아이의 손끝이 어떻게 변하는지 끝까지 보았다. 당가 사람이 말없이 당신을 보았다. 칭찬인지 경고인지 알 수 없었다.'})]]},
+ paeng:{say:'호랑이 가죽을 걸친 팽가 무사가 큰 도를 바닥에 꽂았다. “팽가의 도는 무겁다. 들지 못하면 휘두르지도 못한다. 들어 봐라.”',
+  t2:'팽가 연무장. 아이 키만 한 대감도가 바위에 꽂혀 있었다.',
+  o2:[['뽑아 들어 올린다','근골 · 다친다',S=>({d:chance(.1+S.t.bone*.09)?.3:-.05,hp:-15,txt:'도가 바위에서 빠졌다. 들어 올리다가 허리가 삐끗했다. 그래도 들었다.'})],
+      ['도 주위의 바위를 깬다','영리하다 · 팽가답지 않다',S=>({d:chance(.4)?.12:-.05,txt:'돌로 바위를 쪼아 도를 눕혔다. 무사가 웃다가 정색했다. “팽가는 도를 눕히지 않는다. …그래도 머리는 쓰는구나.”'})],
+      ['맨손으로 매달려 버틴다','끈기 · 소용이 없다',S=>({d:.05,cult:2,txt:'해가 질 때까지 도자루에 매달렸다. 도는 꿈쩍하지 않았다. 무사가 말했다. “내일 또 와라.”'})]],
+  t3:'팽가 대문 앞. 다른 집 아이가 팽가 도를 놀리다 무사들에게 끌려가고 있었다.',
+  o3:[['막아선다','의리 · 팽가의 노여움',S=>({d:chance(.5)?.2:-.1,hp:-10,txt:'무사들 앞을 막았다. 가주가 웃었다. “팽가의 성정이 있구나. 다혈질.”'})],
+      ['아이 대신 사과한다','처세',S=>({d:.08,txt:'고개를 숙였다. 무사들이 아이를 놓아주었다.'})],
+      ['지켜본다','무난하다',S=>({d:0,txt:'아이가 끌려갔다. 한 대 맞고 풀려났다고 했다.'})]]},
+ haomun:{say:'객잔 점소이 차림의 사내가 눈을 찡긋했다. “하오문은 시험 같은 거 안 해. 대신 하나만 물어볼게. 오늘 이 광장에서 제일 돈 많은 사람이 누구게?”',
+  t2:'사흘 동안 장터를 돌며 소문 세 개를 물어 오라는 일. 값나가는 소문일수록 좋다고 했다.',
+  o2:[['주막 아낙들의 수다를 엿듣는다','눈치 · 시시하다',S=>({d:.1,txt:'건넛마을 혼사 이야기 세 개. 사내가 웃었다. “시시한데, 그게 쓸모가 있어.”'})],
+      ['관아 포졸의 술자리에 끼어든다','큰 소문 · 들키면 맞는다',S=>({d:chance(.5)?.25:-.05,hp:-6,txt:'다음 달 세금이 오른다는 소문. 들켜서 한 대 맞았지만 소문은 진짜였다.'})],
+      ['소문을 지어낸다','심계 · 거짓말',S=>({d:chance(.3+S.t.wit*.05)?.15:-.15,moral:-2,txt:'그럴듯하게 지어냈다. 사내가 한참 듣더니 웃었다. “거짓말인 거 아는데, 잘 지었다.”'})]],
+  t3:'장터에서 아이 하나가 지갑을 훔치다 들켰다. 당신과 눈이 마주쳤다.',
+  o3:[['못 본 척 길을 터 준다','하오문다움',S=>({d:.15,moral:-1,txt:'아이가 빠져나갔다. 점소이 사내가 어깨를 쳤다. “우리는 밑바닥끼리 안 판다.”'})],
+      ['지갑 주인에게 돌려준다','바르다 · 하오문이 갸웃한다',S=>({d:.05,moral:3,txt:'주인이 고맙다며 엽전을 주었다. 사내가 말했다. “착하네. 근데 그 지갑 주인이 고리대금업자야.”'})],
+      ['아이를 붙잡는다','무난하다',S=>({d:-.05,txt:'아이를 붙잡았다. 사내가 한숨을 쉬었다.'})]]},
+ demon:{say:'검은 옷의 사내가 당신 앞에만 서서 낮게 말했다. “천마신교는 너를 부른다. 강자존. 살아남으면 들어온다. 그뿐이다.”',
+  t2:'사막 공터. 아이 열이 한 우리에 들어갔다. 해가 질 때까지 우리 밖으로 밀려나지 않으면 된다.',
+  o2:[['힘으로 버틴다','근골 · 다친다',S=>({d:chance(.2+S.t.bone*.07)?.25:-.05,hp:-15,salgi:3,txt:'세 아이를 우리 밖으로 밀어냈다. 해가 졌을 때 당신이 서 있었다.'})],
+      ['다른 아이 둘과 손을 잡는다','연대 · 강자존이 아니다',S=>({d:.12,moral:2,txt:'셋이 등을 맞댔다. 해가 졌을 때 셋이 남았다. 사내가 말했다. “약한 놈들끼리 뭉쳤구나. 교에서는 그걸 오래 못 한다.”'})],
+      ['구석에 숨어 버틴다','살아남는다 · 비겁하다',S=>({d:.05,txt:'우리 구석에서 웅크렸다. 아무도 당신을 신경 쓰지 않았다. 해가 졌다.'})]],
+  t3:'우리 밖. 쓰러진 아이 하나가 물을 달라고 했다.',
+  o3:[['물을 준다','정 · 교의 눈',S=>({d:-.05,moral:3,txt:'물을 주었다. 사내가 보았다. 아무 말도 하지 않았다.'})],
+      ['물을 마신다','강자존',S=>({d:.15,salgi:2,txt:'물을 마셨다. 사내가 고개를 끄덕였다.'})],
+      ['반을 나눈다','무난하다',S=>({d:.05,txt:'반을 나눴다. 사내가 비웃었다. “반쪽짜리 마음이로군.”'})]]},
+ binggung:{say:'흰 여우 털옷의 여인이 아이들의 손을 하나씩 잡아 보았다. 대부분은 금방 놓았다. “빙궁은 추위를 견디는 아이가 아니라, 추위가 견디는 아이를 찾아요.”',
+  t2:'얼음물이 든 대야. 손을 담그고 향 하나가 다 탈 때까지 버티라 했다.',
+  o2:[['끝까지 버틴다','근골 · 동상',S=>({d:has(S,'taeeum')||has(S,'yin')?.35:chance(.15+S.t.bone*.06)?.2:-.05,hp:-12,txt:'손이 하얗게 질렸다. 향이 다 탔다. 여인이 손을 잡아 꺼내 주었다. “아프지?”'})],
+      ['숨을 고르며 마음을 비운다','오성 · 느리다',S=>({d:chance(.25+S.t.wit*.06)?.2:0,cult:3,txt:'추위를 밀어내지 않고 들였다. 이상하게 덜 아팠다.'})],
+      ['손을 빼고 사정을 말한다','몸을 지킨다',S=>({d:-.05,txt:'“더는 못 하겠습니다.” 여인이 웃었다. “솔직하네요. 빙궁은 솔직한 사람을 좋아해요. 다만 추위는 안 좋아하죠.”'})]],
+  t3:'북쪽으로 가는 마차. 옆자리 아이가 오들오들 떨었다.',
+  o3:[['털옷을 덮어 준다','정 · 내가 춥다',S=>({d:.15,hp:-8,txt:'털옷을 덮어 주었다. 마부가 그걸 보고 여인에게 전했다.'})],
+      ['꼭 붙어 앉는다','무난하다',S=>({d:.08,txt:'둘이 붙어 앉았다. 조금 덜 추웠다.'})],
+      ['모른 척한다','몸을 지킨다',S=>({d:0,txt:'떨리는 소리가 밤새 들렸다.'})]]},
+ jangsu:{say:'갈색으로 그을린 사내가 배 노를 어깨에 메고 웃었다. “장강에 빠져 죽지 않을 놈이면 된다. 헤엄칠 줄 알아?”',
+  t2:'강가. 물살이 센 여울을 건너 건너편 깃발을 가져오라 했다.',
+  o2:[['정면으로 헤엄친다','근골 · 떠내려간다',S=>({d:chance(.2+S.t.bone*.07)?.25:-.05,hp:-10,txt:'세 번 떠내려가다 깃발을 잡았다.'})],
+      ['물살을 타고 비스듬히 건넌다','오성 · 멀리 돈다',S=>({d:chance(.25+S.t.wit*.06)?.22:0,txt:'물살이 미는 쪽으로 몸을 맡겼다. 한참 아래에 닿았지만 힘은 남아 있었다.'})],
+      ['나룻배를 빌려 탄다','영리하다 · 반칙',S=>({d:chance(.5)?.15:-.1,gold:-2,txt:'뱃삯을 내고 건넜다. 사내가 배꼽을 잡았다. “수적이 뱃삯을 내?”'})]],
+  t3:'배 위. 나이 든 뱃사공이 노를 놓치고 물에 빠졌다.',
+  o3:[['뛰어든다','의리 · 위험',S=>({d:.2,hp:-10,txt:'노인을 끌어올렸다. 수로채 사내들이 박수를 쳤다.'})],
+      ['노를 던져 준다','침착하다',S=>({d:.12,txt:'노를 잡은 노인이 올라왔다. “침착한 놈이군.”'})],
+      ['소리쳐 사람을 부른다','무난하다',S=>({d:.05,txt:'다른 사내가 뛰어들었다.'})]]}};
+const seDef=id=>SECT_ENTRY[id]||{say:`${ORGS[id].n}의 사자가 아이들을 둘러보았다. “우리 문의 법을 따를 수 있는 아이를 찾는다.”`,t2:`${ORGS[id].n}의 첫째 시험.`,o2:SECT_ENTRY.shaolin.o2,t3:'마지막 시험.',o3:SECT_ENTRY.shaolin.o3};
+function seApply(S,r){const fx={};for(const k of ['hp','moral','cult','gold','med','rp','salgi'])if(r[k])fx[k]=r[k];A(S,fx);S.flags.testP+=r.d||0;S.flags.testScore=(S.flags.testScore||0)+(r.d||0);return r.txt;}
+
 /* ── 어린 시절 ── */
 E({id:'sectTest',arc:1,t:'문파의 사자들',a:[10,10],force:S=>!S.org,
  prep:S=>{let base=shuffle(['shaolin','wudang','huashan','kunlun','beggar']).slice(0,2);
@@ -801,26 +927,26 @@ E({id:'sectTest',arc:1,t:'문파의 사자들',a:[10,10],force:S=>!S.org,
    if(S.origin==='smith')base.push('paeng'); if(S.origin==='orphan')base.push('haomun'); if(S.flags.demonBlood)base.push('demon');
    if(S.flags.taijiLater)base.push('wudang'); if(has(S,'taeeum')||has(S,'yin'))base.push('binggung'); if(['호북','강남'].includes(S.region))base.push('jangsu');
    if(base.length<3)base.push(pick(['emei','huashan','wudang'].filter(x=>!base.includes(x))));S.tmp.offer=[...new Set(base)];},
- x:S=>'열 살 되던 봄, 고을 광장에 문파의 사자들이 제자를 뽑으러 왔다. 아이들이 길게 줄을 섰다. 시험은 셋이라고 한다.'+(S.flags.demonBlood?'\n광장 구석에서 검은 옷의 사내가 당신에게만 조용히 손짓한다.':''),
- ch:S=>[...S.tmp.offer.map(id=>{const o=ORGS[id];return {t:`${o.n}의 줄에 선다`,h:orgHint(id),go:S=>{
-   let p=.25+S.t[o.stat]*.07+S.t.luck*.015;
-   if(id==='beggar'||id==='haomun')p=1; if(id==='jangsu')p=.5+S.t.bone*.04; if(id==='namgung'||id==='paeng')p=S.flags.clanOf===id?.85:.1;
-   if(id==='tang')p=has(S,'dokche')?.97:S.origin==='medic'?.5+S.t.wit*.05:.1; if(id==='demon')p=.95; if(id==='emei'&&S.sex==='m')p*=.5;
-   if(id==='paeng'&&S.origin==='smith')p=.5+S.t.bone*.05; if(id==='wudang'&&has(S,'eumyang'))p=.97; if(id==='binggung'&&(has(S,'taeeum')||has(S,'yin')))p=.9;
-   S.flags.testOrg=id;S.flags.testP=p+orgRep(S,id)/200;S.chain='sectTest2';return `${o.n}의 줄에 섰다. 시험관이 말했다. "몸을 보고, 마음을 본다."`;}};}),
+ x:S=>'열 살 되던 봄, 고을 광장에 문파의 사자들이 제자를 뽑으러 왔다. 줄마다 사자의 옷과 말씨가 달랐다. 어떤 줄은 길고 어떤 줄은 짧았다. 짧은 줄일수록 문턱이 높다고 했다.'+(S.flags.demonBlood?'\n광장 구석에서 검은 옷의 사내가 당신에게만 조용히 손짓한다.':''),
+ ch:S=>[...S.tmp.offer.map(id=>{const o=ORGS[id],d=SE_DIFF[id]!=null?SE_DIFF[id]:.3;return {t:`${o.n}의 줄에 선다`,h:`${orgHint(id)} · 입문 ${d>=.85?'쉽다':d>=.5?'보통':d>=.3?'어렵다':'아주 어렵다'}`,go:S=>{
+   let p=d+S.t[o.stat]*.04+S.t.luck*.01;
+   if(id==='namgung'||id==='paeng')p=S.flags.clanOf===id?.8:p; if(id==='tang')p=has(S,'dokche')?.9:S.origin==='medic'?.4+S.t.wit*.04:p;
+   if(id==='emei'&&S.sex==='m')p*=.5; if(id==='paeng'&&S.origin==='smith')p=.45+S.t.bone*.04; if(id==='wudang'&&has(S,'eumyang'))p=.95; if(id==='binggung'&&(has(S,'taeeum')||has(S,'yin')))p=.85;
+   S.flags.testOrg=id;S.flags.testP=p+orgRep(S,id)/200;S.flags.testScore=0;S.chain='sectTest2';return seDef(id).say;}};}),
   {t:'집에 남는다',h:'무공보다 가족 곁이 좋다.',go:S=>{A(S,{moral:2,mood:5});S.flags.failedTest=1;return '어머니가 말없이 당신 머리를 쓰다듬었다.';}}]});
-E({id:'sectTest2',arc:1,t:'첫째 시험',x:S=>`${ORGS[S.flags.testOrg].n}의 시험관이 세 가지 길을 내밀었다. 하나만 고르라 한다.`,
- ch:[{t:'천근 바위를 들어 올린다',h:'근골',go:S=>{const ok=chance(.15+S.t.bone*.08);S.flags.testP+=ok?.2:-.1;S.chain='sectTest3';return ok?'바위가 무릎 높이까지 올라왔다. 시험관이 붓을 들었다.':'바위는 꿈쩍도 하지 않았다.';}},
-  {t:'시험관의 수수께끼를 푼다',h:'오성',go:S=>{const ok=chance(.15+S.t.wit*.08);S.flags.testP+=ok?.2:-.1;S.chain='sectTest3';return ok?"'달은 하나인데 강마다 달이 뜬다. 왜냐?' 당신의 대답에 시험관이 웃었다.":'대답이 떠오르지 않았다.';}},
-  {t:'사흘 밤낮을 꼼짝 않고 버틴다',h:'끈기·기연',go:S=>{const ok=chance(.25+S.t.luck*.04+(20-S.temper)/200);S.flags.testP+=ok?.2:-.1;if(ok)A(S,{cult:3});S.chain='sectTest3';return ok?'사흘째 해가 질 때까지 앉아 있었다. 다른 아이들은 모두 일어났다.':'둘째 날 밤 졸다가 쓰러졌다.';}}]});
-E({id:'sectTest3',arc:1,t:'마지막 시험',x:'산문으로 오르는 길, 다친 아이 하나가 울고 있다. 해가 지기 전에 산문에 닿아야 한다.',
- ch:[{t:'아이를 업고 간다',go:S=>{const o=ORGS[S.flags.testOrg];A(S,{moral:5});S.flags.testP+=o.side==='마교'?-.05:.25;return testResult(S,'아이를 업고 산문에 닿았을 때 해는 이미 졌다.',o.side!=='마교');}},
-  {t:'못 본 척 서두른다',go:S=>{const o=ORGS[S.flags.testOrg];A(S,{moral:-3});S.flags.testP+=o.side==='백도'?-.1:.05;return testResult(S,'해가 지기 전에 산문에 닿았다.');}},
-  {t:'아이의 짐을 털어 간다',go:S=>{const o=ORGS[S.flags.testOrg];A(S,{moral:-10,gold:5});S.flags.testP+=o.side==='백도'||o.side==='세외'?-.3:.15;return testResult(S,'짐 속에서 엽전 몇 닢이 나왔다.');}}]});
-function testResult(S,pre,kind){const id=S.flags.testOrg,o=ORGS[id];const ok=chance(clamp(S.flags.testP,.02,.98));delete S.flags.testOrg;delete S.flags.testP;
+E({id:'sectTest2',arc:1,t:'첫째 시험',title:S=>S.flags.testOrg?`${ORGS[S.flags.testOrg].n} · 첫째 시험`:'첫째 시험',x:S=>seDef(S.flags.testOrg).t2,
+ ch:S=>seDef(S.flags.testOrg).o2.map(([t,h,f])=>({t,h,go:S=>{const r=f(S);if(r.hp<0){hurtS(S,-r.hp,'입문 시험');r.hp=0;}S.chain='sectTest3';return seApply(S,r);}}))});
+E({id:'sectTest3',arc:1,t:'마지막 시험',title:S=>S.flags.testOrg?`${ORGS[S.flags.testOrg].n} · 마지막 시험`:'마지막 시험',x:S=>seDef(S.flags.testOrg).t3,
+ ch:S=>seDef(S.flags.testOrg).o3.map(([t,h,f])=>({t,h,go:S=>{const r=f(S);if(r.hp<0){hurtS(S,-r.hp,'입문 시험');r.hp=0;}return testResult(S,seApply(S,r));}}))});
+/* 붙으면 내문·외문이 갈린다. 내문은 심법과 영약을 먼저 받고, 외문은 첫 승급 때 내문에 든다 */
+function testResult(S,pre){const id=S.flags.testOrg,o=ORGS[id];const ok=chance(clamp(S.flags.testP,.02,.98)),sc=S.flags.testScore||0;delete S.flags.testOrg;delete S.flags.testP;delete S.flags.testScore;
   if(!ok){S.flags.failedTest=1;A(S,{mood:-15});return pre+`\n시험관은 고개를 저었다. "${jo(o.n,'과','와')}는 인연이 아니다." 집으로 돌아오는 길이 길었다.`;}
-  join(S,id);if(id==='demon')A(S,{moral:-10});deed(S,`${o.n}에 입문했다`);A(S,{mood:15});
-  return pre+`\n시험관이 고개를 끄덕였다. 오늘부터 당신은 ${o.n}의 ${o.ranks[0]}다.${kind?' 마지막 시험은 바로 그 아이였다.':''}`;}
+  join(S,id);if(id==='demon')A(S,{moral:-10});A(S,{mood:15});
+  if(sc>=.3&&id!=='beggar'&&id!=='haomun'){S.flags.inner=id;A(S,{ng:15,contrib:20});const r=learn(S,id+'_1');deed(S,`${o.n}에 내문제자로 입문했다`);
+    return pre+`\n시험관이 붓을 들어 이름을 적었다. 그리고 그 옆에 작은 글씨 하나를 더했다. 內.\n오늘부터 당신은 ${o.n}의 내문제자다. 입문하는 날 사문의 심법 구결을 받고, 장로가 내린 환 한 알을 삼켰다. 아랫배가 따뜻해졌다. ${r||''}`;}
+  if(id!=='beggar'&&id!=='haomun'){S.flags.outer=id;S.arts=S.arts.filter(a=>a!==id+'_h');if(S.heart===id+'_h')S.heart=S.arts.find(a=>ARTS[a]&&ARTS[a].k==='심')||null;deed(S,`${o.n}에 외문제자로 입문했다`);
+    return pre+`\n시험관이 고개를 끄덕였다. 이름 옆에 작은 글씨가 붙었다. 外.\n오늘부터 당신은 ${o.n}의 외문제자다. 심법은 내문에 든 뒤에야 받는다. 처음 일 년은 물 긷고 장작 패며 초식 하나를 익힐 것이다. 먼저 들어간 내문제자들이 당신을 흘끗 보고 지나갔다.`;}
+  deed(S,`${o.n}에 입문했다`);return pre+`\n시험관이 고개를 끄덕였다. 오늘부터 당신은 ${o.n}의 ${o.ranks[0]}다.`;}
 E({id:'beggar',t:'굶주린 노인',a:[6,12],w:1,
  x:'장터 어귀에 누더기를 걸친 노인이 쪼그려 앉아 있다. 당신 손에 든 만두를 물끄러미 바라본다.',
  ch:[{t:'만두를 건넨다',go:S=>{A(S,{moral:5});if(chance(.35+S.t.luck*.05)){learn(S,'breath');A(S,{ng:3});deed(S,'이름 모를 노인에게 토납법을 배웠다');
@@ -8202,10 +8328,10 @@ const JOIN_TESTS={
    ['앞장서 오른다','',S=>{A(S,{moral:-5,gold:10});return [.22,'갑판에 가장 먼저 올랐다. 채주가 당신 몫을 두 배로 쳐 주었다.'];}],
    ['사공들은 다치지 않게 하자고 한다','도덕',S=>{A(S,{moral:3});return [.12,'채주가 웃었다. “수적에게도 도가 있지. 장강은 사공을 죽이지 않는다.”'];}],
    ['못 하겠다고 한다','',S=>{A(S,{moral:3});return [-.2,'채주가 말없이 당신을 뭍에 내려 주었다.'];}]]}]};
-{const e2=EV.find(e=>e.id==='sectTest2'),e3=EV.find(e=>e.id==='sectTest3'),g2=e2.ch,g3=e3.ch,x2=e2.x,x3=e3.x,JT=S=>JOIN_TESTS[S.flags.testOrg];
- const wrap=(st,last)=>S=>JT(S)[st].ch.map(([t,h,f])=>({t,h:h||undefined,go:S=>{const [dp,tx]=f(S);S.flags.testP+=dp;if(!last){S.chain='sectTest3';return tx;}return testResult(S,tx,false);}}));
- e2.title=S=>JT(S)?JT(S)[0].t:'첫째 시험';e2.x=S=>JT(S)?JT(S)[0].x:(typeof x2==='function'?x2(S):x2);e2.ch=S=>JT(S)?wrap(0,false)(S):g2;
- e3.title=S=>JT(S)?JT(S)[1].t:'마지막 시험';e3.x=S=>JT(S)?JT(S)[1].x:(typeof x3==='function'?x3(S):x3);e3.ch=S=>JT(S)?wrap(1,true)(S):g3;}
+{const e2=EV.find(e=>e.id==='sectTest2'),e3=EV.find(e=>e.id==='sectTest3'),g2=e2.ch,g3=e3.ch,x2=e2.x,x3=e3.x,JT=S=>!SECT_ENTRY[S.flags.testOrg]&&JOIN_TESTS[S.flags.testOrg];
+ const wrap=(st,last)=>S=>JT(S)[st].ch.map(([t,h,f])=>({t,h:h||undefined,go:S=>{const [dp,tx]=f(S);S.flags.testP+=dp;S.flags.testScore=(S.flags.testScore||0)+dp;if(!last){S.chain='sectTest3';return tx;}return testResult(S,tx,false);}}));
+ e2.title=S=>JT(S)?JT(S)[0].t:'첫째 시험';e2.x=S=>JT(S)?JT(S)[0].x:(typeof x2==='function'?x2(S):x2);e2.ch=S=>JT(S)?wrap(0,false)(S):(typeof g2==='function'?g2(S):g2);
+ e3.title=S=>JT(S)?JT(S)[1].t:'마지막 시험';e3.x=S=>JT(S)?JT(S)[1].x:(typeof x3==='function'?x3(S):x3);e3.ch=S=>JT(S)?wrap(1,true)(S):(typeof g3==='function'?g3(S):g3);}
 
 /* 두 번째 문: 세력마다 다른 입문 */
 const jnOk=(S,id,t,rank)=>{join(S,id,rank);deed(S,`${ORGS[id].n}에 들었다`);return t+`\n오늘부터 당신은 ${ORGS[id].n}의 ${ORGS[id].ranks[S.rank]}다.`;};
@@ -8344,12 +8470,12 @@ defA('hwahu','화후심법','심',null,2,['양','유'],null,{rate:1.0,push:1});
 defA('cleaver','반근팔량도','무','도',3,['쾌','변']);
 // 객잔
 E({id:'innBacker',tag:'job',job:'inn',t:'자릿세',a:[15,85],w:2,cd:10,if:S=>!S.biz.backer,
- x:'왈패 셋이 탁자를 엎었다. 국수 그릇이 바닥에서 깨졌다. “이 거리에서 장사하려면 달마다 자릿세를 내라.”',
+ x:'왈패 셋이 탁자를 엎자 국수 그릇이 바닥에 부딪쳐 깨졌다.\n왈패: “이 거리에서 장사하려면 달마다 자릿세를 내라.”',
  ch:S=>{const lo=Object.keys(ORGS).find(o=>ORGS[o].reg===S.loc&&ORGS[o].side==='백도')||'beggar';return [
-  {t:`${ORGS[lo].n}에 뒷배를 청한다`,h:'은자 60',if:S=>S.gold>=60,go:S=>{A(S,{gold:-60});S.biz.backer=lo;S.biz.rep+=5;return `${ORGS[lo].n} 무사 둘이 객잔에서 국수를 먹고 갔다. 다음 날부터 왈패들은 길 건너로 돌아다녔다.`;}},
-  {t:'하오문에 줄을 댄다',h:'정보망이 열린다',go:S=>{S.biz.backer='haomun';S.biz.info=Math.max(S.biz.info,10);A(S,{moral:-2});return '하오문 노파가 와서 차 한 잔을 마시고 갔다. 왈패들이 사라졌다. 대신 객잔의 소문이 하오문으로 흘러가기 시작했다.';}},
+  {t:`${ORGS[lo].n}에 뒷배를 청한다`,h:'은자 60',if:S=>S.gold>=60,go:S=>{A(S,{gold:-60});S.biz.backer=lo;S.biz.rep+=5;return `${ORGS[lo].n} 무사 둘이 객잔에서 국수를 먹고 가니 다음 날부터 왈패들은 이곳에 얼씬도 하지 않았다.`;}},
+  {t:'하오문에 줄을 댄다',h:'정보망이 열린다',go:S=>{S.biz.backer='haomun';S.biz.info=Math.max(S.biz.info,10);A(S,{moral:-2});return '하오문 노파가 와서 차 한 잔을 마시고 갔다.\n왈패들이 사라졌지만 대신 객잔의 소문이 하오문으로 흘러가기 시작했다.';}},
   {t:'자릿세를 낸다',go:S=>{A(S,{gold:-Math.min(S.gold,30),mood:-8});return '은자를 건넸다. 깨진 그릇 값은 쳐 주지 않았다.';}},
-  {t:'직접 쫓아낸다',h:'무공이 있어야 한다',if:S=>S.realm>=1,go:S=>{const b=battle(S,mkFoe({n:'왈패',realm:1,q:1,group:1}));if(b.win){S.biz.rep+=8;A(S,{fame:3});}return fightText(b,'왈패 셋이 국수 국물을 뒤집어쓰고 달아났다. 손님들이 박수를 쳤다.','두들겨 맞았다. 손님들이 슬금슬금 나갔다.');}}];}});
+  {t:'직접 쫓아낸다',h:'무공이 있어야 한다',if:S=>S.realm>=1,go:S=>{const b=battle(S,mkFoe({n:'왈패',realm:1,q:1,group:1}));if(b.win){S.biz.rep+=8;A(S,{fame:3});}return fightText(b,'힘으로 왈패 셋을 쓰러뜨리니 그들은 국수 국물을 뒤집어쓰고 달아났다. 당신의 무위에 손님들이 박수를 쳤다.','당신은 오히려 두들겨 맞았다. 이를 본 손님들이 슬금슬금 빠져나갔다.');}}];}});
 E({id:'innDish',tag:'job',job:'inn',t:'간판 요리',a:[16,85],w:3,if:S=>!S.biz.dish&&S.biz.cook>=25,
  x:'솜씨가 늘었다. 이제 이 객잔만의 요리 하나가 있어야 한다. 손님들은 그 요리 이름으로 객잔을 부르게 될 것이다.',
  ch:[{t:'사천 고추 소고기 국수',h:'사천 사람들이 줄을 선다',go:S=>{S.biz.dish='홍유우육면';S.biz.patrons+=3;S.biz.rep+=10;return '혀가 얼얼한 국수에 사천당가 사람들이 줄을 섰다. 당가 사람이 말했다. “독보다 맵군.”';}},
@@ -8669,10 +8795,20 @@ E({id:'docHerb',tag:'job',job:'doctor',t:'벼랑 끝의 영초',a:[18,95],w:2,cd
   {t:'영물의 것은 영물에게',go:S=>{A(S,{cult:3});return '두고 내려왔다. 이듬해 그 벼랑 아래에서 하수오 씨앗이 싹을 틔웠다.';}}]});
 // 객잔
 E({id:'innName',tag:'job',job:'inn',t:'간판',a:[15,80],w:4,if:S=>!S.biz.name,inp:'객잔 이름 (예: 운래객잔)',
- x:S=>S.biz.owner?'객잔을 맡았다. 간판에 이름을 새겨야 한다. 이름은 객잔의 얼굴이고, 강호 사람들은 그 이름으로 길을 찾는다.':'늙은 주인이 간판을 새로 하겠다며 당신을 불렀다. “네가 지어 봐라. 손님들 얼굴은 내가 아니라 네가 더 많이 보잖니.”',
- ch:[{t:'적은 이름으로 건다',go:S=>{const n=(S.tmp.inp||'').trim()||pick(['운래객잔','청풍객잔','취선루','명월각']);S.biz.name=n;S.biz.rep+=5;deed(S,`객잔에 「${n}」 간판을 걸었다`);return `목수가 간판에 「${n}」 넉 자를 새겼다. 금칠은 없었다. 그래도 그날 밤 등불 아래서 간판이 반짝였다.`;}},
-  {t:'「용문객잔」',h:'강호의 갈림길이라는 뜻',go:S=>{S.biz.name='용문객잔';S.biz.rep+=5;return '용문(龍門). 잉어가 넘으면 용이 된다는 문. 이 객잔 문을 넘는 사람 중 누군가는 용이 되리라.';}},
-  {t:'「귀가객잔」',h:'돌아갈 집이라는 뜻',go:S=>{S.biz.name='귀가객잔';S.biz.rep+=5;A(S,{mood:5});return '귀가(歸家). 떠도는 사람들에게 하룻밤의 집. 첫 손님이 간판을 보고 한참 서 있었다.';}}]});
+ x:S=>S.biz.owner?'객잔을 맡았다.\n객잔의 주인된 이로서 간판에 이름을 새겨야 한다.\n이름은 객잔의 얼굴이고, 강호 사람들은 그 이름으로 길을 찾는다.':'늙은 주인이 간판을 새로 하겠다며 당신을 불렀다.\n늙은 주인: “네가 지어 봐라. 손님들 얼굴은 내가 아니라 네가 더 많이 보잖니.”',
+ ch:[{t:'직접 짓는다',h:'적은 이름으로 건다',go:S=>{const n=(S.tmp.inp||'').trim()||pick(['운래객잔','청풍객잔','취선루','명월각']);S.biz.name=n;S.biz.rep+=5;deed(S,`객잔에 「${n}」 간판을 걸었다`);return `목수가 간판에 「${n}」 넉 자를 새겼다. 금칠은 없었다. 그래도 그날 밤 등불 아래서 간판이 반짝였다.`;}},
+  {t:'객잔 사람들에게 이름을 묻는다',h:'객잔을 꾸려 온 방식대로 이름이 정해진다',go:S=>{const n=innPolicyName(S);S.biz.name=n[0];S.biz.rep+=8;S.biz.patrons+=1;deed(S,`객잔 사람들이 지어 준 「${n[0]}」 간판을 걸었다`);
+   return `숙수, 점소이, 단골 손님들을 불러 모아 물었다. 다들 한마디씩 했다.\n${n[1]}\n그 이름으로 정했다. 목수가 간판에 「${n[0]}」을 새기는 동안, 이름을 낸 사람이 괜히 문간을 서성였다.`;}}]});
+/* 객잔을 꾸려 온 방식이 이름이 된다 */
+function innPolicyName(S){const b=S.biz,f=S.flags;
+  if(f.innLaw)return ['문밖객잔','단골 무사: “칼은 문밖에. 이 집 법 아니오. 그게 이름이지.” 모두가 고개를 끄덕였다.'];
+  if(b.backer==='haomun'||(b.info||0)>=15)return ['천이객잔','점소이: “이 집엔 귀가 천 개라던데요. 하오문 노파가 그러던데.” 웃음이 터졌지만 아무도 반대하지 않았다.'];
+  if(b.dish)return [`${b.dish.slice(0,2)}루`,`숙수: “손님들이 다 ${b.dish} 먹으러 오잖소. 그걸 간판에 거는 게 장사지.”`];
+  if(f.onsoStay&&!S.dead_npc.onso)return ['삼호객잔','삼호실 손님이 계단에서 내려다보며 말했다. “삼호실 덕에 조용한 집이잖아요.” 아무도 반박하지 못했다.'];
+  if(f.innSided==='sa')return ['흑풍루','사도련 단골: “우리 형제들 술값으로 먹고 사는 집 아니오.” 숙수가 얼굴을 찌푸렸지만 반대하지 못했다.'];
+  if(f.innJo||(f.innDebt||0)>0)return ['외상객잔','숙수: “조 영감 때부터 외상 장부가 제일 두꺼운 집이잖소.” 다들 웃다가 조용해졌다.'];
+  if(S.moral>=30)return ['귀가객잔','늙은 손님: “떠도는 사람들한테 하룻밤 집이 되는 곳이지. 귀가(歸家).” 점소이가 그 말을 받아 적었다.'];
+  return ['용문객잔','점소이: “강호 사람들이 다 여기서 갈라지잖아요. 용문(龍門).” 다른 이름이 나오지 않았다.'];}
 E({id:'innStory',tag:'job',job:'inn',t:'설서인',a:[16,90],w:2,cd:7,
  x:'떠돌이 설서인(說書人)이 객잔에 머물며 이야기판을 벌이겠다고 한다. 무슨 이야기를 하게 할까.',
  ch:[{t:'천마와 검성의 사흘 밤낮',go:S=>{S.biz.patrons+=2;S.biz.rep+=6;A(S,{gold:30});return '“그날 화산 정상에서는 사흘 밤낮 번개가 그치지 않았으니…” 손님들이 숨도 쉬지 않고 들었다. 술이 동났다.';}},
@@ -11286,6 +11422,9 @@ const SKEY='murim-story';
 function sload(){try{const j=JSON.parse(localStorage.getItem(SKEY)||'{}');return Object.assign({v:1,on:true,ev:{},memo:''},j,{ev:Object.assign({},j.ev)});}catch(e){return {v:1,on:true,ev:{},memo:''};}}
 let STORY=sload();
 function ssave(){STORY.at=Date.now();try{localStorage.setItem(SKEY,JSON.stringify(STORY));}catch(e){toast('저장하지 못했어요: '+e.message);}}
+/* 개발 쪽이 코드에 반영한 편집은 이 기기의 고친 글에서 지운다(원문이 이미 그 글이다). 반영할 때마다 한 줄씩 더한다 */
+const STORY_MERGED=[['2026.10.26-64',['mkHa','innBacker','innName']]];
+for(const [v,ids] of STORY_MERGED){if((STORY.merged||[]).includes(v))continue;let n=0;for(const id of ids)if(STORY.ev[id]){delete STORY.ev[id];n++;}(STORY.merged||(STORY.merged=[])).push(v);if(n)ssave();}
 const STJ={은:['은','는'],는:['은','는'],이:['이','가'],가:['이','가'],을:['을','를'],를:['을','를'],과:['과','와'],와:['과','와'],으로:['으로','로'],로:['으로','로']};
 /* 스크립트 원문의 갈래 표시가 남아 있으면 첫 갈래를 쓴다 */
 const stAlt=t=>{let s=String(t),k=0;while(/〔[^〔〕]*〕/.test(s)&&k++<20)s=s.replace(/〔([^〔〕]*)〕/g,(m,a)=>a==='…'?'':a.split(' │ ')[0]);return s.replace(/\n*──── 또는 ────[\s\S]*$/,'');};
@@ -12775,7 +12914,7 @@ ${NN('ha')}: “아니. 말리러 온 것도 아니고.”
 ${NN('ha')}: “아버지는 나한테 천하를 주고 싶어 했어. 나는 아침밥을 같이 먹을 사람이 필요했고. 그 둘이 같이 갈 수 있을까?”
 ${NN('ha')}: “네가 천마가 된다면… 그 옆에 내가 있을 자리가 있어?”`,
  ch:[{t:'“천마의 옆자리는 네 것이다”',h:'하와 함께 천마결에 오른다',go:S=>{S.flags.mkHaAlly='together';TK(S,'ha',15);npcMem(S,'ha','천마의 옆자리를 약속받았다');return `${NN('ha')}${bat(NN('ha'))?'이':'가'} 웃었다. 사막의 바람 같은 웃음이었다.\n${NN('ha')}: “그럼 아버지 앞에 같이 서자. 혼자 서면 넌 죽어. 둘이 서면… 아버지는 웃을 거야. 그 사람 웃는 거 한 번 보고 싶어.”`;}},
-  {t:'“네가 천마가 되어라. 내가 칼이 되겠다”',h:'하를 천마로 세운다',go:S=>{S.flags.mkHaAlly='her';TK(S,'ha',12);return `${NN('ha')}: “…나보고 천마를 하라고?”\n${NN('ha')}${bat(NN('ha'))?'은':'는'} 한참 말이 없었다. 그러다 술병을 들어 당신 술병에 부딪쳤다.\n${NN('ha')}: “좋아. 대신 아침밥은 네가 해.”`;}},
+  {t:'“네가 천마가 되어라. 내가 칼이 되겠다”',h:'하를 천마로 세운다',go:S=>{S.flags.mkHaAlly='her';TK(S,'ha',12);return `${NN('ha')}: “…나보고 천마를 하라고?”\n${NN('ha')}${bat(NN('ha'))?'은':'는'} 한참 말이 없었다. 그러다 술병을 들어 당신 술병에 부딪쳤다.\n${NN('ha')}: “좋아. 나와 함께 이 끝없는 지옥의 밑바닥까지 함께 가자.”`;}},
   {t:'“이건 나 혼자의 싸움이다”',go:S=>{S.flags.mkHaAlly='alone';TK(S,'ha',-5);return `${NN('ha')}: “…그래. 강자존이니까.”\n하가 지붕에서 내려갔다. 등이 쓸쓸해 보였다. 그날 밤 천마의 처소에서 부녀가 오래 이야기를 나눴다고 한다.`;}}]});
 function mkBecome(S){S.rank=4;S.flags.cmMe=1;S.w.cheonma='dead';S.dead_npc.cheonma=1;const w=S.mainW;const ids=w==='검'?['cmGeom','cmSingeom']:w==='도'?['cmSura','cmPacheon']:w==='창'?['cmChang']:['cmGwon'];
   const got=[...ids,'cmHeart'].map(id=>learn(S,id)).filter(Boolean).join(' ');S.heart='cmHeart';sTitle(S,'천마');A(S,{fame:120,contrib:200,mood:20});deed(S,'천마가 되었다');hist(S,'천마신교에 새 천마가 섰다.');repAdd(S,'demon',30);return got;}
@@ -13771,6 +13910,7 @@ function passive(S){
   A(S,{mood:-Math.round(S.mood*.2)});
   if(S.org){A(S,{contrib:2});const need=[[30,2],[80,3],[160,5]][S.rank];
     if(need&&S.rank<3&&S.contrib>=need[0]&&S.realm>=need[1]){S.rank++;const o=ORGS[S.org];const r=S.rank<3?learn(S,S.org+'_'+S.rank):'';
+      if(S.flags.outer===S.org){delete S.flags.outer;const h=learn(S,S.org+'_h');addLog(S,`외문에서 내문으로 들었다. 사문의 심법 구결을 받았다. ${h}`,1);deed(S,`${o.n}의 내문제자가 되었다`);}
       addLog(S,`${o.n}에서 ${jo(o.ranks[S.rank],'이','가')} 되었다. ${r}`,1);if(S.rank===3)deed(S,`${o.n}의 ${jo(o.ranks[3],'이','가')} 되었다`);}}
   while(S.realm<2&&S.exp>=REALMS[S.realm+1].req){S.realm++;addLog(S,`자연스럽게 ${rName(S)}의 경지에 들었다.`,1);}
   A(S,{hp:8+S.t.bone});
@@ -13905,7 +14045,7 @@ function saveHall(h){try{localStorage.setItem(HKEY,JSON.stringify(h));}catch(e){
 const NAI_URL='https://image.novelai.net/ai/generate-image';
 const NAI_MODELS=[['nai-diffusion-4-5-full','V4.5 Full'],['nai-diffusion-4-5-curated','V4.5 Curated'],['nai-diffusion-5-full','V5 Full'],['nai-diffusion-5-curated','V5 Curated'],['nai-diffusion-4-full','V4 Full']];
 const NAI_Q={'nai-diffusion-5-full':'very aesthetic, masterpiece, best quality','nai-diffusion-5-curated':'very aesthetic, masterpiece, best quality','nai-diffusion-4-5-full':'very aesthetic, masterpiece, no text','nai-diffusion-4-5-curated':'location, masterpiece, no text','nai-diffusion-4-full':'no text, best quality, very aesthetic, absurdres'};
-const GAME_VER='2026.10.26-63';
+const GAME_VER='2026.10.26-64';
 const NAI_NEG='nsfw, nude, lowres, bad anatomy, bad hands, missing fingers, extra digits, text, watermark, signature, logo, worst quality, low quality, blurry, modern clothes, glasses, eyewear, jpeg artifacts';
 const NKEY='murim-nai';
 function ncfg(){let c={};try{c=JSON.parse(localStorage.getItem(NKEY)||'{}');}catch(e){}return Object.assign({key:'',relay:'',model:'nai-diffusion-4-5-full',style:'wuxia, ancient china, hanfu, detailed illustration, cinematic lighting',autoEv:false,autoPc:false,vn:true,neg:NAI_NEG,tnpc:'',tev:'',tmap:'',q:true},c,{pr:Object.assign({},c.pr)});}
