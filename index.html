@@ -11293,10 +11293,22 @@ const stOv=id=>STORY.on!==false&&STORY.ev[id]?STORY.ev[id]:null;
 /* 게임에 고친 글을 입힌다: 제목·본문·선택지 이름·힌트·결과 글. 결과 글을 고쳐도 수치 변화는 원래대로 일어난다 */
 function stChoices(S,e,list){const o=stOv(e.id);if(!o||!o.ch)return list;return list.map(c=>{const v=o.ch[c.t];if(!v)return c;const n={...c};if(v.t)n.t=stFill(S,v.t);if(v.h!=null&&v.h!=='')n.h=stFill(S,v.h);if(v.r){const g=c.go;n.go=S=>{const r=g(S);return typeof r==='string'?stFill(S,v.r):r;};}return n;});}
 /* 사건 하나를 지금 삶을 본뜬 사본에서 미리 돌려 본다(진짜 게임 상태는 건드리지 않는다) */
+/* 미리보기용으로 빠진 조건을 채운 가상의 삶: 소꿉동무·사문·사부·배우자 등이 없으면 임시로 넣는다 */
+function stFill0(S,id){const f=S.flags;if(!f.cf)f.cf={n:'석이',sex:S.sex==='m'?'f':'m',path:'home',org:null,love:0,rel:30};else if(!f.cf.path)f.cf.path='home';
+  if(!S.org){const o=Object.keys(ORGS).find(k=>LEADER[k])||'wudang';S.org=o;S.rank=S.rank||1;}
+  if(id.startsWith('lv_')){const m=/^lv_(\w+?)_\d$/.exec(id);if(m)S.met[m[1]]=1;}
+  if(!S.wpn&&S.wpns&&S.wpns[0])S.wpn=S.wpns[0];
+  /* 인연이 필요한 사건: 이야기가 있는 인연 하나를 연인·배우자·첩으로 */
+  const pool=romList(S).filter(x=>NPCS[x]&&LOVE[x]&&LOVE[x].st&&LOVE[x].st.length);const L=pool[0]||romList(S).find(x=>NPCS[x]);const L2=pool.find(x=>x!==L)||romList(S).find(x=>NPCS[x]&&x!==L);
+  if(L){S.met[L]=1;S.rel[L]=Math.max(S.rel[L]||0,80);if(!S.lover)S.lover=L;}
+  if(/wed|Wed|harem|concub|propose|lvOld|lvFate|wedLife/.test(id)&&L){S.spouse=S.spouse||L;if(L2){S.met[L2]=1;S.rel[L2]=Math.max(S.rel[L2]||0,70);S.harem=S.harem&&S.harem.length?S.harem:[L2];S.flags.conNew=S.flags.conNew||L2;}}
+  for(const x of Object.keys(NPCS).slice(0,40))if(!S.met[x])S.met[x]=1;
+  if(!S.job&&/^(inn|smith|doc|iA|sA|dA|mA|cA|mer|sch)/.test(id))setJob(S,/^(inn|iA)/.test(id)?'inn':/^(smith|sA)/.test(id)?'smith':/^(doc|dA)/.test(id)?'doctor':/^(mer|mA)/.test(id)?'merchant':'scholar');}
 function stSample(id){const real=S,e=EVM[id],out={ch:[]};const snap=JSON.stringify(real),mv=modal,vw=view,sv=save,rd=render,ts=toast;save=()=>{};render=()=>{};toast=()=>{};
-  try{S=JSON.parse(snap);S.tmp={};S.cur=id;S.phase='event';if(e.prep)e.prep(S);out.title=typeof e.title==='function'?e.title(S):e.t;out.x=typeof e.x==='function'?e.x(S):e.x;
+  const run=fill=>{S=JSON.parse(snap);if(fill)stFill0(S,id);S.tmp={};S.cur=id;S.phase='event';if(e.prep)e.prep(S);out.title=typeof e.title==='function'?e.title(S):e.t;out.x=typeof e.x==='function'?e.x(S):e.x;
     const ch=(typeof e.ch==='function'?e.ch(S):e.ch)||[];const mid=JSON.stringify(S);
-    ch.forEach(c=>{let r='';try{S=JSON.parse(mid);r=c.go(S);}catch(x){r='(이 상태에서는 결과를 만들지 못했다: '+x.message+')';}out.ch.push({t:c.t,h:c.h||'',r:typeof r==='string'?r:'(결과 없음)',cond:!!c.if});});}
+    ch.forEach(c=>{let r='';try{S=JSON.parse(mid);r=c.go(S);}catch(x){r='(이 상태에서는 결과를 만들지 못했다: '+x.message+')';}out.ch.push({t:c.t,h:c.h||'',r:typeof r==='string'?r:'(결과 없음)',cond:!!c.if});});};
+  try{try{run(false);}catch(x){out.ch=[];run(true);out.fake=1;}}
   catch(x){out.err=x.message;}finally{S=real;modal=mv;view=vw;save=sv;render=rd;toast=ts;}return out;}
 const stAge=e=>e.a?`${e.a[0]}~${e.a[1]>=130?'':e.a[1]}세`:'나이 무관';
 function stInfo(e){const f=[];f.push(stAge(e));if(e.force)f.push('조건이 맞으면 반드시');else if(e.w)f.push(e.cd?`${e.cd}년마다 다시 올 수 있음`:'한 번만');else f.push('다른 사건에서 이어짐');if(e.tag)f.push(EV_TAGS&&EV_TAGS[e.tag]?EV_TAGS[e.tag]:e.tag);if(e.job)f.push('생업: '+(JOB_N[e.job]||e.job));return f.join(' · ');}
@@ -11323,7 +11335,7 @@ function storyEvHTML(){const m=modal,e=EVM[m.id],o=STORY.ev[m.id]||{},sm=m.sm||(
   const val=(k,def)=>d[k]!=null?d[k]:def;const ok=safe(()=>eligible(S,e))===true;
   return `<div class="modal" data-a="mbg"><div class="sheet story" role="dialog" aria-modal="true" aria-labelledby="mt"><div class="row" style="justify-content:space-between"><h3 id="mt" style="margin:0">${esc(stName(e))}</h3><button class="ghost" data-a="mclose">목록</button></div>
    <p class="muted small" style="margin:0">${esc(e.id)} · ${esc(stInfo(e))} · 지금 삶에서 ${ok?'일어날 수 있다':'조건이 맞지 않는다'}</p>
-   ${sm.err?`<p class="small" style="color:#a33">지금 삶으로는 예시를 만들지 못했다(${esc(sm.err)}). 원문 대신 빈칸에 새로 써도 된다.</p>`:''}
+   ${sm.fake?'<p class="small muted">지금 삶에는 이 사건의 조건(소꿉동무·사문 등)이 없어서, 그 조건을 임시로 채운 가상의 삶으로 예시를 만들었다.</p>':''}${sm.err?`<p class="small" style="color:#a33">이 사건은 조건이 까다로워 예시를 만들지 못했다(${esc(sm.err)}). 게임에는 문제없다. 원문 대신 빈칸에 새로 써도 된다.</p>`:''}
    <p class="grp-t">제목</p><input id="se_title" class="evinp" style="width:100%" value="${esc(val('title',o.t||sm.title||''))}">
    <p class="grp-t">본문 <span class="muted small" style="font-weight:400">‘이름: “대사”’ 줄은 그 사람의 대사가 된다</span></p>
    <textarea id="se_x" rows="12">${esc(val('x',o.x||sm.x||''))}</textarea>
@@ -13764,7 +13776,7 @@ function saveHall(h){try{localStorage.setItem(HKEY,JSON.stringify(h));}catch(e){
 const NAI_URL='https://image.novelai.net/ai/generate-image';
 const NAI_MODELS=[['nai-diffusion-4-5-full','V4.5 Full'],['nai-diffusion-4-5-curated','V4.5 Curated'],['nai-diffusion-5-full','V5 Full'],['nai-diffusion-5-curated','V5 Curated'],['nai-diffusion-4-full','V4 Full']];
 const NAI_Q={'nai-diffusion-5-full':'very aesthetic, masterpiece, best quality','nai-diffusion-5-curated':'very aesthetic, masterpiece, best quality','nai-diffusion-4-5-full':'very aesthetic, masterpiece, no text','nai-diffusion-4-5-curated':'location, masterpiece, no text','nai-diffusion-4-full':'no text, best quality, very aesthetic, absurdres'};
-const GAME_VER='2026.10.26-61';
+const GAME_VER='2026.10.26-62';
 const NAI_NEG='nsfw, nude, lowres, bad anatomy, bad hands, missing fingers, extra digits, text, watermark, signature, logo, worst quality, low quality, blurry, modern clothes, glasses, eyewear, jpeg artifacts';
 const NKEY='murim-nai';
 function ncfg(){let c={};try{c=JSON.parse(localStorage.getItem(NKEY)||'{}');}catch(e){}return Object.assign({key:'',relay:'',model:'nai-diffusion-4-5-full',style:'wuxia, ancient china, hanfu, detailed illustration, cinematic lighting',autoEv:false,autoPc:false,vn:true,neg:NAI_NEG,tnpc:'',tev:'',tmap:'',q:true},c,{pr:Object.assign({},c.pr)});}
