@@ -736,8 +736,8 @@ function nickCands(S){const r=S.realm,f=S.fame,W=WCH[S.mainW]||'검',A_=adjPool(
 const bestNickRank=S=>nickCands(S).reduce((m,o)=>Math.max(m,o.r),-1);
 
 const SUR=['진','백','한','위','도','연','설','하','곽','모용','제갈','서문','유','석','독고'];
-const GIV_M=['소운','무결','청','태호','은성','류','휘','서강','건','운학','지혁','천우'];
-const GIV_F=['하린','설화','령','비연','소월','청아','서윤','예린','무향','은설','가람','초희'];
+const GIV_M=['소운','도윤','청','태호','은성','류','휘','서강','건','운결','지혁','천우'];
+const GIV_F=['하린','설화','령','비연','소담','청아','서윤','예린','무향','은비','가람','초희'];
 const randName=sex=>pick(SUR)+pick(sex==='f'?GIV_F:GIV_M);
 const ycNew=()=>({t:{bone:0,wit:0,luck:0,looks:0},origin:null,trait:null,gold:0,mem:false,remove:[],stat:{},bond:null,long:false});
 const ycCost=yc=>Object.values(yc.t).reduce((a,b)=>a+b,0)*3+(yc.origin?4:0)+(yc.trait?TCOST[yc.trait]:0)+yc.gold+(yc.mem?4:0)+yc.remove.length*3+Object.values(yc.stat||{}).reduce((a,b)=>a+b,0)+(yc.bond?3:0)+(yc.long?3:0);
@@ -13642,7 +13642,7 @@ const evMemo=(S,k,f)=>{const t=S.tmp||(S.tmp={}),c=t[k];if(c&&c.id===S.cur)retur
 const evTitle=(S,e)=>{const o=typeof stOv==='function'&&stOv(e.id);if(o&&o.t)return stFill(S,o.t);return typeof e.title==='function'?evMemo(S,'_tt',()=>e.title(S)):e.t;};
 /* 사건에 나오는 인물: 인연 사건은 그 인물, 아니면 제목·본문에 가장 먼저 나오는 인물(만난 인물은 이름만으로도 찾는다) */
 function sceneNpc(S,e){const m=/^lv_(\w+?)_\d$/.exec(S.cur);if(m&&NPCS[m[1]])return m[1];
-  const tx=(()=>{try{return evTitle(S,e)+' '+evText(S,e);}catch(_){return '';}})();let best=null,bi=1e9;
+  let tx=(()=>{try{return evTitle(S,e)+' '+evText(S,e);}catch(_){return '';}})();for(const n of myNames(S))tx=tx.split(n).join('□'.repeat(n.length));let best=null,bi=1e9;
   for(const id in NPCS){const n=NPCS[id].n;if(!n||!NPC_TAGS[id])continue;let i=tx.indexOf(n);if(i<0&&S.met&&S.met[id]){const g=n.split(' ').pop();if(g!==n&&g.length>=2)i=tx.indexOf(g);}if(i>=0&&i<bi){bi=i;best=id;}}
   return best;}
 const evText=(S,e)=>{const o=typeof stOv==='function'&&stOv(e.id);if(o&&o.x)return stFill(S,o.x);return typeof e.x==='function'?evMemo(S,'_tx',()=>e.x(S)):e.x;};
@@ -13740,7 +13740,7 @@ function saveHall(h){try{localStorage.setItem(HKEY,JSON.stringify(h));}catch(e){
 const NAI_URL='https://image.novelai.net/ai/generate-image';
 const NAI_MODELS=[['nai-diffusion-4-5-full','V4.5 Full'],['nai-diffusion-4-5-curated','V4.5 Curated'],['nai-diffusion-5-full','V5 Full'],['nai-diffusion-5-curated','V5 Curated'],['nai-diffusion-4-full','V4 Full']];
 const NAI_Q={'nai-diffusion-5-full':'very aesthetic, masterpiece, best quality','nai-diffusion-5-curated':'very aesthetic, masterpiece, best quality','nai-diffusion-4-5-full':'very aesthetic, masterpiece, no text','nai-diffusion-4-5-curated':'location, masterpiece, no text','nai-diffusion-4-full':'no text, best quality, very aesthetic, absurdres'};
-const GAME_VER='2026.10.26-57';
+const GAME_VER='2026.10.26-58';
 const NAI_NEG='nsfw, nude, lowres, bad anatomy, bad hands, missing fingers, extra digits, text, watermark, signature, logo, worst quality, low quality, blurry, modern clothes, glasses, eyewear, jpeg artifacts';
 const NKEY='murim-nai';
 function ncfg(){let c={};try{c=JSON.parse(localStorage.getItem(NKEY)||'{}');}catch(e){}return Object.assign({key:'',relay:'',model:'nai-diffusion-4-5-full',style:'wuxia, ancient china, hanfu, detailed illustration, cinematic lighting',autoEv:false,autoPc:false,vn:true,neg:NAI_NEG,tnpc:'',tev:'',tmap:'',q:true},c,{pr:Object.assign({},c.pr)});}
@@ -14545,8 +14545,10 @@ function foeBox(){const f=S.tmp.foe;if(!f)return '';const p=perceive(S,f);const 
 let VN={k:'',i:0,tk:'',t:0};
 const vnAuto=()=>{try{return localStorage.getItem('murim-vnauto')==='1';}catch(e){return false;}};
 const vnOn=()=>ncfg().vn!==false;
-function vnNames(S){const o=[];for(const id in NPCS){const p=NPCS[id];if(!p.n)continue;o.push([p.n,id]);const g=p.n.split(' ').pop();if(g!==p.n&&g.length>=2)o.push([g,id]);const k=safe(()=>npcNick(id,S));if(k&&k.length>=2)o.push([k,id]);}
-  const cnt={};o.forEach(([n])=>cnt[n]=(cnt[n]||0)+1);return o.filter(([n])=>cnt[n]===1).sort((a,b)=>b[0].length-a[0].length);}
+function vnNames(S){const o=[];for(const id in NPCS){const p=NPCS[id];if(!p.n)continue;o.push([p.n,id]);const g=p.n.split(' ').pop();if(g!==p.n&&g.length>=2)o.push([g,id]);const k=safe(()=>npcNick(id,S));if(k&&k.length>=2){o.push([k,id]);o.push([k+' '+p.n,id]);}}
+  const cnt={};o.forEach(([n])=>cnt[n]=(cnt[n]||0)+1);const mine=myNames(S);return [...mine.map(n=>[n,'me']),...o.filter(([n])=>cnt[n]===1&&!mine.includes(n))].sort((a,b)=>b[0].length-a[0].length);}
+/* 내 이름: 성을 뗀 이름까지. 같은 이름의 인물이 있어도 내 이름으로 읽는다 */
+function myNames(S){const n=S&&S.name;if(!n)return [];const L=[n];const sur=(SUR||[]).filter(x=>n.startsWith(x)&&n.length>x.length).sort((a,b)=>b.length-a.length)[0];if(sur){const g=n.slice(sur.length);if(g.length>=2)L.push(g);}return L;}
 function vnWho(S,name,NM){name=name.trim();if(/^(당신|나)$/.test(name))return 'me';if(name==='붉은 눈의 홍의')return 'hongui';const f=NM.find(([n])=>n===name);return f?f[1]:null;}
 // 한 문장 안에서 가장 뒤(또는 앞)에 나오는 주어를 찾는다
 function vnSubj(S,t,NM,fromEnd,back){if(!t)return undefined;const hits=[];
@@ -14579,22 +14581,23 @@ const VN_POS={1:[50],2:[30,70],3:[20,50,80]};
    o:{key,text,scene,bg,title,tags,sub,draw,end(마지막에 대사창 아래 붙일 것),panel(선택지 위 패널),acts(선택지 버튼들)} */
 const vnPlate=who=>who?`<div class="vnplate ${who.me?'me':''}">${who.k?`<small>${esc(who.k)}</small>`:''}${esc(who.n)}</div>`:'';
 /* 자동 넘김: 지금 대사를 읽을 시간만큼 기다렸다가 다음으로 */
-function vnArm(key,i,n,b){const done=i>=n-1;if(!vnAuto()||done||VN.log){clearTimeout(VN.t);return;}if(VN.tk===key+'|'+i)return;VN.tk=key+'|'+i;clearTimeout(VN.t);
+function vnArm(key,i,n,b){const done=i>=(VN.cur&&VN.cur.last!=null?VN.cur.last:n-1);if(!vnAuto()||done||VN.log){clearTimeout(VN.t);return;}if(VN.tk===key+'|'+i)return;VN.tk=key+'|'+i;clearTimeout(VN.t);
   const wait=()=>{if(VN.k!==key||VN.i!==i)return;if(modal||view!=='ev'||document.hidden||VN.log){VN.t=setTimeout(wait,800);return;}vnAdvance();};VN.t=setTimeout(wait,1400+b.t.length*55);}
 /* 다음 대사: 마지막 대사가 아니면 화면 전체를 다시 그리지 않고 글·이름표·인물 강조만 바꾼다(배경과 인물 그림을 다시 불러오지 않아 끊기지 않는다) */
 function vnAdvance(){VN.i++;if(!vnStep())render();}
 function vnStep(){const c=VN.cur,root=document.querySelector('.vnfull[data-a="vnnext"]');if(!c||!root||VN.k!==c.key||modal||VN.log)return false;
-  const n=c.beats.length,i=VN.i;if(i<=0||i>=n-1)return false;const b=c.beats[i],t=root.querySelector('.vnt'),pw=root.querySelector('.vnpw');if(!t||!pw)return false;
+  const n=c.beats.length,i=VN.i;if(i<=0||i>n-1||i>=c.last)return false;const b=c.beats[i],t=root.querySelector('.vnt'),pw=root.querySelector('.vnpw');if(!t||!pw)return false;
   root.classList.remove('vnfade');pw.innerHTML=vnPlate(c.whoOf(b.s,b.n));
   const nt=document.createElement('div');nt.className='vnt'+(b.s?'':' nar');nt.innerHTML=c.line(b);t.replaceWith(nt);
   const bk=beatKey(S,b);root.querySelectorAll('.vnsp').forEach((el,j)=>{const id=c.cast[j];el.classList.remove('in');el.classList.toggle('on',bk===id);el.classList.toggle('nar',!b.s);});
   const pv=root.querySelector('.vnpv');if(pv)pv.hidden=false;vnArm(c.key,i,n,b);return true;}
 function vnScreen(S,o){const beats=vnBeats(S,o.text,o.scene);if(!beats.length)beats.push({s:null,t:''});if(VN.k!==o.key){VN.k=o.key;VN.i=0;VN.log=0;}
-  const n=beats.length,i=Math.min(VN.i,n-1),b=beats[i],done=i>=n-1,auto=vnAuto();
+  const n=beats.length,one=/data-a="next"/.test(o.acts||''),last=one||!o.acts?n-1:n;/* 선택지가 있으면 마지막 대사를 먼저 보이고, 한 번 더 누르면 선택지 */
+  const n0=Math.min(VN.i,last),i=Math.min(n0,n-1),b=beats[i],done=n0>=last,auto=vnAuto();
   const cast=vnCast(S,beats,o.scene).filter(id=>imgURL(castKey(id))),pos=VN_POS[cast.length]||[],bk=beatKey(S,b);
   const whoOf=(x,nm)=>x==='me'?{k:S.nick?S.nick.n:'',n:dispName(S),me:1}:x==='@'?{k:'',n:nm}:x&&NPCS[x]?{k:safe(()=>npcNick(x,S))||'',n:NPCS[x].n}:x==='?'?{k:'',n:'???'}:null;
   const who=whoOf(b.s,b.n),line=x=>x.s?'“'+esc(x.t)+'”':esc(x.t);
-  VN.cur={key:o.key,beats,cast,whoOf,line};vnArm(o.key,i,n,b);
+  VN.cur={key:o.key,beats,cast,whoOf,line,last};vnArm(o.key,n0,n,b);
   const tool=(a,l,on,lab)=>`<button class="vntool ${on?'on':''}" data-a="${a}" ${lab?`aria-label="${lab}"`:''} ${on!=null?`aria-pressed="${!!on}"`:''}>${l}</button>`;
   const log=VN.log?`<div class="vnlogp" data-a="vnnop"><div class="row" style="justify-content:space-between"><b>지난 대사</b>${tool('vnlog','닫기')}</div><div class="vnlogl">${beats.slice(0,i+1).map(x=>{const w=whoOf(x.s,x.n);return `<p>${w?`<b>${esc(w.n)}</b> `:''}${line(x)}</p>`;}).join('')}</div></div>`:'';
   return `<section class="vnfull ${done?'done':''} ${VN.i?'':'vnfade'}" ${done||VN.log?'':'data-a="vnnext"'} aria-live="polite">
@@ -14794,7 +14797,7 @@ app.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b||b
   else if(a==='vnlog'){VN.log=VN.log?0:1;render();}
   else if(a==='vnnop'){}
   else if(a==='vnauto'){try{localStorage.setItem('murim-vnauto',vnAuto()?'0':'1');}catch(e){}VN.tk='';render();}
-  else if(a==='vnprev'){VN.i=Math.max(0,VN.i-1);render();}
+  else if(a==='vnprev'){VN.i=Math.max(0,Math.min(VN.i,VN.cur?VN.cur.last:VN.i)-1);render();}
   else if(a==='vnskip'){VN.i=1e9;clearTimeout(VN.t);render();}
   else if(a==='next'){if(S.pendingWpn){const el=document.getElementById('wname');commitWpn(S,el?el.value:'');}if(S.phase==='death'||S.dead)endLife();else if(S.chain){const c=S.chain;S.chain=null;openEvent(S,c);view='ev';resetScroll=true;save();render();}else nextYear();if(!S.dead)safe(()=>pcAgeCheck(S));}
   else if(a==='again'){S=newFate(null,null,{...ycNew()});tab='ab';view='ev';resetScroll=true;save();render();}
