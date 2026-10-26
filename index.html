@@ -3409,7 +3409,7 @@ const LOVE={
 /* 첫 만남 이야기는 아직 짝이 없을 때만: 이미 그 사람과 맺어졌거나(혼인·연인) 다른 사람과 혼인·연애 중이면 열리지 않는다(수라장 끝에 모두 품은 경우는 예외) */
 const firstMeetOk=(S,id)=>S.spouse!==id&&S.lover!==id&&!(S.harem&&S.harem.includes(id))&&((!S.spouse&&!lover(S))||!!(S.harem&&S.harem.length));
 Object.entries(LOVE).forEach(([id,L])=>L.st.forEach((st,i)=>E({id:`lv_${id}_${i}`,tag:'love',t:typeof st.t==='string'?st.t:'인연',title:typeof st.t==='function'?st.t:undefined,a:[15,80],w:3.5,
-  if:S=>loveList(S).includes(id)&&S.met[id]&&!S.dead_npc[id]&&!loveBlocked(S,id)&&(S.rel[id]||0)>=[0,35,60][i]&&(i===0||S.seen[`lv_${id}_${i-1}`])&&(i===0?firstMeetOk(S,id):!S.spouse||S.spouse===id||(S.harem&&S.harem.includes(id))),
+  if:S=>loveList(S).includes(id)&&S.met[id]&&!S.dead_npc[id]&&!loveBlocked(S,id)&&(S.rel[id]||0)>=[0,35,60][i]&&(i===0||S.seen[`lv_${id}_${i-1}`])&&(i===0?firstMeetOk(S,id)&&fmFresh(S,id):!S.spouse||S.spouse===id||(S.harem&&S.harem.includes(id))),
   x:st.x,ch:st.ch})));
 /* 이야기가 없던 인연들(LOVE_X)의 이야기 세 장. 호감 18·42·65에서 하나씩 열린다 */
 const LOVE_ARC={
@@ -7929,7 +7929,7 @@ const LOVE_ARC={
   wed:'칠영은 혼인한 뒤 산 아래 절 근처에 집을 얻었다. 칼은 들지 않는다. 대신 늘 우산을 들고 다닌다. 비 오는 날이면 당신 쪽으로 기울인다. 자기 어깨가 젖어도. 그 아이는 이제 어른이 되어 가끔 형을 찾아온다.'},
 };
 Object.entries(LOVE_ARC).forEach(([id,L])=>L.st.forEach((st,i)=>E({id:`lv_${id}_${i}`,tag:'love',t:typeof st.t==='string'?st.t:'인연',title:typeof st.t==='function'?st.t:undefined,a:[15,95],w:3.5,
-  if:S=>romList(S).includes(id)&&!loveList(S).includes(id)&&S.met[id]&&!S.dead_npc[id]&&!loveBlocked(S,id)&&(S.rel[id]||0)>=[0,35,60][i]&&(i===0||S.seen[`lv_${id}_${i-1}`])&&(i===0?firstMeetOk(S,id):!S.spouse||S.spouse===id||(S.harem&&S.harem.includes(id))),
+  if:S=>romList(S).includes(id)&&!loveList(S).includes(id)&&S.met[id]&&!S.dead_npc[id]&&!loveBlocked(S,id)&&(S.rel[id]||0)>=[0,35,60][i]&&(i===0||S.seen[`lv_${id}_${i-1}`])&&(i===0?firstMeetOk(S,id)&&fmFresh(S,id):!S.spouse||S.spouse===id||(S.harem&&S.harem.includes(id))),
   x:st.x,ch:st.ch})));
 const loveStory=id=>LOVE[id]&&LOVE[id].st&&LOVE[id].st.length?LOVE[id]:LOVE_ARC[id]||null;
 const fatePending=S=>Object.keys(LOVE).filter(id=>NPCS[id]&&LOVE[id].fate&&S.spouse!==id&&!S.flags['fate_'+id]&&!S.dead_npc[id]&&(id==='ha'?S.met.ha&&(S.rel.ha||0)>=40:S.seen[`lv_${id}_1`])&&(S.spouse||S.age>=42));
@@ -13336,11 +13336,22 @@ for(const id in RANK_CAP){const e=EV.find(x=>x.id===id);if(!e)continue;const oi=
 /* 노인이 ‘젊은이’라 부르는 장면도 나이와 이름을 본다 */
 for(const id of ['hermit']){const e=EV.find(x=>x.id===id);if(e&&typeof e.x==='string'&&/젊은이/.test(e.x)){const o=e.x;e.x=S=>o.replace(/젊은이/g,callYou(S));}}
 
+/* 누구를 어디서 처음 알게 됐는지 적어 둔다. 첫 만남 장(인연 1장)은 ‘처음 마주친 자리’가 우연한 만남일 때만 연다.
+   살막·사문·직업 이야기처럼 다른 사건 속에서 이미 얼굴을 익힌 사람에게는 첫 만남 장을 건너뛰고 다음 장부터 잇는다. */
+const FM_SRC=new Set(['meet','chuldo2','enemyMeet','loveSpark','tavern','romeo','suitor','matchmaker']);
+/* 첫 만남 장 대부분은 바깥 사람으로 처음 마주치는 이야기다. 같은 사문 안에서 만나는 이야기로 쓰인 사람만 사문 동료로도 연다 */
+const FM_INSECT=new Set(['joyeon']);
+function metTrack(S,src){const f=S.flags;if(!f)return;const k=f.metK||(f.metK={}),by=f.metBy||(f.metBy={});const init=!f.metKInit;f.metKInit=1;
+  for(const id in S.met)if(S.met[id]&&!k[id]){k[id]=1;if(!by[id])by[id]=init?'old':sameOrg(S,id)&&!FM_INSECT.has(id)?'sect':sameOrg(S,id)?'meet':(src||S.cur||'?');
+    if(by[id]!=='old'&&!FM_SRC.has(by[id])&&!/^lv_/.test(by[id])){if(typeof LOVE_ARC!=='undefined'&&(LOVE_ARC[id]||LOVE[id])&&!S.seen[`lv_${id}_0`])S.seen[`lv_${id}_0`]='skip';if(typeof TALK!=='undefined'&&TALK[id]&&TALK[id].length>1&&!f['tk_'+id]&&!sameOrg(S,id))f['tk_'+id]=1;}}}
+/* 첫 만남 장은 처음 알게 된 지 세 해 안에만 */
+const fmFresh=(S,id)=>{const by=(S.flags.metBy||{})[id];if(by&&by!=='old'&&!FM_SRC.has(by))return false;const a=(S.flags.fmAt||{})[id];return a!=null&&a>=0&&S.age-a<=3;};
 /* 처음 마주친 인연의 첫 만남 이야기를 순서대로 띄운다 */
 function fmNext(S){const f=S.flags.fmAt||(S.flags.fmAt={});
   if(!S.flags.fmInit){S.flags.fmInit=1;for(const id of romList(S))if(S.met[id])f[id]=-99;}
   for(const id of romList(S))if(S.met[id]&&f[id]==null)f[id]=S.age;
-  const ids=romList(S).filter(id=>f[id]!=null&&f[id]>=0&&S.age-f[id]<=3&&!S.seen[`lv_${id}_0`]&&EVM[`lv_${id}_0`]&&eligible(S,EVM[`lv_${id}_0`]));
+  for(const id of romList(S))if(S.met[id]&&f[id]!=null&&(f[id]<0||S.age-f[id]>3)&&!S.seen[`lv_${id}_0`]&&EVM[`lv_${id}_0`])S.seen[`lv_${id}_0`]='skip';
+  const ids=romList(S).filter(id=>f[id]!=null&&f[id]>=0&&S.age-f[id]<=3&&fmFresh(S,id)&&!S.seen[`lv_${id}_0`]&&EVM[`lv_${id}_0`]&&eligible(S,EVM[`lv_${id}_0`]));
   return ids.length?`lv_${ids.sort((a,b)=>f[a]-f[b])[0]}_0`:null;}
 
 /* ══ 문파 우호도 ══
@@ -13636,7 +13647,7 @@ function chooseEvent(S){
 let WARMQ=[],WARMT=0;function warmSoon(S){try{const ks=[];if(REG[S.loc])ks.push('reg:'+REG_EN[S.loc]);Object.keys(S.met||{}).filter(id=>NPCS[id]).sort((a,b)=>(S.rel[b]||0)-(S.rel[a]||0)).slice(0,24).forEach(id=>ks.push('st:'+id));
   WARMQ=ks.map(k=>imgURL(k)).filter(u=>u&&!WARM.has(u));if(!WARMT){const step=()=>{const u=WARMQ.shift();if(u)warmImg(u);WARMT=WARMQ.length?setTimeout(step,180):0;};WARMT=setTimeout(step,300);}}catch(e){}}
 const WARM=new Set();function warmImg(u){if(!u||WARM.has(u))return;WARM.add(u);if(WARM.size>200)WARM.clear();try{const im=new Image();im.decoding='async';im.src=u;if(im.decode)im.decode().catch(()=>{});}catch(e){}}
-function openEvent(S,id){const e=EVM[id];S.tmp={};S.seen[id]=1;S.last[id]=S.age;S.cur=id;S.phase='event';if(e.prep)e.prep(S);if(S.dead)deathCard(S);
+function openEvent(S,id){const e=EVM[id];S.tmp={};S.seen[id]=1;S.last[id]=S.age;S.cur=id;S.phase='event';if(e.prep)e.prep(S);metTrack(S,id);if(S.dead)deathCard(S);
   if(ncfg().autoEv&&id!=='focus'&&id!=='bt'&&id!=='ai'&&!/^lv_/.test(id))autoDraw('ev:'+id,evPrompt(id),false);}
 /* 제목·본문이 무작위 줄을 고르면 그릴 때마다 달라져 대사가 처음으로 되돌아갔다 — 한 사건 동안은 한 번 정한 글을 쓴다 */
 const evMemo=(S,k,f)=>{const t=S.tmp||(S.tmp={}),c=t[k];if(c&&c.id===S.cur)return c.v;const v=f();t[k]={id:S.cur,v};return v;};
@@ -13678,7 +13689,7 @@ function choose(i){const e=EVM[S.cur];const c=evChoices(S,e)[i];if(!c)return;
   if(c.craft==='map'){view='map';mapSel=null;resetScroll=true;render();return;}
   if(c.craft==='forge'){const f={w:S.mainW,m:'정철',name:''};f.def=forgeDefault(S,f);S.tmp.forge=f;S.phase='forge';save();render();return;}
   if(c.craft){const ws=craftWeapons(S);S.tmp.craft={sel:[],w:ws.includes(S.mainW)?S.mainW:ws[0],name:'',mode:'art',fo:'ng'};S.phase='craft';save();render();return;}
-  const title=evTitle(S,e),before=SNAP(S),nid=safe(()=>sceneNpc(S,e));const text=c.go(S);
+  const title=evTitle(S,e),before=SNAP(S),nid=safe(()=>sceneNpc(S,e));const text=c.go(S);metTrack(S,e.id);
   if(nid&&S.met[nid]&&e.id!=='focus')npcMem(S,nid,`${title} — ${c.t}`);
   finish(S,title,c.t,text,before,e.id!=='bt'&&e.id!=='focus');}
 function doCraft(){const c=S.tmp.craft;if(!c||c.sel.length<2)return;if(c.mode==='heart')return doCraftHeart(c);const before=SNAP(S);S.last.craft=S.age;
@@ -13692,7 +13703,7 @@ function deathCard(S){S.phase='death';const c=S.dead;
 function nextYear(){if(S.dead){endLife();return;}
   if(S.age<YOUNG&&!S.flags.half&&S.phase!=='birth'){S.flags.half=1;let id=null;try{id=chooseEvent(S);}catch(e){}if(id&&id!=='focus'){openEvent(S,id);view='ev';resetScroll=true;save();render();return;}}
   S.flags.half=0;
-  passive(S);if(S.dead){deathCard(S);addLog(S,S.res.text,1);save();render();return;}
+  passive(S);metTrack(S,'year');if(S.dead){deathCard(S);addLog(S,S.res.text,1);save();render();return;}
   let id=chooseEvent(S);if(aiTake(S,id))id='ai';openEvent(S,id);view='ev';resetScroll=true;save();render();aiPrefetch();}
 
 /* 평가 */
@@ -13741,7 +13752,7 @@ function saveHall(h){try{localStorage.setItem(HKEY,JSON.stringify(h));}catch(e){
 const NAI_URL='https://image.novelai.net/ai/generate-image';
 const NAI_MODELS=[['nai-diffusion-4-5-full','V4.5 Full'],['nai-diffusion-4-5-curated','V4.5 Curated'],['nai-diffusion-5-full','V5 Full'],['nai-diffusion-5-curated','V5 Curated'],['nai-diffusion-4-full','V4 Full']];
 const NAI_Q={'nai-diffusion-5-full':'very aesthetic, masterpiece, best quality','nai-diffusion-5-curated':'very aesthetic, masterpiece, best quality','nai-diffusion-4-5-full':'very aesthetic, masterpiece, no text','nai-diffusion-4-5-curated':'location, masterpiece, no text','nai-diffusion-4-full':'no text, best quality, very aesthetic, absurdres'};
-const GAME_VER='2026.10.26-59';
+const GAME_VER='2026.10.26-60';
 const NAI_NEG='nsfw, nude, lowres, bad anatomy, bad hands, missing fingers, extra digits, text, watermark, signature, logo, worst quality, low quality, blurry, modern clothes, glasses, eyewear, jpeg artifacts';
 const NKEY='murim-nai';
 function ncfg(){let c={};try{c=JSON.parse(localStorage.getItem(NKEY)||'{}');}catch(e){}return Object.assign({key:'',relay:'',model:'nai-diffusion-4-5-full',style:'wuxia, ancient china, hanfu, detailed illustration, cinematic lighting',autoEv:false,autoPc:false,vn:true,neg:NAI_NEG,tnpc:'',tev:'',tmap:'',q:true},c,{pr:Object.assign({},c.pr)});}
