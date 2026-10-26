@@ -8610,7 +8610,10 @@ const SECT_FIRST={
   o:[['그걸 알아서 무엇합니까',S=>{A(S,{mind:3});return '“오늘은 쓸모없지. 십 년 뒤 그 셋째가 가주가 되면 쓸모 있어. 하오문은 십 년을 보고 줍는다.”';}],['제 소문도 있습니까',S=>{TK(S,'eunsn',6);return '장로가 씨를 뱉었다. “있지. 문 사람이라도 값은 받는다.” 그러곤 하나를 공짜로 말해 주었다. 정확했다.';}],['씨를 한 줌 얻어먹는다',S=>{TK(S,'eunsn',8);return '“문 안에서도 씨 하나 공짜가 없는데… 넌 특별히.” 장로가 웃었다. 이가 세 개였다.';}]]},
  galch:{x:'장강 위 누선(樓船), 대채주가 뱃전에 서서 강물에 술을 붓는다. 수로채 형제라면 다 아는 의식이다.',l:'“왔냐, 형제. 장강 용왕님께 먼저 한 잔. 이 물에 빠져 죽은 우리 형제들 몫이다. 너도 부어라.”',
   o:[['강물에 술을 붓는다',S=>{TK(S,'galch',10);return '“좋다.” 대채주가 어깨를 쳤다. 그날 밤 배 위에서 형제 서른이 노래를 불렀다.';}],['죽은 형제들의 이름을 묻는다',S=>{TK(S,'galch',8);A(S,{cult:2});return '대채주가 이름을 하나씩 불렀다. 마흔둘. 한 번도 막히지 않았다.';}],['한 잔은 용왕님께, 한 잔은 대채주께',S=>{TK(S,'galch',8);A(S,{tongue:2});return '대채주가 크게 웃으며 잔을 받았다. “말할 줄 아는 형제군!”';}]]}};
-const tview=(S,id,i)=>{const sc=TALK[id]&&TALK[id][i];if(!sc||i!==0||!sameOrg(S,id))return sc;const o=SECT_FIRST[id];
+const tview=(S,id,i)=>{const sc=TALK[id]&&TALK[id][i];
+  if(sc&&i===0&&typeof outranks==='function'&&outranks(S,id)){const u=SECT_UP[id];if(u)return Object.assign({},sc,{x:typeof u.x==='function'?u.x(S):u.x,l:u.l,o:u.o,n:null});
+    return Object.assign({},sc,{x:`${ORGS[S.org].n}의 ${retired(S,id)?'전대 '+ORGS[S.org].ranks[4]:(NPCS[id].realm||0)>=6?'장로':'제자'} ${nnm(id,S)}. `+sc.x,n:null});}
+  if(!sc||i!==0||!sameOrg(S,id))return sc;const o=SECT_FIRST[id];
   return o?Object.assign({},sc,o):Object.assign({},sc,{x:`${ORGS[S.org].n}의 ${sectRole(S,id)} ${nnm(id,S)}. `+sc.x});};
 const talkScene=(S,id)=>{const L=TALK[id],i=S.flags['tk_'+id]||0,sc=L&&L[i];return sc&&(S.rel[id]||0)>=sc.min&&(!sc.if||sc.if(S))&&!(stance(S,id)==='foe'&&(S.rel[id]||0)<40)?sc:null;};
 const talkCands=S=>Object.keys(TALK).filter(id=>NPCS[id]&&!S.dead_npc[id]&&talkScene(S,id));
@@ -12806,7 +12809,7 @@ defA('mkCheongang','흑운단천검','무','검',4,['마','강기','변']);defA(
 defA('mkHeuksal','흑부장','무','권',4,['마','독','강기']);defA('mkMuhyeong','무형마공','무','권',4,['마','음','변']);
 defA('mkJajeon','적뢰마공','심',null,5,['마','양','강기'],null,{rate:1.7,push:2});
 defA('hkEung','홍상장','무','권',4,['혈','음']);defA('hkEungjo','홍상조','무','권',5,['혈','음','쾌']);
-defA('bmBuk','누란사경','심',null,5,['자연','유','강기'],null,{rate:1.65,push:'bal'});defA('bmNoe','천뢰경','무','권',5,['강기','쾌','중']);
+defA('bmBuk','누란사경','심',null,5,['도','유','강기'],null,{rate:1.65,push:'bal'});defA('bmNoe','천뢰경','무','권',5,['강기','쾌','중']);
 defA('hwYeom','열사신공','무','권',5,['양','강기','중'],[10,100]);
 const JJ_NAME={3:'뇌갑(雷甲) · 살갗 위로 붉은 벼락이 갑옷처럼 돈다',6:'뇌망(雷網) · 몸 밖으로 벼락 그물을 친다',9:'적뢰천벌(赤雷天罰) · 대성'};
 E({id:'mkHeukmi',t:'현철마골공',a:[11,45],w:S=>inMk(S)&&S.seen.mkGate&&!S.flags.heukmi?6:0,
@@ -13283,6 +13286,55 @@ ${NN('haryeong')}: “둘째든 셋째든. 당신 상단 깃발 옆에 우리 �
 ${NN('seohyeon')}: “평생 남의 이름으로 살았어요. 둘째 자리쯤은 아무렇지도 않아요.”
 ${NN('seohyeon')}: “거짓말이에요. 아무렇지 않지 않아요. 그래도… 당신 옆이면 내 이름으로 살 수 있을 것 같아요.”`});
 
+/* ══ 지위에 맞는 대접: 윗사람이 된 당신을 아이 취급하지 않는다 ══
+   같은 사문에서 당신이 수장(교주·장문인·가주·방주…)이거나 장로급이면, 첫 대화 장면이 아랫사람의 자리에서 윗사람의 자리로 바뀐다.
+   나이가 들거나 이름이 높아지면 ‘젊은이’라 부르지 않는다. */
+const myPost=S=>S.org?ORGS[S.org].ranks[S.rank]:'';
+const outranks=(S,id)=>sameOrg(S,id)&&!S.job&&(S.rank>=4||(S.rank>=3&&LEADER[S.org]!==id));
+const callYou=S=>S.org&&S.rank>=4?`${myPost(S)}`:S.fame>=250&&S.nick?S.nick.n:lookAge(S)>=45?'노형':'젊은이';
+const SECT_UP={
+ geolwang:{x:S=>`분타 뒷마당. 전대 방주가 술 호리병을 끼고 졸다가 당신 발소리에 한쪽 눈을 떴다. 푸른 대나무 막대기는 이제 그의 옆이 아니라 당신 손에 있다.`,l:S=>`“${myPost(S)} 납시었네. 국수는 이제 자네가 사야지. 방주가 얻어먹으면 개방 꼴이 뭐가 되나.”`,
+  o:[['국수와 술을 산다',S=>{TK(S,'geolwang',10);A(S,{gold:-5});return '“방주가 사 주는 국수는 또 다르군.” 노인이 세 그릇을 비우고 트림을 했다. “내 자리 앉아 보니 어떤가. 배고프지?”';}],['방주의 일을 묻는다',S=>{TK(S,'geolwang',6);A(S,{cult:3});return '“방주의 일? 밥을 나누는 거지. 자네가 배부를 때 제일 먼저 떠올리는 얼굴. 그게 방주가 챙길 얼굴이야.”';}]]},
+ geomseon:{x:S=>`무당 뒷산 산정. 사문의 큰어른 검선이 나뭇가지로 허공을 긋다가 손을 멈췄다. 그리고 당신에게 몸을 돌려 먼저 손을 모았다.`,l:S=>`“${myPost(S)}께서 이 늙은이를 찾으셨구려. 장문의 무게가 검보다 무겁지요? 검은 손으로 쥐지만 그건 마음으로 쥐어야 하니.”`,
+  o:[['가르침을 청한다',S=>{TK(S,'geomseon',8);A(S,{cult:3});return '“장문인께 가르칠 것이 남았겠습니까.” 노인이 웃으며 나뭇가지를 건넸다. “다만 하나. 칼끝이 아니라 칼등으로 문파를 지키십시오.”';}],['함께 허공을 긋는다',S=>{TK(S,'geomseon',6);SK(S,S.mainW,1);return '두 나뭇가지가 허공에 같은 원을 그렸다. 산 아래 제자들이 그 모습을 오래 올려다보았다.';}]]},
+ buljon:{x:S=>`소림 장경각 뒤 찻방. 불존이 찻잔을 내려놓고 합장했다. 노승의 허리가 당신 앞에서 반 치 굽었다.`,l:S=>`“${myPost(S)}. 그 자리에 앉으니 얼굴의 칼 그림자가 더 짙어졌군요. 이제는 당신이 벨지 말지를 정하는 게 아니라, 천 명의 제자가 벨지 말지를 당신 얼굴을 보고 정합니다.”`,
+  o:[['그 무게를 묻는다',S=>{TK(S,'buljon',6);A(S,{cult:3});return '“무겁지요. 그래서 장문은 차를 자주 마셔야 합니다.” 노승이 새 차를 따랐다.';}],['노승께 자리를 물려드리고 싶다고 말한다',S=>{TK(S,'buljon',8);return '노승이 크게 웃었다. “늙은 중을 또 고생시키시려고. 안 됩니다. 그 자리는 도망칠 수 없는 자리입니다.”';}]]},
+ gumwang:{x:S=>`새벽 남궁세가 연무장. 전대 가주가 홀로 검을 닦다가 당신을 보고 검을 칼집에 넣었다. 그리고 한 걸음 물러나 길을 비켰다.`,l:S=>`“${myPost(S)}. 연무장 첫 자리는 이제 당신 것이다. 늙은이는 구석이면 족하다.”`,
+  o:[['함께 검을 닦는다',S=>{TK(S,'gumwang',8);return '둘이 나란히 앉아 검을 닦았다. 해가 뜰 때까지 아무 말이 없었다. 전대 가주가 일어서며 말했다. “세가의 검이 좋은 손에 갔다.”';}],['한 수 청한다',S=>{TK(S,'gumwang',6);SK(S,S.mainW,1);return '“가주가 청하면 거절할 수 없지.” 백 합. 노인이 먼저 검을 거뒀다. “…이제 내가 배울 차례군.”';}]]},
+ geomma:{x:S=>`비 오는 총단 다리 위. 검마 사마 율이 붉은 검을 빗물에 씻다가 당신을 보았다. 검을 거두고, 한쪽 무릎을 꿇었다. 빗물이 그의 등을 타고 흘렀다.`,l:S=>`“${myPost(S)}. 검마는 강한 자를 따릅니다. 당신이 약해지는 날 이 무릎은 다시 펴질 겁니다. 그날까지는.”`,
+  o:[['“그날은 오지 않는다”',S=>{TK(S,'geomma',6);return '검마가 처음으로 서툴게 웃었다. “강자존. 그 말을 믿게 해 주십시오.”';}],['일으켜 세운다',S=>{TK(S,'geomma',8);return '“교에서 무릎 꿇은 자를 일으켜 세우는 자는 처음입니다.” 검마가 일어섰다. 키가 당신보다 한 뼘 컸다. 그래도 고개는 당신보다 낮았다.';}]]},
+ dokma:{x:S=>`총단 약방. 교의 객경 독마가 독초를 쥐고 냄새를 맡다가, 당신이 문턱을 넘자 독초를 등 뒤로 감췄다. 보랏빛 입술이 굳었다.`,l:S=>`“${myPost(S)}께서 이 냄새나는 곳까지. …오늘 차에는 독이 없습니다. 맹세하지요. ${S.flags.cmMe?'천마의 찻잔에 독을 타는 놈은 천마보다 강해야 하니까.':'교의 윗분 찻잔에 장난칠 만큼 오래 살고 싶지 않아서.'}”`,
+  o:[['그 독초가 무엇이냐 묻는다',S=>{TK(S,'dokma',8);A(S,{med:2});return '“단장초입니다. 창자를 끊지요. 교의 적에게 쓸 겁니다.” 독마가 독초를 내밀었다. “교주의 명이 있으면.”';}],['독마의 차를 마신다',S=>{TK(S,'dokma',10);return '독마의 손이 처음으로 떨렸다. 찻잔을 비우고 내려놓자 독마가 길게 숨을 내쉬었다. “…독을 탔으면 어쩌시려고.” “그럼 네가 나보다 강하다는 뜻이겠지.” 독마가 웃었다. 오래.';}]]},
+ binghu:{x:S=>`빙궁 한옥전. 전대 궁주가 홀로 차를 마시다 당신을 보고 일어서려 했다. 앉은 탁자에 서리가 내렸다.`,l:S=>`“앉으세요, ${myPost(S)}. 이제 이 궁의 차는 당신 앞에서 식겠네요.”`,
+  o:[['새 차를 올린다',S=>{TK(S,'binghu',8);return '“궁주가 차를 올리다니.” 노궁주가 찻잔을 감쌌다. 처음으로 찻잔이 얼지 않았다.';}],['궁 밖의 차를 사 오겠다고 한다',S=>{TK(S,'binghu',6);return '“궁주가 궁 밖에 나간다고요?” 노궁주가 웃었다. “당신 대에는 이 궁도 조금 따뜻해지겠네요.”';}]]},
+ hwayoung:{x:S=>`만화궁 꽃정자. 전대 궁주가 부채로 입을 가리고 웃다가 부채를 접었다. 처음으로 웃음 없이 당신을 보았다.`,l:S=>`“이제 꽃을 꺾는 사람이 됐네. 궁주님. 이 궁의 꽃들이 당신을 무서워하는지, 좋아하는지 매일 확인해.”`,
+  o:[['어떻게 확인하느냐 묻는다',S=>{TK(S,'hwayoung',6);A(S,{mind:3});return '“아침에 꽃들이 고개를 드는지 봐. 무서우면 숙이고, 좋으면 들어.” 노궁주가 부채로 정원을 가리켰다. 반쯤 들려 있었다.';}],['함께 꽃을 본다',S=>{TK(S,'hwayoung',8);return '노궁주가 오래 말이 없었다. “…독한 꽃 말고, 그냥 꽃도 좀 키워 봐. 궁주님은 그래도 돼.”';}]]},
+ cheongun:{x:S=>`화산 연무장 구석. 매 청운이 다리를 꼬고 앉아 있다가 당신을 보고 벌떡 일어났다. 일어서 놓고 어색한지 머리를 긁었다.`,l:S=>`“아… ${myPost(S)}. 부르기 어색하네. 예전처럼 한판 하자고 하면 혼나려나? 지면 술 사는 거, 아직 유효하지?”`,
+  o:[['한판 붙는다',S=>{const b=battle(S,npcFoe(S,'cheongun'),{spar:1});TK(S,'cheongun',b.win?10:8);return fightText(b,'청운이 바닥에 누워 웃었다. “역시 윗자리에 앉을 만하네. 술은 내가 산다.”','“봐주지 마라니까!” 청운이 손을 내밀었다. “윗사람한테 이겨 보는 것도 나쁘지 않네.”');}],['술은 내가 산다',S=>{TK(S,'cheongun',8);A(S,{gold:-3});return '“윗분이 사 주는 술이라.” 청운이 잔을 채웠다. 그날 밤 당신 흉은 보지 않았다. 전대 어른들 흉만 봤다.';}]]},
+ nokrim:{x:S=>`녹림 총채 대청. 전대 녹림왕이 술독을 끼고 있다가 당신이 들어서자 술독을 내려놓았다. 산채 형제들이 일제히 일어섰다.`,l:S=>`“왔구나, ${myPost(S)}! 내 자리에 앉으니 엉덩이가 배기지? 칠십이 채의 무게다. 오늘은 술로 좀 풀어라.”`,
+  o:[['술독을 함께 비운다',S=>{TK(S,'nokrim',10);return '셋째 독에서 노녹림왕이 먼저 쓰러졌다. “늙었다… 이제 진짜 네 산이다.”';}],['녹림의 일을 묻는다',S=>{TK(S,'nokrim',6);A(S,{contrib:5});return '노인이 산채 지도를 펼쳤다. “굶는 마을은 털지 마라. 그것만 지키면 칠십이 채가 너를 따른다.”';}]]},
+ cheonma:{x:S=>`총단 가장 높은 누각. 폐관에서 나온 혁련 무악이 별을 보고 있다가 당신을 보고 옆자리를 비웠다.`,l:S=>`“천마. 그 자리에서 무엇이 보이느냐. 나는 끝내 대답하지 못했지.”`,
+  o:[['곁에서 함께 별을 본다',S=>{TK(S,'cheonma',8);return '두 천마가 말없이 별을 보았다. 혁련 무악이 말했다. “백 년 뒤에도 별은 이렇겠지. 그때 그 자리에 앉은 자도 이 질문을 받겠고.”';}],['“아직 아무것도 보이지 않습니다”',S=>{TK(S,'cheonma',6);A(S,{mind:3});return '“좋은 대답이다. 보인다고 하는 놈은 거짓말쟁이다.”';}]]},
+ tangcw:{x:S=>`당가 외당. 전대 가주가 찻잔을 들고 웃다가 당신을 보고 찻잔을 내밀었다. 그 웃음이 처음으로 무섭지 않았다.`,l:S=>`“${myPost(S)}. 독을 가장 잘 아는 자가 해독도 가장 잘하지. 이제 당가가 독쟁이가 될지 의가가 될지는 당신 손에 달렸소.”`,
+  o:[['가주의 차를 마신다',S=>{TK(S,'tangcw',8);return '“이제 내 차에 독이 없는 걸 알겠지. 가주가 마시는 차엔 늘 없었소. 사람들이 몰랐을 뿐.”';}],['당가의 길을 묻는다',S=>{TK(S,'tangcw',6);A(S,{mind:3});return '“독을 줄이지 말고 해독약을 늘리시오. 그게 내가 끝내 못 한 일이오.”';}]]},
+ eunsn:{x:S=>`하오문 거점 객잔 구석. 장로 은 삼낭이 해바라기씨를 까다가 당신을 보고 씨를 한 줌 내밀었다. 손이 조금 공손했다.`,l:S=>`“문주가 이런 구석 자리에 오시면 다들 놀라. …어제 남궁세가 셋째 공자 외상 얘기, 문주는 벌써 들으셨겠지? 우리 문의 귀는 이제 문주 귀니까.”`,
+  o:[['씨를 받아 까먹는다',S=>{TK(S,'eunsn',8);return '“문주도 씨 까먹는 손은 밑바닥 시절 그대로네.” 장로가 웃었다. 이가 세 개였다.';}],['오늘 들은 소문을 묻는다',S=>{TK(S,'eunsn',6);A(S,{mind:3});return '장로가 소문 셋을 공짜로 말했다. “문주한테 값을 받으면 문이 망하지.”';}]]},
+ galch:{x:S=>`장강 위 누선. 전대 대채주가 뱃전에서 강물에 술을 붓다가, 당신을 보고 술병을 건넸다.`,l:S=>`“${myPost(S)}. 이제 용왕님께 첫 잔은 자네가 부어야지. 이 물에 빠진 형제들 이름도 자네가 외우고.”`,
+  o:[['술을 붓고 이름을 외운다',S=>{TK(S,'galch',10);A(S,{cult:2});return '마흔두 이름을 불렀다. 한 번 막혔다. 노채주가 대신 불러 주었다. “다음엔 안 막힐 거다.”';}],['노채주의 잔에도 붓는다',S=>{TK(S,'galch',8);return '“허허, 대채주가 따라 주는 술이라.” 노인이 잔을 비웠다. 강바람이 시원했다.';}]]}};
+/* ‘젊은이’라는 부름은 나이와 지위를 본다 */
+for(const id in TALK)(TALK[id]||[]).forEach(sc=>{if(typeof sc.l==='string'&&/젊은이/.test(sc.l)){const o=sc.l;sc.l=S=>o.replace(/젊은이/g,callYou(S));}});
+
+/* 지위를 넘어선 사건은 오지 않는다: 입문·막내·아랫사람의 사건은 그 자리에 있을 때만 */
+const RANK_CAP={nrConvoy:2,bloodLure:3,nrJoin:1,srJoin:1,hmJoin:1,mkGate:1,hkGate:1,smName:1,smShadow:1,sl1:1,wd1:1,hs1:1,em1:1,kl1:1,bg1:1,nk1:1,tg1:1,pg1:1,
+ nrFeast:2,nrGranary:2,nrSis:3,nrKing:3,srKing:3,mkHeukmi:2,mkHeuksi:3,mkHeupseong:3,mkBirth:3,mkPurge:3,mkSamaOne:3,mkHa:3,
+ hkSorcery:3,hkGangsi:3,hkVamp:3,hkOffer:3,hkFeast:3,hkPit:3,hkEung:3,hkGuard:3,hkSecret:3,mgScheme:3};
+for(const id in RANK_CAP){const e=EV.find(x=>x.id===id);if(!e)continue;const oi=e.if,cap=RANK_CAP[id];e.if=S=>(oi?oi(S):true)&&!(S.org&&S.rank>cap)&&!S.flags.cmMe&&!S.flags.hkHeir;}
+{const e=EV.find(x=>x.id==='mgScheme');if(e){const oi=e.if;e.if=S=>oi(S)&&S.org==='demon'&&S.w.cheonma==='alive';}}
+/* 마령단은 장로에게 빚을 지는 영약. 장로 이상에게는 오지 않는다 */
+{const e=EV.find(x=>x.id==='mkElixir');if(e){const op=e.prep;e.prep=S=>{op(S);if(S.rank>=3&&S.tmp.ex[0]==='마령단'){S.tmp.ex=MK_ELIX[0];}};}}
+/* 노인이 ‘젊은이’라 부르는 장면도 나이와 이름을 본다 */
+for(const id of ['hermit']){const e=EV.find(x=>x.id===id);if(e&&typeof e.x==='string'&&/젊은이/.test(e.x)){const o=e.x;e.x=S=>o.replace(/젊은이/g,callYou(S));}}
+
 /* 처음 마주친 인연의 첫 만남 이야기를 순서대로 띄운다 */
 function fmNext(S){const f=S.flags.fmAt||(S.flags.fmAt={});
   if(!S.flags.fmInit){S.flags.fmInit=1;for(const id of romList(S))if(S.met[id])f[id]=-99;}
@@ -13688,7 +13740,7 @@ function saveHall(h){try{localStorage.setItem(HKEY,JSON.stringify(h));}catch(e){
 const NAI_URL='https://image.novelai.net/ai/generate-image';
 const NAI_MODELS=[['nai-diffusion-4-5-full','V4.5 Full'],['nai-diffusion-4-5-curated','V4.5 Curated'],['nai-diffusion-5-full','V5 Full'],['nai-diffusion-5-curated','V5 Curated'],['nai-diffusion-4-full','V4 Full']];
 const NAI_Q={'nai-diffusion-5-full':'very aesthetic, masterpiece, best quality','nai-diffusion-5-curated':'very aesthetic, masterpiece, best quality','nai-diffusion-4-5-full':'very aesthetic, masterpiece, no text','nai-diffusion-4-5-curated':'location, masterpiece, no text','nai-diffusion-4-full':'no text, best quality, very aesthetic, absurdres'};
-const GAME_VER='2026.10.25-56';
+const GAME_VER='2026.10.26-57';
 const NAI_NEG='nsfw, nude, lowres, bad anatomy, bad hands, missing fingers, extra digits, text, watermark, signature, logo, worst quality, low quality, blurry, modern clothes, glasses, eyewear, jpeg artifacts';
 const NKEY='murim-nai';
 function ncfg(){let c={};try{c=JSON.parse(localStorage.getItem(NKEY)||'{}');}catch(e){}return Object.assign({key:'',relay:'',model:'nai-diffusion-4-5-full',style:'wuxia, ancient china, hanfu, detailed illustration, cinematic lighting',autoEv:false,autoPc:false,vn:true,neg:NAI_NEG,tnpc:'',tev:'',tmap:'',q:true},c,{pr:Object.assign({},c.pr)});}
