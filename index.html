@@ -1255,14 +1255,14 @@ E({id:'simma',t:'심마',a:[12,99],w:4,cd:5,if:S=>S.mood<=-60,
   {t:'술로 잊는다',go:S=>{A(S,{mood:20,temper:6,gold:-Math.min(S.gold,40)});hurt(S,10,'폭음');return '취해 있는 동안은 괜찮았다.';}},
   {t:'더 독하게 수련한다',go:S=>{if(chance(.4)){A(S,{exp:tb(S)*1.5,mood:15,cult:5});return '고통 끝에 마음이 비워졌다.';}hurt(S,30,'심마');A(S,{ng:-Math.round(S.ng*.15)});return '심마에 사로잡혀 주화입마에 빠졌다.';}}]});
 E({id:'hermit',t:'바늘 없는 낚싯대',a:[22,80],w:S=>.3+S.t.luck*.06,
- x:S=>`강가에서 낚싯대를 드리운 노인이 당신을 불러 세웠다. '${S.age>=50?'노형':'젊은이'}, 바둑 한 판 두겠나?' 노인의 낚싯줄에는 바늘이 없다.`,
+ x:S=>`강가에서 낚싯대를 드리운 노인이 당신을 불러 세웠다. '${S.age>=50?(S.sex==='f'?'노선배':'노형'):'젊은이'}, 바둑 한 판 두겠나?' 노인의 낚싯줄에는 바늘이 없다.`,
  ch:[{t:'바둑을 둔다',h:'오성이 높으면 노인을 감탄시킨다.',go:S=>{if(chance(.2+S.t.wit*.07)){A(S,{exp:60+tb(S)*2,mu:10,mind:6});S.bt+=.3;if(chance(.4))T(S,'wit',1);deed(S,'강가의 은거 고수에게 가르침을 받았다');return '백 수째, 노인이 바둑알 하나로 당신 혈도를 툭 쳤다. 막혀 있던 무언가가 뚫렸다.';}
       A(S,{exp:20,mind:3});return "졌다. 노인은 '바둑도 무공도 서두르면 진다네' 하고 사라졌다.";}},
   {t:'갈 길이 바쁘다며 사양한다',go:S=>'뒤돌아보니 강가에 아무도 없었다.'}]});
 E({id:'nongeom',t:'논검',a:[20,90],w:1.2,cd:6,if:S=>S.mu>=25&&S.realm>=3,
  prep:S=>{S.tmp.npc=pick(['geomseon','gumwang','buljon','geomhu','muhwang']);S.met[S.tmp.npc]=1;},
  x:S=>`${NPCS[S.tmp.npc].nick} ${NPCS[S.tmp.npc].n}의 다회에 불려 갔다. 오늘의 화두는 '무공은 빨라야 하는가, 무거워야 하는가'. 강호의 눈이 모였다.`,
- ch:[{t:'무학으로 맞선다',h:'무학·오성',go:S=>{const nk=NPCS[S.tmp.npc].nick;const sc=S.mu+S.t.wit*5+R(0,30);if(sc>=90){A(S,{fame:20,mu:8});if(chance(.3))T(S,'wit',1);deed(S,`${jo(nk,'과','와')}의 논검에서 인정받았다`);return `${jo(nk,'이','가')} 찻잔을 내려놓았다. '${S.age>=50?'오늘은 노형에게 배웠소':'젊은이에게 배웠소'}.'`;}A(S,{mu:5,fame:3});return '말이 막혔다. 그래도 배운 것이 많았다.';}},
+ ch:[{t:'무학으로 맞선다',h:'무학·오성',go:S=>{const nk=NPCS[S.tmp.npc].nick;const sc=S.mu+S.t.wit*5+R(0,30);if(sc>=90){A(S,{fame:20,mu:8});if(chance(.3))T(S,'wit',1);deed(S,`${jo(nk,'과','와')}의 논검에서 인정받았다`);return `${jo(nk,'이','가')} 찻잔을 내려놓았다. '${S.age>=50?(S.sex==='f'?'오늘은 노선배께 배웠소':'오늘은 노형에게 배웠소'):'젊은이에게 배웠소'}.'`;}A(S,{mu:5,fame:3});return '말이 막혔다. 그래도 배운 것이 많았다.';}},
   {t:'구력으로 몰아붙인다',h:'구력·학문',go:S=>{const sc=S.tongue+S.lore/2+R(0,30);if(sc>=80){A(S,{fame:15,tongue:4});return '좌중이 웃음을 터뜨렸다. 말로는 아무도 당신을 이기지 못했다.';}A(S,{fame:-2,tongue:2});return '말만 번지르르하다는 소리를 들었다.';}},
   {t:'귀 기울여 경청한다',go:S=>{A(S,{mu:10,cult:3,exp:tb(S)});if(chance(.15))T(S,'wit',1);return '한마디도 하지 않고 듣기만 했다. 밤새 머릿속에서 초식이 움직였다.';}}]});
 E({id:'hwangol',t:'환골탈태',a:[14,99],force:S=>!S.flags.hwangol&&(S.realm>=6||S.ng>=180),
@@ -8745,7 +8745,7 @@ const tview=(S,id,i)=>{const sc=TALK[id]&&TALK[id][i];
   if(!sc||i!==0||!sameOrg(S,id))return sc;const o=SECT_FIRST[id];
   return o?Object.assign({},sc,o):Object.assign({},sc,{x:`${ORGS[S.org].n}의 ${sectRole(S,id)} ${nnm(id,S)}. `+sc.x});};
 const talkScene=(S,id)=>{const L=TALK[id],i=S.flags['tk_'+id]||0,sc=L&&L[i];return sc&&(S.rel[id]||0)>=sc.min&&(!sc.if||sc.if(S))&&!(stance(S,id)==='foe'&&(S.rel[id]||0)<40)?sc:null;};
-const talkCands=S=>Object.keys(TALK).filter(id=>NPCS[id]&&!S.dead_npc[id]&&talkScene(S,id));
+const talkCands=S=>Object.keys(TALK).filter(id=>NPCS[id]&&!S.dead_npc[id]&&!isMine(S,id)&&talkScene(S,id));
 const talkIntro=(S,id)=>{const nm=`${npcNick(id,S)} ${NPCS[id].n}`;return S.job==='inn'?`${jo(nm,'이','가')} 객잔 문을 밀고 들어왔다. `:S.job==='smith'?`${jo(nm,'이','가')} 대장간 앞에 멈춰 섰다. `:S.job==='doctor'?`${jo(nm,'이','가')} 의원 문턱을 넘었다. `:S.job==='merchant'?`${jo(nm,'이','가')} 상점 앞에 말을 매었다. `:S.job==='scholar'?`${jo(nm,'이','가')} ${S.biz.post?'관아':'서당'} 마당에 들어섰다. `:'';};
 E({id:'talk',tag:'talk',t:'만남',title:S=>S.flags.tkId?`${npcNick(S.flags.tkId,S)} ${NPCS[S.flags.tkId].n}`:'만남',a:[13,130],w:S=>talkCands(S).length?2.4:0,cd:2,
  prep:S=>{const c=talkCands(S);if(!c.length)return;const ws=c.map(id=>(NPCS[id].org&&NPCS[id].org===S.org?4:1)*(NPCS[id].org&&ORGS[NPCS[id].org]&&ORGS[NPCS[id].org].reg===S.loc?3:1));let r=Math.random()*ws.reduce((a,b)=>a+b,0),id=c[0];for(let i=0;i<c.length;i++){if((r-=ws[i])<0){id=c[i];break;}}S.flags.tkId=id;S.met[id]=1;},
@@ -9152,8 +9152,8 @@ E({id:'visit',tag:'talk',t:'찾아온 사람',title:S=>S.tmp.v?`찾아온 사람
  ch:[{t:'반갑게 맞는다',go:S=>{const id=S.tmp.v;TK(S,id,5);const t=visitHelp(S,id);npcMem(S,id,'찾아와 도움을 주었다');return t;}},
   {t:'술상을 차린다',h:'은자 10',go:S=>{const id=S.tmp.v;A(S,{gold:-Math.min(S.gold,10),mood:10});TK(S,id,10);const t=visitHelp(S,id);npcMem(S,id,'술상을 앞에 두고 밤새 이야기했다');return '밤이 깊도록 이야기했다. '+t;}}]});
 // 위기에 달려오는 사람
-E({id:'rescue',tag:'talk',t:'달려온 사람',a:[16,130],w:S=>(S.hp<hpMax(S)*.4||S.enemies>=3)&&Object.keys(NPCS).some(id=>S.met[id]&&!S.dead_npc[id]&&(S.rel[id]||0)>=50)?3:0,cd:6,
- prep:S=>{S.tmp.v=pick(Object.keys(NPCS).filter(id=>S.met[id]&&!S.dead_npc[id]&&(S.rel[id]||0)>=50));},
+E({id:'rescue',tag:'talk',t:'달려온 사람',a:[16,130],w:S=>(S.hp<hpMax(S)*.4||S.enemies>=3)&&Object.keys(NPCS).some(id=>S.met[id]&&!S.dead_npc[id]&&S.spouse!==id&&!(S.harem||[]).includes(id)&&(S.rel[id]||0)>=50)?3:0,cd:6,
+ prep:S=>{S.tmp.v=pick(Object.keys(NPCS).filter(id=>S.met[id]&&!S.dead_npc[id]&&S.spouse!==id&&!(S.harem||[]).includes(id)&&(S.rel[id]||0)>=50));},
  x:S=>`${S.enemies>=3?'원수들이 사방에서 당신을 노린다.':'상처가 깊어 일어나지 못한 지 사흘째다.'} 문이 열렸다. ${jo(nnm(S.tmp.v,S),'이','가')} 서 있었다. “소문 듣고 왔다. 왜 말을 안 했어.”`,
  ch:[{t:'그 손을 잡는다',go:S=>{const id=S.tmp.v;A(S,{hp:hpMax(S),mood:15});if(S.enemies>0)A(S,{enemies:-1});TK(S,id,8);npcMem(S,id,'위기에 달려와 주었다');return S.enemies>=2?'그 사람이 당신 집 앞에 사흘 동안 앉아 있었다. 원수 하나가 그 얼굴을 보고 발길을 돌렸다.':'사흘 밤낮 곁을 지켰다. 깨어나니 죽 한 그릇이 식어 있었다. 그래도 맛있었다.';}},
   {t:'괜찮다고 돌려보낸다',go:S=>{A(S,{hp:20});TK(S,S.tmp.v,-2);return '“바보.” 그 사람은 문 앞에 약을 놓고 갔다.';}}]});
@@ -9235,7 +9235,7 @@ const MEET_L={
  '사파>정파':['“흑도 버러지가 감히 관도를 걷느냐.”','“흑도에도 의리는 있다지. 그 의리, 어디 한번 보자.”'],
  '사파>마교':['“흑도라. 개 중에서도 들개로군. 교에 엎드리면 목줄 정도는 채워 주마.”','“의리? 교에서는 그런 걸 약점이라 부른다.”'],
  '마교>사파':['“교의 사람이군. 우리 구역이오. 여기서는 천마도 통행세를 내야 하오.”','“마교 놈들은 웃으면서 등을 찌른다더군. 웃지 마시오. 소름 끼치니까.”']};
-const meetCands=S=>Object.keys(NPCS).filter(id=>!S.dead_npc[id]&&S.spouse!==id&&S.lover!==id&&(S.rel[id]||0)<40&&['foe','rival'].includes(stance(S,id))&&NPCS[id].n&&!S.flags['emW_'+id]&&!S.flags['xf_'+id]&&(S.flags['em_'+id]||0)<2);
+const meetCands=S=>Object.keys(NPCS).filter(id=>!S.dead_npc[id]&&!isMine(S,id)&&(S.rel[id]||0)<40&&['foe','rival'].includes(stance(S,id))&&NPCS[id].n&&!S.flags['emW_'+id]&&!S.flags['xf_'+id]&&(S.flags['em_'+id]||0)<2);
 E({id:'enemyMeet',tag:'talk',t:'깃발이 다른 사람',title:S=>S.tmp.v?nnm(S.tmp.v,S):'깃발이 다른 사람',a:[15,120],w:S=>{const c=meetCands(S);return !c.length?0:c.some(id=>stance(S,id)==='foe')?2.2:1.2;},cd:3,
  prep:S=>{const c=meetCands(S),ws=c.map(id=>(stance(S,id)==='foe'?2:1)*(S.met[id]?1.5:1)*(NPCS[id].org&&ORGS[NPCS[id].org]&&ORGS[NPCS[id].org].reg===S.loc?3:1));let r=Math.random()*ws.reduce((a,b)=>a+b,0);S.tmp.v=c[0];for(let i=0;i<c.length;i++){if((r-=ws[i])<0){S.tmp.v=c[i];break;}}S.met[S.tmp.v]=1;S.flags['em_'+S.tmp.v]=(S.flags['em_'+S.tmp.v]||0)+1;},
  x:S=>{const id=S.tmp.v,nm=nnm(id,S),k=mySide(S)+'>'+npcSide(id,S),war=S.w.demon>=2||S.w.pact==='broken';
@@ -9504,6 +9504,9 @@ function aiSys(){if(AI_SYS)return AI_SYS;const side=o=>o?`${ORGS[o].n}(${ORGS[o]
 - 주인공의 진영·직업·나이·경지·인연에 맞춘다. 정파와 마교는 서로 원수다. 적대 진영 인물은 주인공을 칭찬하거나 같은 편처럼 대하지 않는다. 경계·조롱·적의를 보이고, 호감이 높으면 남의 눈을 피해 만나는 긴장이 있다.
 - 나이에 맞춘다. 열 살 안팎은 아이로, 스물 안팎은 풋내기·후기지수로, 서른~쉰은 한창때의 무인으로, 쉰다섯이 넘으면 노고수·원로로 쓴다. 노년의 주인공에게 사람들은 '노선배'·'어르신'이라 부르며 가르침을 청하거나 옛일을 묻고, 첫사랑·객잔 시비·선배의 훈계 같은 젊은 날의 사건은 짓지 않는다. 겉모습(환골탈태로 젊어졌는지)도 함께 본다.
 - 정파(백도)는 협의와 체면, 아름다움. 그 안에 썩은 자도 있다. 사파(흑도)는 의리와 낭만, 술과 칼. 마교는 계략과 위계, 천마를 받든다.
+- 주인공이 걷는 길에 분위기를 맞춘다. 도덕이 낮거나 살기가 높거나 천살성·혈마·마두·살수의 길을 걷는 주인공을 협객처럼 칭송하지 않는다. 사람들은 두려워하고 피하고 증오하거나 숭배하며, 서술도 그 어둠의 결로 쓴다. 협객으로 사는 주인공에게는 그 반대로 쓴다.
+- 주인공의 성별에 맞게 부르고 묘사한다. 여자 주인공에게 영감·할아버지·형님·수염 같은 말을 쓰지 않고, 남자 주인공에게 할머니·누님 같은 말을 쓰지 않는다.
+- 배우자·연인·첩은 함께 사는 가까운 사람답게 대한다. 처음 보는 사람처럼 차갑거나 깍듯하게 굴지 않는다.
 - 무림인이 아닌 직업(점소이·객잔 주인·대장장이·의원)이면 그 일터에서 벌어지는 일로 짓는다.
 - 등장 인물은 아래 명부의 id만 쓴다. 죽은 인물은 회상으로만 나온다. 명부에 없는 사람은 이름 없는 사람(늙은 길손, 소년 표사 등)으로만 쓴다.
 - 최근 일과 겹치지 않게, 최근 AI 이야기 제목과 다른 이야기를 짓는다.
@@ -9534,6 +9537,7 @@ function aiState(S,wish){const o=S.org&&ORGS[S.org],p=pwOf(S),lv=lover(S);
   `소속: ${o?`${o.n}(${o.side}) ${o.ranks[S.rank]}`:'없음'}${S.job?` · 직업 ${jobTitle(S)}`:''}`,
   `경지 ${realmLabel(S)} · 명성 ${Math.round(S.fame)} · 도덕 ${Math.round(S.moral)}(${moralName(S.moral)}) · 은자 ${Math.round(S.gold)} · 체력 ${Math.round(S.hp)}/${Math.round(hpMax(S))} · 주무기 ${S.mainW}`,
   `별호 ${S.nick?S.nick.n:'없음'} · 칭호 ${S.titles.join(', ')||'없음'} · 배우자 ${S.spouse?(NPCS[S.spouse]?S.spouse:'평범한 사람'):'없음'} · 연인 ${lv||'없음'} · 자식 ${S.kids}`,
+  `[타고난 것·길] ${S.traits.map(k=>TRAITS[k]&&TRAITS[k].n).filter(Boolean).join(', ')||'없음'} · 살기 ${Math.round(S.salgi||0)}${darkOf(S)?` · 강호가 ${DARK_NAME[darkOf(S)]}${bat(DARK_NAME[darkOf(S)])?'으로':'로'} 두려워한다`:''}${S.flags.hyeolsin?' · 혈신':''}`,
   `[천하] ${eraLines(S).join(' ')} 판도: 정파 ${Math.round(p.정파)}% 사파 ${Math.round(p.사파)}% 마교 ${Math.round(p.마교)}%`,
   `[인연]\n${rels.join('\n')||'아직 없음'}`,`[죽은 인물] ${Object.keys(S.dead_npc).filter(id=>NPCS[id]).join(', ')||'없음'}`,
   `[최근 일]\n${S.log.slice(-10).map(l=>`${l.age}세 ${l.t}`).join('\n')||'없음'}`,
@@ -9995,12 +9999,13 @@ const BOOK_SYS=`너는 무협 인생 시뮬레이션 「무림인생」에서 �
 - review: 3~5문장의 평가. 이 사람의 선택들을 돌아보며 빛났던 것과 아쉬운 것을 솔직하게 말한다. '당신'에게 말하듯 쓴다.
 - chapters: 4~6장. h는 '제1장 ○○' 꼴의 제목, t는 2~4문장. 이 사람을 '그' 또는 '그녀'로 부르며 과거형의 문학적인 문장으로 쓴다.
 - 일어난 일은 주어진 기록에서만 가져온다. 기록에 없는 큰 사건을 지어내지 않는다. 장면의 작은 묘사는 더해도 된다.
+- 그 사람이 걸은 길(정·사·마, 살기, 악명)에 맞는 결로 쓴다. 악명 높은 마두를 협객처럼 미화하지 않고, 협객을 마두처럼 쓰지 않는다. 성별에 맞게 쓴다.
 - 무협 문학의 결로, 짧고 감각적으로. 실제 소설이나 게임의 문장을 베끼지 않는다.`;
 function bookState(S){const o=S.org&&ORGS[S.org],e=endingOf(S);
  const big=['qing','lore','med','forge','tongue','savvy','mind','cult'].map(k=>[LBL[k],Math.round(S[k]||0)]).filter(x=>x[1]>=40).map(x=>`${x[0]} ${x[1]}`).join(', ');
  return [`[이름] ${S.name} · ${S.sex==='m'?'남':'여'} · ${ORIGINS.find(x=>x.id===S.origin).n} · ${S.region} 출신`,`[끝] ${S.age}세 · ${S.dead||'천수를 다함'} · 결말: ${e[1]}`,
   `[소속] ${o?`${o.n}(${o.side}) ${o.ranks[S.rank]}`:'없음'}${S.job?` · 직업 ${jobTitle(S)}`:''}`,`[경지] ${realmLabel(S)} · 명성 ${Math.round(S.fame)} · 도덕 ${Math.round(S.moral)}(${moralName(S.moral)}) · 성정 ${temperName(S.temper)}`,
-  `[별호·칭호] ${S.nick?S.nick.n:'없음'} / ${S.titles.join(', ')||'없음'}`,`[두드러진 능력] ${big||'없음'} · 주무기 ${S.mainW}`,
+  `[별호·칭호] ${S.nick?S.nick.n:'없음'} / ${S.titles.join(', ')||'없음'}`,`[타고난 것·길] ${S.traits.map(k=>TRAITS[k]&&TRAITS[k].n).filter(Boolean).join(', ')||'없음'} · 살기 ${Math.round(S.salgi||0)}${darkOf(S)?` · 강호가 ${DARK_NAME[darkOf(S)]}${bat(DARK_NAME[darkOf(S)])?'으로':'로'} 두려워했다`:''}`,`[두드러진 능력] ${big||'없음'} · 주무기 ${S.mainW}`,
   `[무공] ${artsOf(S).sort((a,b)=>b.t-a.t).slice(0,6).map(a=>a.n+(a.made?'(창안)':'')).join(', ')||'없음'}`,
   `[인연] 배우자 ${S.spouse?(NPCS[S.spouse]?nnm(S.spouse,S):'평범한 사람'):'없음'}${S.harem?` · 함께 산 사람 ${S.harem.map(id=>NPCS[id].n).join(', ')}`:''} · 자식 ${S.kids} · 제자 ${S.disciples}`,
   `[가까웠던 사람] ${Object.keys(S.rel).filter(id=>NPCS[id]&&S.met[id]).sort((a,b)=>S.rel[b]-S.rel[a]).slice(0,6).map(id=>`${NPCS[id].n}(${npcStatus(S,id)})`).join(', ')||'없음'}`,
@@ -10437,7 +10442,16 @@ ${ORGS[S.tmp.o1].n} 장로: “…그렇다고 그냥 덮을 수는 없습니다
   {t:'나는 이제 칼을 내려놓은 사람이라 한다',go:S=>{A(S,{cult:3,fame:-5});return '당신이 일어서자 대청이 웅성거렸다. 그해 겨울 두 문파는 기어이 붙었다. 당신은 그 소식을 산중에서 들었다. 내려놓은 칼에도 책임은 남는다는 걸, 그때 알았다.';}}]});
 
 E({id:'eldStory',tag:'side',t:'설서인의 이야기',a:[48,130],w:S=>S.fame>=150?1.6:0,
- x:S=>`장터 찻집에 사람이 가득했다. 설서인이 부채를 탁 접으며 목청을 높였다.
+ x:S=>{const dk=darkOf(S),nm=S.nick?S.nick.n:'그 사람';if(dk){const D=DARK_NAME[dk];return `장터 찻집에 사람이 가득했다. 설서인이 부채를 탁 접으며 목소리를 낮췄다.
+설서인: “자, 오늘은 ${nm}! ${S.name}의 이야기올시다. 아이들은 귀를 막으시오.”
+구석 자리에서 차를 마시던 당신의 손이 멈췄다.
+설서인: “그 ${jI(D)} 지나간 마을에는 우물마다 피가 고였고, 그 ${jI(D)} 웃으면 그날 밤 누군가 죽었다 하오!”
+반은 맞는 말이었다.
+아이: “엄마, 그 사람 지금도 살아 있어요?”
+아낙: “쉿. 이름 부르면 찾아온단다.”
+설서인: “${dk==='blood'?'피를 마셔 늙지 않는다':dk==='demon'?'천마의 그림자를 등에 업고 다닌다':dk==='sal'?'태어나던 밤 하늘에서 붉은 별이 떨어졌다':'그자의 칼에 맞은 사람은 이름조차 남지 않는다'} 하니, 길에서 ${S.sex==='f'?'백발의 여인':'백발의 노인'}을 보거든 눈을 내리깔고 지나가시오!”
+찻집이 조용해졌다. 당신은 찻잔을 내려놓았다.`;}
+ return `장터 찻집에 사람이 가득했다. 설서인이 부채를 탁 접으며 목청을 높였다.
 설서인: “자, 오늘은 ${S.nick?S.nick.n:'그 사람'}! ${S.name}의 이야기올시다!”
 구석 자리에서 차를 마시던 당신의 손이 멈췄다.
 설서인: “그분이 열 살에 호랑이를 맨손으로 때려잡고, 열다섯에 마교 장로 셋을 한 칼에 베었으니!”
@@ -10445,8 +10459,10 @@ E({id:'eldStory',tag:'side',t:'설서인의 이야기',a:[48,130],w:S=>S.fame>=1
 아이: “그분은 키가 아홉 자래요! 눈에서 불이 나온대요!”
 설서인: “그렇지! 그리고 그분이 한 번 화를 내면 장강의 물이 거꾸로 흘렀다 하오!”
 옆자리 노인: “에이, 그건 좀 심하다. 내가 듣기로는 그 사람, 술 한 잔에 얼굴이 빨개진다던데.”
-당신은 찻잔으로 얼굴을 가렸다.`,
- ch:[{t:'일어서서 바로잡는다',go:S=>{A(S,{tongue:2,mood:10});return `당신: “호랑이는 아니었소. 들개였지. 그리고 졌소.”\n찻집이 조용해졌다. 설서인이 당신을 위아래로 훑었다.\n설서인: “영감님이 뭘 안다고.”\n당신: “좀 아오.”\n아무도 믿지 않았다. 다음 날부터 설서인의 이야기에는 ‘들개에게 진 날’이 한 대목 늘었다. 그 대목에서 사람들이 제일 크게 웃었다.`;}},
+당신은 찻잔으로 얼굴을 가렸다.`;},
+ ch:S=>darkOf(S)?[{t:'일어서서 이름을 밝힌다',h:'명성·살기',go:S=>{A(S,{fame:8,salgi:3,mood:5});return `당신: “내가 ${S.name}이오.”\n찻잔 깨지는 소리가 여기저기서 났다. 설서인이 부채를 떨어뜨렸다. 사람들이 문으로 몰렸다. 당신은 혼자 남은 찻집에서 식은 차를 마저 마셨다. 그날부터 이야기에 한 대목이 늘었다. ‘그자가 찻집에 나타난 날.’`;}},
+  {t:'끝까지 듣는다',h:'수양',go:S=>{A(S,{cult:3,mood:-5});return '이야기 속의 당신은 한 번도 망설이지 않았고, 한 번도 울지 않았다. 찻값을 내고 나오며 생각했다. 진짜 당신은 그보다 조금 더 많이 망설였다. 아무도 그건 궁금해하지 않았다.';}},
+  {t:'설서인에게 은자를 던져 준다',h:'은자 10',go:S=>{A(S,{gold:-Math.min(S.gold,10)});return '은자가 탁자에 떨어지는 소리에 설서인이 고개를 들었다. 당신 얼굴을 보았다. 설서인의 얼굴에서 핏기가 가셨다. 그날 이야기는 거기서 끝났다. 이튿날부터 설서인은 다른 사람의 이야기를 했다.';}}]:[{t:'일어서서 바로잡는다',go:S=>{A(S,{tongue:2,mood:10});return `당신: “호랑이는 아니었소. 들개였지. 그리고 졌소.”\n찻집이 조용해졌다. 설서인이 당신을 위아래로 훑었다.\n설서인: “${S.sex==='f'?'할멈이':'영감님이'} 뭘 안다고.”\n당신: “좀 아오.”\n아무도 믿지 않았다. 다음 날부터 설서인의 이야기에는 ‘들개에게 진 날’이 한 대목 늘었다. 그 대목에서 사람들이 제일 크게 웃었다.`;}},
   {t:'끝까지 웃으며 듣는다',go:S=>{A(S,{mood:15,cult:2});return '이야기 속의 당신은 한 번도 지지 않았고, 한 번도 울지 않았다. 찻값을 내고 나오며 생각했다. 저 사람은 참 외로웠겠다고. 진짜 당신은 그보다 훨씬 많이 졌고, 그래서 훨씬 많은 사람을 만났다.';}},
   {t:'엽전 한 꾸러미를 던져 준다',h:'은자 10',go:S=>{A(S,{gold:-Math.min(S.gold,10),fame:3});return '설서인이 꾸러미를 받아 들고 허리를 숙였다. 당신이 누군지는 끝내 몰랐다. 그날 이야기는 평소보다 한 시진 길어졌다.';}}]});
 
@@ -10559,9 +10575,9 @@ ${w}: “그리고요?”
 
 E({id:'eldYoungFace',tag:'side',t:'몰라보는 사람',a:[50,150],w:S=>S.flags.hwangolAt!=null&&S.age-lookAge(S)>=20&&!S.flags.eldYoungFace?3:0,
  x:S=>`객잔에서 시비가 붙었다. 상대는 마흔쯤 된 무사였다. 당신을 스물 남짓으로 본 모양이다.
-무사: “어린놈이 어른 앞에서 술잔을 높이 드는구나. 어느 문파 애송이냐?”
+무사: “${S.sex==='f'?'어린것이':'어린놈이'} 어른 앞에서 술잔을 높이 드는구나. 어느 문파 애송이냐?”
 당신: “문파는 모르겠고, 나이는 자네 아버지뻘일세.”
-무사: “뭐? 이놈이 지금….”
+무사: “뭐? ${S.sex==='f'?'이것이':'이놈이'} 지금….”
 옆자리 노인이 술잔을 떨어뜨렸다. 당신을 알아본 얼굴이었다.
 노인: “이, 이보게. 그분은….”
 무사: “영감님은 빠지시오. 요즘 애송이들은 버릇이 없어서….”
@@ -13631,7 +13647,7 @@ ${NN('seohyeon')}: “거짓말이에요. 아무렇지 않지 않아요. 그래�
    나이가 들거나 이름이 높아지면 ‘젊은이’라 부르지 않는다. */
 const myPost=S=>S.org?ORGS[S.org].ranks[S.rank]:'';
 const outranks=(S,id)=>sameOrg(S,id)&&!S.job&&(S.rank>=4||(S.rank>=3&&LEADER[S.org]!==id));
-const callYou=S=>S.org&&S.rank>=4?`${myPost(S)}`:S.fame>=250&&S.nick?S.nick.n:lookAge(S)>=45?'노형':'젊은이';
+const callYou=S=>S.org&&S.rank>=4?`${myPost(S)}`:S.fame>=250&&S.nick?S.nick.n:lookAge(S)>=45?(S.sex==='f'?'노선배':'노형'):'젊은이';
 const SECT_UP={
  geolwang:{x:S=>`분타 뒷마당. 전대 방주가 술 호리병을 끼고 졸다가 당신 발소리에 한쪽 눈을 떴다. 푸른 대나무 막대기는 이제 그의 옆이 아니라 당신 손에 있다.`,l:S=>`“${myPost(S)} 납시었네. 국수는 이제 자네가 사야지. 방주가 얻어먹으면 개방 꼴이 뭐가 되나.”`,
   o:[['국수와 술을 산다',S=>{TK(S,'geolwang',10);A(S,{gold:-5});return '“방주가 사 주는 국수는 또 다르군.” 노인이 세 그릇을 비우고 트림을 했다. “내 자리 앉아 보니 어떤가. 배고프지?”';}],['방주의 일을 묻는다',S=>{TK(S,'geolwang',6);A(S,{cult:3});return '“방주의 일? 밥을 나누는 거지. 자네가 배부를 때 제일 먼저 떠올리는 얼굴. 그게 방주가 챙길 얼굴이야.”';}]]},
@@ -13937,6 +13953,127 @@ const beatKey=(S,b)=>b.s==='@'?(mobOf(S,b.n)?'mob:'+mobOf(S,b.n):null):b.s;
 
 {const e=EV.find(x=>x.id==='wedding');if(e){const ox=e.x;e._src=Object.values(WED_SCENE).map(String).join(' ')+String(ox);e.x=S=>WED_SCENE[S.spouse]?WED_SCENE[S.spouse](S)+'\n\n어떤 혼례를 올릴까?':ox(S);}}
 
+/* ══ 가족·인연·노년의 나날 ══════════════════════════
+   혼인한 뒤에는 ‘하루를 보낸다’로 반려와의 일상을, 인연의 다음 장이 열려 있으면 그 사람을 만나러 갈 수 있다.
+   쉰을 넘기면 옛 벗을 찾아가고, 제자를 들여 하산시키고, 회고록을 쓰고, 마지막 유람을 떠난다. */
+const isMine=(S,id)=>!!id&&(S.spouse===id||S.lover===id||(S.harem||[]).includes(id));
+const spName=S=>NPCS[S.spouse]?NPCS[S.spouse].n:(S.sex==='m'?'아내':'남편');
+const spSex=S=>NPCS[S.spouse]?NPCS[S.spouse].sex:(S.sex==='m'?'f':'m');
+/* 주인공이 걷는 어둠: 혈교·혈신, 마교, 살수·천살성, 악명 */
+const darkOf=S=>S.flags.hyeolsin||inHk(S)?'blood':inMk(S)?'demon':S.flags.salsin||inSal(S)||(has(S,'slaughter')&&!S.flags.salSealed&&!S.flags.salTamed&&(S.salgi||0)>=50)?'sal':S.moral<=-40?'evil':null;
+const DARK_NAME={blood:'혈마',demon:'마두',sal:'살성',evil:'악인'};
+const jI=n=>jo(n,'이','가'),jU=n=>jo(n,'은','는'),jW=n=>jo(n,'과','와'),jL=n=>jo(n,'을','를');
+const grandName=S=>S.sex==='m'?'할아버지':'할머니';
+
+/* 반려와의 하루. 젊은 날·한창때·늙어서, 자식이 있고 없고에 따라 */
+const FAM_DAY=[
+ {a:[0,40],x:(S,n)=>`${jI(n)} 새벽에 먼저 일어나 마당을 쓸었다. 수련을 마치고 돌아오니 상 위에 국 두 그릇이 김을 올리고 있었다.\n${n}: “식기 전에.”\n둘이 마주 앉아 말없이 국을 비웠다. 그날 들은 말은 그게 전부였는데, 이상하게 하루가 꽉 찼다.`},
+ {a:[0,50],x:(S,n)=>spSex(S)==='f'?`장날, ${jW(n)} 장터를 걸었다. ${jU(n)} 노리개 하나를 오래 들여다보다 내려놓았다. 당신은 모른 척 지나갔다가, 돌아가는 길에 혼자 그 가게에 들렀다.\n그날 밤 ${n}의 허리춤에서 노리개가 달랑거렸다. ${jU(n)} 아무 말도 하지 않았다. 대신 저녁상에 당신이 좋아하는 반찬이 하나 더 올라왔다.`
+   :`장날, ${jW(n)} 장터를 걸었다. ${jU(n)} 술도가 앞에서 걸음을 늦췄다가 짐짓 모른 척 지나갔다. 당신은 돌아가는 길에 혼자 그 술도가에 들렀다.\n그날 밤 툇마루에 술병 하나를 내려놓자 ${jI(n)} 웃음을 참느라 입술을 깨물었다.\n${n}: “…들켰나.”`},
+ {a:[0,60],x:(S,n)=>`소금을 얼마나 넣느냐로 다퉜다. ${jI(n)} 문을 쾅 닫고 들어갔다.\n밤이 깊도록 문 앞에 앉아 있었더니 문이 빼꼼 열렸다.\n${n}: “…추워. 들어와.”\n다음 날 국은 짰다. 둘 다 아무 말 없이 다 먹었다.`},
+ {a:[0,60],x:(S,n)=>`수련하다 팔을 베었다. ${jI(n)} 말없이 약을 발라 주며 혀를 찼다.\n${n}: “${S.fame>=150?'천하가 다 아는 고수':'강호에서 이름 좀 날려 보겠다는 사람'}이 자기 팔 하나 못 지켜?”\n붕대를 감는 손이 말보다 훨씬 조심스러웠다.`},
+ {a:[0,55],x:(S,n)=>`비가 사흘째 내렸다. 강호도 쉬는 날이다. ${jW(n)} 처마 밑에 앉아 빗소리를 들었다.\n${n}: “당신 칼 소리보다 이게 좋아.”\n당신: “칼 소리가 없으면 이 집 쌀은 누가 사고.”\n${n}: “그러니까 비 오는 날만 좋다는 거야.”\n${jI(n)} 당신 어깨에 머리를 기댔다. 비는 그날 밤까지 그치지 않았다.`},
+ {a:[25,80],if:S=>S.kids>0,x:(S,n)=>`아이가 처음으로 목검을 들었다. ${jI(n)} 마루에 앉아 지켜보다가 당신을 흘겼다.\n${n}: “당신 닮아서 고집이 세.”\n아이가 넘어졌다가 다시 일어섰다. 또 넘어졌다가 또 일어섰다. 둘이 동시에 웃음을 참았다.`},
+ {a:[25,80],if:S=>S.kids>0,x:(S,n)=>`아이가 열이 올라 밤새 끙끙 앓았다. ${jW(n)} 번갈아 이마의 수건을 갈았다. 새벽녘, 아이의 숨이 고르게 돌아왔다.\n${n}: “당신, 아까 손 떨더라. 마두 열 명 앞에서도 안 떨던 손이.”\n당신은 대답하지 않았다. 손은 아직도 조금 떨렸다.`},
+ {a:[30,80],if:S=>!S.kids,x:(S,n)=>`아이 없는 집은 조용했다. 저녁이면 ${jW(n)} 툇마루에 나란히 앉아 별을 셌다.\n${n}: “우리 둘이면 됐지.”\n그 말이 위로인지 진심인지 묻지 않았다. 둘 다였을 것이다.`},
+ {a:[30,70],x:(S,n)=>`강호에 큰일이 났다는 소식에 칼을 챙기자 ${jI(n)} 문간을 막아섰다. 한참 서로를 보았다.\n${jU(n)} 결국 길을 비켜 주며 당신 옷깃을 여며 주었다.\n${n}: “저녁은 차려 둘게. 식으면 안 데워 줄 거야.”\n그날 당신은 해 지기 전에 돌아왔다. 국은 아직 따뜻했다.`},
+ {a:[38,75],x:(S,n)=>`${n}의 머리에서 흰 머리카락 하나를 찾아냈다. 뽑아 주겠다고 하자 ${jI(n)} 손을 쳐냈다.\n${n}: “두고 봐. 당신 것도 곧 나와.”\n한 달 뒤 정말로 나왔다. ${jU(n)} 그걸 뽑지 않고 한참 들여다보며 웃었다.`},
+ {a:[50,200],x:(S,n)=>`${jW(n)} 마당 평상에 앉아 볕을 쬐었다. 젊어서는 하루가 짧았는데 이제는 길다. 길어서 좋았다.\n${n}: “우리 처음 만난 날 기억나?”\n당신은 기억했다. ${jU(n)} 조금 틀리게 기억하고 있었다. 고쳐 주지 않았다.`},
+ {a:[50,200],if:S=>S.kids>0,x:(S,n)=>`손주들이 몰려와 ${S.sex==='m'?'당신 수염을 잡아당겼다':'당신 비녀를 뽑아 들고 달아났다'}. ${jI(n)} 웃으며 말렸지만 말리는 시늉뿐이었다.\n${n}: “${grandName(S)} 힘드시다.”\n아이들이 더 매달렸다. 당신은 하나도 힘들지 않았다.`},
+ {a:[55,200],x:(S,n)=>`${jI(n)} 밤마다 기침을 했다. 당신은 손바닥을 ${n}의 등에 대고 내공으로 데워 주었다.\n${n}: “그 귀한 내공을 이런 데 쓰네.”\n당신: “이런 데 쓰려고 쌓았지.”\n기침이 잦아들었다. ${jI(n)} 당신 손을 끌어다 자기 배 위에 얹고 잠들었다.`},
+ {a:[60,200],x:(S,n)=>`${jW(n)} 젊은 날 다니던 길을 다시 걸었다. 반나절이면 넘던 고개를 이틀에 걸쳐 넘었다.\n고개 마루에서 ${jI(n)} 숨을 고르며 말했다.\n${n}: “그때는 이 길이 이렇게 예쁜 줄 몰랐어. 당신 뒤통수만 보고 걸었거든.”`}];
+const FAM_HAREM=(S,L)=>{const a=NPCS[L[0]].n,b=NPCS[L[1]].n;return pick([
+ `아침부터 집안이 시끄러웠다. ${jW(a)} ${jI(b)} 부엌을 두고 다퉜다. 누구 국을 먼저 올리느냐로. 당신이 두 그릇을 한꺼번에 비우자 둘이 동시에 당신을 노려보았다. 그리고 동시에 웃음을 터뜨렸다.`,
+ `${jW(a)} ${jI(b)} 마당에서 비무를 했다. 이유는 끝내 말해 주지 않았다. 해 질 녘 둘은 나란히 툇마루에 앉아 서로의 멍에 약을 발라 주고 있었다. 당신이 다가가자 둘이 입을 모았다. “당신은 모르셔도 돼요.”`,
+ `${jI(a)} 수놓은 손수건을 내밀었고, ${jI(b)} 그걸 보더니 말없이 방으로 들어가 밤새 무언가를 만들었다. 다음 날 아침 당신 앞에 손수건이 두 장 놓여 있었다. 어느 쪽을 먼저 쓸지 고르는 데 반나절이 걸렸다.`]);};
+function famDay(S){const sid=S.spouse,n=spName(S),hm=(S.harem||[]).filter(id=>NPCS[id]&&!S.dead_npc[id]&&id!==sid);
+  A(S,{mood:15,hp:8,moral:1,cult:1});if(NPCS[sid])TK(S,sid,3);hm.forEach(id=>TK(S,id,2));
+  if(hm.length&&NPCS[sid]&&chance(.35))return FAM_HAREM(S,[sid,hm[0]]);
+  const seen=S.flags.famSeen||(S.flags.famSeen=[]);let L=FAM_DAY.map((f,i)=>i).filter(i=>{const f=FAM_DAY[i];return S.age>=f.a[0]&&S.age<=f.a[1]&&(!f.if||f.if(S));});
+  let fresh=L.filter(i=>!seen.includes(i));if(!fresh.length){S.flags.famSeen=[];fresh=L;}const i=pick(fresh);(S.flags.famSeen||(S.flags.famSeen=[])).push(i);
+  return FAM_DAY[i].x(S,n);}
+const famChoice=S=>S.spouse&&!S.dead_npc[S.spouse]?[{t:`${jW(spName(S))} 하루를 보낸다`,h:`심상·체력${NPCS[S.spouse]?' · 호감':''}${(S.harem||[]).length?' · 집안사람들':''}`,go:S=>famDay(S)}]:[];
+
+/* 인연의 다음 장이 열려 있으면: 그 사람을 만나러 가는 선택지가 생기고, 해마다 그 장이 먼저 찾아올 기회도 커진다 */
+const lvWho=id=>(/^lv_(\w+?)_\d$/.exec(id)||[])[1];
+function lvReady(S){if(S.age<15)return null;const L=EV.filter(e=>/^lv_\w+?_\d$/.test(e.id)&&!S.seen[e.id]&&NPCS[lvWho(e.id)]&&eligible(S,e));
+  if(!L.length)return null;return L.sort((a,b)=>((S.rel[lvWho(b.id)]||0)+(S.spouse===lvWho(b.id)?50:0))-((S.rel[lvWho(a.id)]||0)+(S.spouse===lvWho(a.id)?50:0)))[0].id;}
+const lvChoice=S=>{const r=lvReady(S);if(!r)return [];const id=lvWho(r),i=+r.slice(-1),nm=NPCS[id].n;
+  return [{t:S.spouse===id?`${jW(nm)} 둘만의 시간을 보낸다`:`${npcNick(id,S)} ${jL(nm)} 만나러 간다`,h:`${nm}의 이야기 ${i+1}/3`,go:S=>{S.chain=r;return pick([`${nm}의 얼굴이 자꾸 떠올랐다.`,`발길이 저절로 ${nm} 쪽으로 향했다.`,`오늘은 ${jL(nm)} 보러 가야겠다고 생각했다.`]);}}];};
+
+/* 옛 벗을 찾아간다 */
+const OLD_FRIEND=[
+ (S,n)=>`${jL(n)} 찾아갔다. 둘 다 머리가 하얗게 셌다. 젊어서 겨루던 이야기를 하다가, 그때 누가 이겼는지를 두고 또 다퉜다. 다툼은 술 세 병으로 끝났다. 승패는 끝내 가리지 않았다.`,
+ (S,n)=>`${jI(n)} 사는 곳까지 사흘을 걸었다. 문을 열어 준 ${jI(n)} 한참 당신을 보다가 웃었다.\n${n}: “살아 있었구나.”\n당신: “자네도.”\n그 말이면 충분했다. 그날 밤은 옛날이야기만으로 새웠다.`,
+ (S,n)=>`${jW(n)} 강가에 나란히 앉아 낚싯대를 드리웠다. 고기는 한 마리도 안 잡혔다. 아무도 서운해하지 않았다.\n${n}: “우리가 칼 대신 낚싯대를 쥘 줄 누가 알았겠나.”\n당신: “칼보다 무겁군.”`,
+ (S,n)=>`${jI(n)} 앓아누웠다는 소식에 찾아갔다. 손을 잡자 ${jI(n)} 투덜댔다.\n${n}: “죽으러 온 거 아니니 그런 얼굴 하지 마라.”\n당신은 사흘 동안 곁에서 약을 달였다. 이듬해 봄, ${jU(n)} 털고 일어나 당신에게 술을 샀다.`,
+ (S,n)=>`${jW(n)} 바둑을 두었다. 젊어서는 한 판에 반 시진이던 것이 이제는 하루가 걸린다. 한 수 둘 때마다 옛 이름 하나씩이 나왔다. 죽은 이름이 산 이름보다 많았다.\n${n}: “우리라도 오래 살자.”\n당신: “그러세.”`];
+const oldFriendChoice=S=>Object.keys(NPCS).filter(id=>S.met[id]&&!S.dead_npc[id]&&!isMine(S,id)&&(S.rel[id]||0)>=40&&S.flags['ofY_'+id]!==S.age).sort((a,b)=>(S.rel[b]||0)-(S.rel[a]||0)).slice(0,2)
+  .map(id=>({t:`옛 벗 ${npcNick(id,S)} ${jL(NPCS[id].n)} 찾아간다`,h:`호감 ${Math.round(S.rel[id]||0)} · 심상·수양`,go:S=>{S.flags['ofY_'+id]=S.age;TK(S,id,6);A(S,{mood:12,cult:2});npcMem(S,id,'늘그막에 찾아와 함께 시간을 보냈다');return pick(OLD_FRIEND)(S,NPCS[id].n);}}));
+
+/* 회고록: 지나온 자취를 하나씩 적는다 */
+function memoir(S){const n=(S.flags.memo||0)+1;S.flags.memo=n;A(S,{lore:3,cult:3,mood:6});const D=S.deeds||[];const d=D.length?D[Math.min(D.length-1,Math.floor(Math.random()*D.length))]:null;
+  if(n===1)return `붓과 종이를 꺼냈다. 첫 줄을 쓰는 데 사흘이 걸렸다. ‘나, ${S.name}${S.nick?`, 강호가 ${S.nick.n}${bat(S.nick.n)?'이라':'라'} 부른 사람`:''}은 ${homeOf(S)}에서 났다.’`;
+  if(d)return `회고록 ${n}권째. ${d.age}세의 일을 적었다. ‘${d.t}.’ 붓을 놓고 한참 창밖을 보았다. 적고 보니 그날의 일은 생각보다 짧았다. 그날의 마음은 생각보다 길었다.${n>=5?'\n찾아온 젊은이 하나가 원고를 베껴 가도 되느냐고 물었다.':''}`;
+  return `회고록 ${n}권째. 적을 것이 없는 해도 적었다. 아무 일 없던 해가 생각보다 많았다. 그 해들이 제일 그리웠다.`;}
+
+/* 마지막 유람 */
+function oldTrip(S){A(S,{mood:8,exp:tb(S)*.3});const dk=darkOf(S),r=Math.random();
+  if(r<.2){A(S,{cult:4});return `젊은 날 목숨을 걸었던 싸움터에 다시 섰다. 풀이 무릎까지 자라 있었다. 피 냄새는 없었다. 당신만 그날을 기억했다.`;}
+  if(r<.4){A(S,{fame:3});if(dk)return `지나는 마을마다 사람들이 문을 걸었다. 아이를 안으로 들였다. ${DARK_NAME[dk]}의 얼굴은 늙어도 잊히지 않는 모양이었다. 한 노파만이 문틈으로 당신을 오래 보았다. 당신이 죽인 누군가의 어미였을지도 모른다.`;
+    return `객잔에서 젊은 무사 하나가 당신을 알아보았다. 무릎을 꿇고 한 수를 청했다. 당신은 젓가락 하나로 그 손목을 세 번 짚어 주었다. 무사는 그 세 번을 평생 붙들고 살 것이다.`;}
+  if(r<.55){A(S,{mood:6});return S.origin==='orphan'?`저잣거리 다리 밑에 들렀다. 움막 자리에 국숫집이 들어서 있었다. 국수 한 그릇을 시켜 놓고 한참 다리 기둥을 보았다. 거기 새겨 둔 금은 아직 남아 있었다.`
+    :`${homeOf(S)}에 들렀다. 아는 얼굴이 하나도 없었다. 개울만 그대로였다. 신을 벗어 발을 담갔다. 물이 차가웠다. 여섯 살 때도 그랬다.`;}
+  if(r<.68){hurt(S,10,'먼 길');return '먼 길이 무릎에 왔다. 객잔 방에서 보름을 누워 있었다. 늙는다는 건 길이 길어지는 일이었다.';}
+  if(r<.8){A(S,{ng:3,cult:2});return '이름 없는 산꼭대기 암자에서 늙은 승려와 하룻밤 차를 마셨다. 승려는 당신이 누군지 묻지 않았다. 그 덕에 당신도 오랜만에 아무도 아니었다.';}
+  return dk?`${dk==='blood'?'붉은 달이':'검은 구름이'} 뜬 밤, 옛 교도 몇이 당신을 알아보고 길가에 엎드렸다. 당신은 그들을 지나쳤다. 등 뒤에서 그들이 오래도록 머리를 들지 않았다.`:'강남의 물빛과 새북의 모래바람을 다시 보았다. 젊어서 본 것과 같았다. 보는 눈만 달라져 있었다.';}
+
+/* ── 제자를 들인다: 들이고, 가르치고, 첫 비무, 갈림길, 하산 ── */
+const dsc=S=>S.flags.dsc||null;
+const dscN=S=>dsc(S)?dsc(S).n:'제자';
+const DSC_K={bone:'근골',wit:'오성',heart:'마음'};
+const dscChoice=S=>{if(S.age<45||S.job)return [];const d=dsc(S);
+  if(!d&&!S.flags.dscDone)return [{t:'제자 하나를 들인다',h:'몇 해에 걸쳐 키워 하산시킨다',go:S=>{S.chain='dscTake';return '평생 배운 것을 누군가에게 넘겨줄 때가 되었다고 생각했다.';}}];
+  if(d&&!d.done)return [{t:`제자 ${jL(d.n)} 가르친다`,h:`가르침 ${d.lv}/9 · 수양·명성`,go:S=>dscTeach(S)}];return [];};
+function dscTeach(S){const d=dsc(S);d.lv++;A(S,{cult:2,fame:1,mood:4,exp:tb(S)*.3});const n=d.n;
+  if(d.lv===3)S.chain='dscDuel';else if(d.lv===6)S.chain='dscCross';else if(d.lv>=9)S.chain='dscLeave';
+  return pick([`${jL(n)} 새벽마다 깨웠다. 처음 한 달은 울었고, 둘째 달에는 투덜댔고, 셋째 달에는 먼저 일어나 있었다.`,`${n}의 초식에서 버릇 하나를 찾아냈다. 당신이 젊었을 때와 똑같은 버릇이었다. 고쳐 주려다 웃음이 났다.`,`${jI(n)} 물었다. “사부는 왜 칼을 잡았어요?” 대답하는 데 하룻밤이 걸렸다. 그래도 다 대답하지 못했다.`,`${jI(n)} 처음으로 당신 소매를 스쳤다. 당신은 모른 척했다. 그날 저녁 ${n}의 밥그릇에 고기를 한 점 더 얹었다.`,`${n}에게 ${S.mainW}의 첫 초식을 백 번 시켰다. 백 번째에서야 ${jI(n)} 물었다. “왜 같은 걸 백 번 해요?” 당신은 대답 대신 백한 번째를 시켰다.`]);}
+E({id:'dscTake',tag:'side',t:'제자를 들이다',a:[45,200],
+ prep:S=>{S.tmp.d=['m','f','m'].map((sx,i)=>({n:pick(CF_NAMES[i===1?'f':pick(['m','f'])]),k:['bone','wit','heart'][i]}));},
+ x:S=>{const [a,b,c]=S.tmp.d,dk=darkOf(S);return `${dk?`${DARK_NAME[dk]}의 문하에 들겠다는 아이가 있을 줄은 몰랐다. 그런데 셋이나 왔다.`:'제자를 받는다는 소문이 돌자 아이 셋이 찾아왔다.'} 마당에 나란히 무릎을 꿇었다.
+첫째 아이 ${a.n}: 어깨가 넓고 손이 컸다. 지게를 지고 왔다고 했다.
+둘째 아이 ${b.n}: 눈이 빨랐다. 들어오자마자 마당의 목인과 병기 걸이를 다 훑어보았다.
+셋째 아이 ${c.n}: 가장 뒤에서 떨고 있었다. 그런데 셋 중 유일하게 당신 눈을 피하지 않았다.
+${a.n}: “힘이라면 자신 있습니다!”
+${b.n}: “한 번 보면 다 외워요.”
+${c.n}: “…….”`;},
+ ch:S=>S.tmp.d.map((d,i)=>({t:`${['힘센','눈 빠른','떨던'][i]} 아이 ${jL(d.n)} 받는다`,h:DSC_K[d.k],go:S=>{S.flags.dsc={n:d.n,k:d.k,lv:0,at:S.age};A(S,{mood:8});deed(S,`${jL(d.n)} 제자로 들였다`);
+   return [`${d.n}의 손을 잡아 일으켰다. 손바닥이 굳은살투성이였다. “내일부터 지게 대신 칼을 진다.” ${jI(d.n)} 씩 웃었다.`,`“다 외운다고?” ${d.n}에게 초식 하나를 보여 주었다. ${jI(d.n)} 그대로 따라 했다. 틀린 데가 세 군데 있었다. 하나도 안 틀린 것보다 그게 마음에 들었다.`,`다른 둘을 돌려보내고 ${d.n} 앞에 쪼그려 앉았다. “왜 떨었느냐.” “무서워서요.” “그런데 왜 눈을 안 피했느냐.” “…무서워서요.” 그 대답이 마음에 들었다.`][i];}}))});
+E({id:'dscDuel',tag:'side',t:'제자의 첫 비무',a:[45,200],
+ x:S=>`${jI(dscN(S))} 고을 비무 대회에 나가겠다고 했다. 상대는 이름난 문파의 제자였다. 대회 날 아침 ${jI(dscN(S))} 당신 앞에 와서 섰다. 손이 떨리고 있었다.\n${dscN(S)}: “사부, 한 말씀만 해 주세요.”`,
+ ch:[{t:'아무 말 없이 등을 두드린다',h:'제자의 마음',go:S=>{const d=dsc(S),w=chance(d.k==='heart'?.65:.5);A(S,{fame:w?5:1});d.duel=w?1:0;return w?`${jI(d.n)} 이겼다. 대회장을 나서며 당신을 찾았다. 당신은 이미 집에 와 있었다. 저녁상에 고기를 올려놓고.`:`${jI(d.n)} 졌다. 돌아와서 울지 않았다. 대신 그날 밤 마당에서 혼자 초식을 백 번 했다. 당신은 창 너머로 그 백 번을 다 보았다.`;}},
+  {t:'상대의 약점을 귀띔한다',h:'제자의 오성',go:S=>{const d=dsc(S),w=chance(d.k==='wit'?.75:.6);A(S,{fame:w?6:1,moral:-1});d.duel=w?1:0;return w?`귀띔한 그대로였다. ${jI(d.n)} 세 수 만에 이겼다. 그런데 돌아와서 말했다. “다음엔 말씀 안 해 주셔도 돼요. 제가 찾을게요.”`:`상대가 그 약점을 알고 있었다. ${jI(d.n)} 졌다. “사부 말만 믿었어요.” 당신은 그날 처음으로 제자에게 사과했다.`;}},
+  {t:'“이기지 말고 버텨라”',h:'제자의 근골',go:S=>{const d=dsc(S),w=chance(d.k==='bone'?.7:.45);A(S,{fame:w?5:2,cult:2});d.duel=w?1:0;return w?`${jI(d.n)} 한 시진을 버텼다. 상대가 먼저 지쳐 칼을 내렸다. 심판이 어리둥절해하며 ${d.n}의 손을 들었다.`:`${jI(d.n)} 버티다 버티다 쓰러졌다. 그래도 상대는 그날 밤 숙소에서 끙끙 앓았다고 했다. 고을 사람들은 진 쪽 이야기를 더 많이 했다.`;}}]});
+E({id:'dscCross',tag:'side',t:'제자의 갈림길',a:[45,200],
+ x:S=>{const d=dsc(S),dk=darkOf(S);return dk?`${jI(d.n)} 짐을 쌌다. 붙잡자 ${jI(d.n)} 처음으로 당신 눈을 똑바로 보았다.\n${d.n}: “사부가 가르쳐 준 칼로 사람을 죽이고 싶지 않아요. 사람들이 사부를 ${DARK_NAME[dk]}${bat(DARK_NAME[dk])?'이라':'라'} 불러요. 저는… 사부처럼 되고 싶지 않아요.”`
+  :`${jI(d.n)} 피 묻은 서찰을 들고 왔다. 고향 마을이 흑도 무리에게 불탔다고 했다.\n${d.n}: “가야겠어요. 사부한테 배운 걸로 그놈들을 다 베겠어요.”\n${d.n}의 눈이 낯설었다. 처음 칼을 잡던 날의 당신 눈과 닮아 있었다.`;},
+ ch:S=>{const dk=darkOf(S);return dk?[
+  {t:'놓아준다',h:'제자는 다른 길로 · 수양',go:S=>{const d=dsc(S);d.path='free';A(S,{cult:6,mood:-6,moral:6});return `당신은 길을 비켜 주었다. ${jI(d.n)} 큰절을 하고 떠났다. 몇 해 뒤 ${jI(d.n)} 백도 어느 문파의 객경이 되었다는 소식이 왔다. 당신 이름은 한 번도 입에 올리지 않았다고 했다. 그게 제자가 할 수 있는 가장 큰 효도였다.`;}},
+  {t:'“칼은 칼일 뿐이다. 쓰는 건 너다”',h:'남는다',go:S=>{const d=dsc(S);d.path='stay';A(S,{mind:3});return `${jI(d.n)} 한참 서 있다가 짐을 풀었다. 그 뒤로 ${jU(d.n)} 같은 초식을 배워도 당신과 다르게 썼다. 베는 대신 쳐서 떨어뜨렸다. 당신은 고치지 않았다.`;}},
+  {t:'억지로 붙잡는다',h:'살기',go:S=>{const d=dsc(S);d.path='bound';A(S,{salgi:5,moral:-5});return `${d.n}의 손목을 잡았다. 뼈가 울리도록. ${jI(d.n)} 울면서 짐을 풀었다. 그날부터 ${jU(d.n)} 당신을 사부라고 부르지 않았다. ‘주인’이라고 불렀다.`;}}]:[
+  {t:'함께 간다',h:'전투 · 명성',go:S=>{const d=dsc(S);d.path='with';const b=battle(S,mkFoe({n:'흑도 무리',realm:clamp(S.realm-1,2,7),q:1,group:1}));A(S,{fame:b.win?10:2,moral:3});return fightText(b,`둘이서 산채를 쓸었다. 마지막 놈의 목에 ${d.n}의 칼이 닿았을 때, ${jI(d.n)} 칼을 거두었다. “…죽이면 저도 저놈들이랑 같아요.” 당신이 가르친 적 없는 것이었다.`,`산채는 생각보다 강했다. ${jI(d.n)} 당신을 업고 산을 내려왔다. 처음으로 제자의 등이 넓다고 느꼈다.`);}},
+  {t:'혼자 보내 시험한다',h:'제자의 몫',go:S=>{const d=dsc(S),w=chance(.45+(d.duel?.15:0));d.path=w?'alone':'hurt';A(S,{cult:3});return w?`보름 뒤 ${jI(d.n)} 돌아왔다. 옷이 찢어져 있었지만 다친 데는 없었다. 원수를 베었느냐고 묻자 고개를 저었다. “관아에 넘겼어요. 제 칼은 더 아껴 두려고요.”`:`한 달 뒤 ${jI(d.n)} 피투성이로 돌아왔다. 원수는 놓쳤다. 대신 원수가 데려가려던 아이 셋을 데려왔다. ${jU(d.n)} 그걸 실패라고 불렀다. 당신은 그렇게 부르지 않았다.`;}},
+  {t:'붙잡고 원한을 내려놓게 한다',h:'수양·도덕',go:S=>{const d=dsc(S);d.path='stay';A(S,{cult:5,moral:4});return `“원수를 갚는 칼은 한 번 쓰면 다시는 칼집에 안 들어간다.” ${jI(d.n)} 밤새 울었다. 이튿날 아침 ${jU(d.n)} 서찰을 태웠다. 그리고 수련장에 나왔다. 평소보다 한 시진 일찍.`;}}];}});
+E({id:'dscLeave',tag:'side',t:'하산',a:[45,200],
+ x:S=>{const d=dsc(S);return `${jI(d.n)} 당신 앞에 큰절을 했다. 처음 왔던 날처럼 마당에 무릎을 꿇고. 다른 것은, 이제 그 어깨가 당신보다 넓다는 것이었다.\n${d.n}: “사부, 내일 하산하겠습니다.”\n당신은 한참 말이 없었다. 몇 해가 한순간 같았다.`;},
+ ch:[{t:'평생의 무공을 다 넘긴다',h:'제자에게 무공을 · 수양',go:S=>{const d=dsc(S);d.done=1;d.doneAt=S.age;S.flags.dscDone=1;S.disciples++;A(S,{cult:8,fame:8,mood:10});deed(S,`제자 ${d.n}에게 평생의 무공을 넘겨 하산시켰다`);return `그날 밤 마지막 초식까지 다 보여 주었다. 아무에게도 보여 준 적 없는 것까지. ${jU(d.n)} 새벽까지 눈 한 번 깜빡이지 않았다. 이튿날 아침, 제자의 뒷모습이 산길 아래로 작아졌다. 당신 안에서 무언가가 빠져나갔다. 이상하게 가벼웠다.`;}},
+  {t:'별호 하나를 지어 준다',h:'명성',go:S=>{const d=dsc(S);d.done=1;d.doneAt=S.age;S.flags.dscDone=1;S.disciples++;const nk=pick(['청풍','철골','소룡','무영','백학','적심'])+pick(['검','도','권','객']);d.nick=nk;A(S,{fame:12,mood:10});deed(S,`제자 ${d.n}에게 별호 ‘${nk}’를 지어 주어 하산시켰다`);return `“${nk}.” 당신이 말했다. ${jI(d.n)} 그 두 글자를 입속으로 몇 번 굴렸다. “강호가 너를 그렇게 부를 때까지 돌아오지 마라.” ${jU(d.n)} 웃으며 고개를 끄덕였다.`;}},
+  {t:'아무 말 없이 등을 떠민다',h:'수양',go:S=>{const d=dsc(S);d.done=1;d.doneAt=S.age;S.flags.dscDone=1;S.disciples++;A(S,{cult:6,mood:6});deed(S,`제자 ${jL(d.n)} 하산시켰다`);return `당신은 일어나 제자의 등을 한 번 밀었다. 그게 다였다. ${jI(d.n)} 문밖에서 한 번 돌아보았다. 당신은 이미 등을 돌리고 있었다. 제자가 보지 못하게.`;}}]});
+E({id:'dscNews',tag:'side',t:'제자의 소식',a:[48,200],w:S=>{const d=dsc(S);return d&&d.done&&S.age-d.doneAt>=3?2.2:0;},cd:6,
+ x:S=>{const d=dsc(S),nm=d.nick?`${d.nick} ${d.n}`:d.n;return pick([`객잔에서 ${nm}의 이야기를 들었다. 장강에서 수적 떼를 혼자 막았다고. 듣던 사람들이 그 사부가 누구냐고 수군댔다. 당신은 잔을 비우고 조용히 일어났다.`,`${nm}에게서 서찰이 왔다. ‘사부, 저도 제자를 하나 들였습니다. 첫날 울더군요. 사부 생각이 났습니다.’`,`${jI(nm)} 큰 비무에서 졌다는 소식이 왔다. 이튿날 또 소식이 왔다. 진 상대의 문파를 찾아가 한 수를 배웠다고. 당신은 그 소식이 더 반가웠다.`]);},
+ ch:[{t:'답장을 쓴다',h:'학문·심상',go:S=>{A(S,{lore:2,mood:10});return '쓸 말이 많았는데 결국 한 줄을 보냈다. ‘밥은 먹고 다녀라.’';}},
+  {t:'몰래 찾아가 본다',h:'심상',go:S=>{A(S,{mood:14,hp:-4});return `먼발치에서 제자를 보았다. 그 옆에 아이 하나가 목검을 들고 서 있었다. 아이의 첫 초식에 당신의 버릇이 그대로 있었다. 당신은 인사도 하지 않고 돌아왔다.`;}}]});
+
 const EVM=Object.fromEntries(EV.map(e=>[e.id,e]));
 try{devAddAll();}catch(e){}
 EVM.ai=AI_EV;
@@ -13953,14 +14090,14 @@ function train(S){SK(S,S.mainW,3+S.t.wit*.3);A(S,{exp:tb(S),mu:1,ng:ngRate(S)*.3
   return pick([`새벽부터 밤까지 ${S.mainW} 초식을 만 번 반복했다.`,'폭포 아래서 수련했다.','손바닥이 갈라지도록 수련했다.']);}
 function heartPush(S){const h=heartArt(S);if(!h)return;if(h.push==='bal')A(S,{yy:-Math.round(S.yy*.15)});else A(S,{yy:Math.round(h.push*2)});}
 EVM.focus={id:'focus',t:'올해의 나날',
- prep:S=>{const P=S.age<13?['별일 없는 한 해가 시작된다.','처마 끝 고드름 녹는 소리에 잠을 깼다.','어머니가 끓여 준 죽이 유난히 달았다.','개울에서 잡은 송사리를 도로 놓아주었다.','마을 어귀 느티나무가 올해도 잎을 틔웠다.']
+ prep:S=>{const P=S.age<13?['별일 없는 한 해가 시작된다.','처마 끝 고드름 녹는 소리에 잠을 깼다.',S.origin==='orphan'?'국밥집 뒷문에서 얻은 누룽지가 유난히 고소했다.':`${jI(parentOf(S))} 끓여 준 죽이 유난히 달았다.`,'개울에서 잡은 송사리를 도로 놓아주었다.','마을 어귀 느티나무가 올해도 잎을 틔웠다.']
    :S.age<30?['큰일 없는 한 해다. 이런 해가 사람을 만든다.','칼끝에 맺힌 이슬 하나가 떨어지는 데 한나절이 걸렸다.','바람이 분다. 어디서 와서 어디로 가는지 아무도 모른다.','젊음은 칼과 같아서, 갈지 않으면 무디어지고 너무 갈면 부러진다.','봄 강물이 불었다. 떠내려가는 꽃잎을 오래 보았다.']
    :S.age<56?['이름이 알려질수록 혼자 마시는 술이 늘었다.','거울 속 얼굴에 처음 보는 주름이 있었다.','강호에서 십 년을 살면 벗보다 무덤이 많아진다.','검은 손에 익었는데 마음은 여전히 낯설다.','가을 기러기가 남으로 간다. 저들에게도 돌아갈 곳이 있다.']
    :['툇마루에 앉아 있는 날이 늘었다.','흰 눈썹 위로 눈이 내린다. 녹지 않는다.','옛 벗들의 이름을 하나씩 불러 본다. 대답하는 이가 줄었다.','젊은 날 그토록 쥐려던 것들이 이제는 손바닥 위의 먼지 같다.','올해도 매화가 피었다. 몇 번을 더 볼 수 있을까.'];
    S.tmp.line=pick(P)+(S.mood<-30?' 마음이 무겁다. 검도 무겁다.':S.mood>30?' 오랜만에 발걸음이 가볍다.':'');},
  x:S=>S.tmp.line+` 마음은 ${moodName(S.mood)}하다. 무엇에 마음을 쏟을까?`,
  ch:S=>{const L=[];
-  if(S.job)return [...jobChoices(S),...loveChoices(S),...aiChoice(S)];
+  if(S.job)return [...jobChoices(S),...loveChoices(S),...lvChoice(S),...famChoice(S),...(S.age>=56?oldFriendChoice(S):[]),...aiChoice(S)];
   if(S.age<13&&!S.org){
     L.push({t:'뒷산을 뛰어다닌다',h:'경공',go:S=>{A(S,{qing:4,exp:1,mood:6});return '해 질 녘까지 산을 뛰었다. 다리가 가벼워졌다.';}});
     L.push({t:'글을 배운다',h:'학문·구력',go:S=>{A(S,{lore:6,tongue:2});return '천자문을 다 외웠다.';}});
@@ -13974,7 +14111,13 @@ EVM.focus={id:'focus',t:'올해의 나날',
     L.push({t:'후학을 가르친다',h:'명성·도덕',go:S=>{A(S,{fame:2+S.disciples,moral:2,mood:5});return '마당에 모인 젊은이들에게 초식을 풀어 주었다.';}});
     L.push({t:'끝까지 수련한다',h:`${S.mainW} 숙련·깨달음`,go:S=>train(S)});
     L.push({t:'참선한다',h:'수양·항마·깨달음. 수양이 깊으면 선도(仙道)에 눈뜬다.',go:S=>zen(S)});
-    if(S.spouse)L.push({t:'가족과 지낸다',go:S=>{A(S,{hp:10,moral:2,mood:15});return '손주들이 수염을 잡아당겼다.';}});
+    L.push(...famChoice(S),...lvChoice(S),...oldFriendChoice(S),...dscChoice(S));
+    L.push({t:'회고록을 쓴다',h:'학문·수양 · 지나온 자취를 적는다',go:S=>memoir(S)});
+    if(S.org)L.push({t:'사문의 원로로서 일을 본다',h:'공헌·명성',go:S=>{A(S,{contrib:R(6,12),fame:2,savvy:2});return pick(['젊은 장로들의 다툼을 한마디로 갈랐다.','사문의 오래된 장부를 바로잡았다. 젊은 것들이 몰랐던 빚이 셋이나 나왔다.','입문 시험관 자리에 앉았다. 떨고 있는 아이 하나가 젊은 날의 당신 같았다.']);}});
+    if(S.med>=10)L.push({t:'약초를 다루며 소일한다',h:'의술·항독',go:S=>{A(S,{med:4,rp:2,hp:6});return '마당에 약초밭을 일궜다. 동네 아이들이 체하면 당신 집 문을 두드렸다.';}});
+    if(S.forge>=15)L.push({t:'병기를 벼린다',h:'재료와 병기를 골라 이름을 새긴다.',craft:'forge'});
+    L.push({t:'길을 떠난다',h:`지금 ${S.loc}. 지도에서 이웃한 곳을 고른다.`,craft:'map'});
+    L.push({t:'마지막 유람을 떠난다',h:'옛 싸움터·고향·낯선 산 · 무슨 일이 생길지 모른다',go:S=>oldTrip(S)});
     if(craftOk(S))L.push({t:'평생의 무공을 하나로 엮는다',h:'무공 창안',craft:1});
     return [...L,...aiChoice(S)];}
   L.push({t:`${S.mainW} 수련에 매진한다`,h:`${S.mainW} 숙련·깨달음`,go:S=>train(S)});
@@ -13995,13 +14138,13 @@ EVM.focus={id:'focus',t:'올해의 나날',
   if(S.age>=16)L.push({t:'강호를 유람한다',h:'무슨 일이 생길지 모른다.',go:S=>{A(S,{exp:tb(S)*.5,mood:8});const r=Math.random();
      if(r<.03+S.t.luck*.005){T(S,'luck',1);return '산속 노인에게서 삼생석이라는 돌을 얻었다. 운이 트이는 기분이다. 기연이 늘었다.';}
      if(r<.25){A(S,{ng:5});return '이름 없는 산에서 영초 한 뿌리를 캐 먹었다.';}
-     if(r<.45){A(S,{fame:R(2,5),moral:2});return '지나던 마을에서 도적을 쫓아 주었다.';}
+     if(r<.45){if(darkOf(S)){A(S,{fame:R(2,5),salgi:2});return '지나던 마을에서 도적 떼를 베었다. 마을 사람들은 도적보다 당신을 더 무서워하며 문을 걸어 잠갔다.';}A(S,{fame:R(2,5),moral:2});return '지나던 마을에서 도적을 쫓아 주었다.';}
      if(r<.6){hurt(S,12,'유람 중의 시비');return '시비에 휘말려 다쳤다.';}
      if(r<.7){A(S,{mind:3,savvy:2});return '사기꾼에게 속을 뻔했다. 세상 보는 눈이 늘었다.';}
      return '강남의 물빛과 새북의 모래바람을 보았다.';}});
   L.push(...loveChoices(S));
   if(!S.spouse)romList(S).filter(id=>S.met[id]&&!S.dead_npc[id]&&!loveBlocked(S,id)&&(S.rel[id]||0)>=(LOVE[id]?0:15)).sort((a,b)=>(S.rel[b]||0)-(S.rel[a]||0)).slice(0,2).forEach(id=>L.push({t:`${npcNick(id,S)} ${jo(NPCS[id].n,'을','를')} 찾아간다`,h:`호감 ${S.rel[id]||0}`,go:S=>{const g=Math.round(4+S.t.looks+likeBonus(S,id)/2+R(0,6));S.rel[id]=clamp((S.rel[id]||0)+g,-100,100);A(S,{mood:10});return pick(['함께 달을 보았다.','저잣거리를 함께 걸었다.','나란히 앉아 차를 마셨다.']);}}));
-  if(S.spouse)L.push({t:'가족과 지낸다',h:'심상·체력',go:S=>{A(S,{mood:20,moral:2,hp:8});return '집이 따뜻했다.';}});
+  L.push(...famChoice(S),...lvChoice(S),...dscChoice(S));
   return [...L,...aiChoice(S)];}};
 
 /* ══ 경지의 벽과 깨달음 ════════════════════════════
@@ -14142,6 +14285,7 @@ function chooseEvent(S){
   const f=EV.find(e=>{const dv=devOv(e),fo=dv&&dv.force==='off'?null:dv&&dv.force==='on'?(S=>!S.chain&&wOf(S,e)>0):e.force;return fo&&eligible(S,e)&&fo(S);});if(f)return f.id;
   {const fm=fmNext(S);if(fm)return fm;}
   if(S.flags.nextEv){const id=S.flags.nextEv;delete S.flags.nextEv;if(EVM[id])return id;}
+  {const lr=chance(.22)?lvReady(S):null;if(lr)return lr;}
   if(S.flags.half||chance(S.age<YOUNG?.8:.6)){const pool=EV.filter(e=>e.w&&eligible(S,e)&&wOf(S,e)>0);
     const cw=S.flags.creed&&CREED_W[S.flags.creed];const ws=pool.map(e=>wOf(S,e)*ageFit(S,e)*(cw&&cw.test(e.id)?1.8:1)*(e.reg?(e.reg.includes(S.loc)?3:.35):1));if(S.flags.half&&!pool.length)return null;const tot=ws.reduce((a,b)=>a+b,0);
     let r=Math.random()*tot;for(let i=0;i<pool.length;i++){if((r-=ws[i])<0)return pool[i].id;}}
@@ -14255,7 +14399,7 @@ function saveHall(h){try{localStorage.setItem(HKEY,JSON.stringify(h));}catch(e){
 const NAI_URL='https://image.novelai.net/ai/generate-image';
 const NAI_MODELS=[['nai-diffusion-4-5-full','V4.5 Full'],['nai-diffusion-4-5-curated','V4.5 Curated'],['nai-diffusion-5-full','V5 Full'],['nai-diffusion-5-curated','V5 Curated'],['nai-diffusion-4-full','V4 Full']];
 const NAI_Q={'nai-diffusion-5-full':'very aesthetic, masterpiece, best quality','nai-diffusion-5-curated':'very aesthetic, masterpiece, best quality','nai-diffusion-4-5-full':'very aesthetic, masterpiece, no text','nai-diffusion-4-5-curated':'location, masterpiece, no text','nai-diffusion-4-full':'no text, best quality, very aesthetic, absurdres'};
-const GAME_VER='2026.10.26-66';
+const GAME_VER='2026.10.26-67';
 const NAI_NEG='nsfw, nude, lowres, bad anatomy, bad hands, missing fingers, extra digits, text, watermark, signature, logo, worst quality, low quality, blurry, modern clothes, glasses, eyewear, jpeg artifacts';
 const NKEY='murim-nai';
 function ncfg(){let c={};try{c=JSON.parse(localStorage.getItem(NKEY)||'{}');}catch(e){}return Object.assign({key:'',relay:'',model:'nai-diffusion-4-5-full',style:'wuxia, ancient china, hanfu, detailed illustration, cinematic lighting',autoEv:false,autoPc:false,vn:true,neg:NAI_NEG,tnpc:'',tev:'',tmap:'',q:true},c,{pr:Object.assign({},c.pr)});}
