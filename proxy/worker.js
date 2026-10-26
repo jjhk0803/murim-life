@@ -10,6 +10,8 @@ const ALLOW_ORIGIN = 'https://jjhk0803.github.io';
 const ALLOW_HOSTS = [
   'image.novelai.net',
   'generativelanguage.googleapis.com', // Gemini
+  'aiplatform.googleapis.com', // Vertex AI (전역). 리전을 쓰면 아래처럼 '리전-aiplatform.googleapis.com'을 더한다
+  'us-central1-aiplatform.googleapis.com', 'asia-northeast3-aiplatform.googleapis.com', 'asia-northeast1-aiplatform.googleapis.com', 'europe-west4-aiplatform.googleapis.com',
   'openrouter.ai', 'api.openai.com', 'api.deepseek.com', 'ollama.com', // OpenAI 방식
   'api.anthropic.com',
 ];

@@ -9291,7 +9291,7 @@ E({id:'wedLife',tag:'love',t:'함께 사는 날',title:S=>NPCS[S.spouse]?`함께
    Claude(Anthropic) · Gemini(Google) · OpenAI 방식 API(OpenRouter·OpenAI·DeepSeek·Ollama 클라우드…)를 고를 수 있다.
    키는 이 브라우저(localStorage)에만 있고 고른 AI 회사로 바로(또는 내 중계 서버를 거쳐) 보낸다. */
 const AKEY='murim-ai';
-const AI_PROV={anthropic:'Claude (Anthropic)',gemini:'Gemini (Google)',openai:'OpenAI 방식 (OpenRouter 등)'};
+const AI_PROV={anthropic:'Claude (Anthropic)',gemini:'Gemini (Google)',vertex:'Vertex AI (Google Cloud)',openai:'OpenAI 방식 (OpenRouter 등)'};
 const AI_MODELS=[['claude-opus-5-5','Claude Opus 5.5 · 글이 가장 좋다'],['claude-sonnet-5-5','Claude Sonnet 5.5 · 빠르고 값이 절반'],['claude-haiku-5-5','Claude Haiku 5.5 · 가장 빠르고 싸다']];
 const GEM_MODELS=['gemini-2.5-flash','gemini-2.5-pro','gemini-2.5-flash-lite'];
 const OAI_PRE=[
@@ -9299,7 +9299,7 @@ const OAI_PRE=[
  ['OpenAI','https://api.openai.com/v1','','platform.openai.com → API keys에서 키를 만든다. 모델 이름은 OpenAI 모델 목록에 있는 이름을 그대로 쓴다.'],
  ['DeepSeek','https://api.deepseek.com/v1','deepseek-chat','platform.deepseek.com → API keys에서 키를 만든다. 브라우저에서 바로 연결되지 않으면 중계 서버를 켠다.'],
  ['Ollama 클라우드','https://ollama.com/v1','gpt-oss:120b','ollama.com → Settings → Keys에서 키를 만든다. 모델은 ollama.com의 클라우드 모델 이름(끝의 -cloud는 뺀다). 무료 플랜은 사용량 한도가 있다. 브라우저에서 바로 연결되지 않으면 중계 서버를 켠다.']];
-const AI_DEF={anthropic:{key:'',model:'claude-opus-5-5'},gemini:{key:'',model:'gemini-2.5-flash'},openai:{key:'',model:'',base:'https://openrouter.ai/api/v1'}};
+const AI_DEF={anthropic:{key:'',model:'claude-opus-5-5'},gemini:{key:'',model:'gemini-2.5-flash'},vertex:{key:'',model:'gemini-2.5-flash',proj:'',loc:'global',tok:''},openai:{key:'',model:'',base:'https://openrouter.ai/api/v1'}};
 function acfg(){let c={};try{c=JSON.parse(localStorage.getItem(AKEY)||'{}');}catch(e){}
  const p=c.p||{anthropic:{key:c.key||'',model:c.model||'claude-opus-5-5'}}; // 예전 설정(Claude 하나)은 그대로 옮긴다
  return {prov:AI_DEF[c.prov]?c.prov:'anthropic',freq:+c.freq||0,relay:!!c.relay,p:Object.fromEntries(Object.keys(AI_DEF).map(k=>[k,Object.assign({},AI_DEF[k],p[k])]))};}
@@ -9307,8 +9307,8 @@ function asave(c){try{localStorage.setItem(AKEY,JSON.stringify({prov:c.prov,freq
 const aiCur=c=>c.p[c.prov];
 const normBase=u=>String(u||'').trim().replace(/\/+$/,'').replace(/\/chat\/completions$/,'');
 const oaiPre=p=>OAI_PRE.find(x=>normBase(x[1])===normBase(p.base));
-const aiReady=c=>{const p=aiCur(c);return c.prov==='openai'?!!(normBase(p.base)&&p.model.trim()&&p.key.trim()):!!(p.key.trim()&&p.model.trim());};
-const aiName=c=>{const p=aiCur(c);return c.prov==='anthropic'?(AI_MODELS.find(x=>x[0]===p.model)||[0,p.model])[1]:`${c.prov==='gemini'?'Gemini':(oaiPre(p)||['OpenAI 방식'])[0]} · ${p.model}`;};
+const aiReady=c=>{const p=aiCur(c);if(c.prov==='vertex')return !!(p.model.trim()&&(p.key.trim()||(p.tok.trim()&&p.proj.trim())));return c.prov==='openai'?!!(normBase(p.base)&&p.model.trim()&&p.key.trim()):!!(p.key.trim()&&p.model.trim());};
+const aiName=c=>{const p=aiCur(c);return c.prov==='anthropic'?(AI_MODELS.find(x=>x[0]===p.model)||[0,p.model])[1]:`${c.prov==='gemini'?'Gemini':c.prov==='vertex'?'Vertex AI':(oaiPre(p)||['OpenAI 방식'])[0]} · ${p.model}`;};
 const aiChoice=S=>aiReady(acfg())&&S.age>=8?[{t:'AI가 짓는 이야기를 펼친다',h:'바라는 이야기를 적을 수도 있다 · API 사용료',ai:1}]:[];
 function aiCfgHTML(a){const k=a.prov,p=aiCur(a),pre=k==='openai'?oaiPre(p):null;
  return `<p class="grp-t" style="margin:0">AI 이야기꾼 (선택)</p>
@@ -9319,6 +9319,12 @@ function aiCfgHTML(a){const k=a.prov,p=aiCur(a),pre=k==='openai'?oaiPre(p):null;
    :k==='gemini'?`<label for="a_key">Gemini API 키 (aistudio.google.com → Get API key)</label><input type="password" id="a_key" value="${esc(p.key)}" autocomplete="off" placeholder="AIza...">
    <label for="a_model">모델</label><input type="text" id="a_model" list="a_gm" value="${esc(p.model)}" autocomplete="off" placeholder="gemini-2.5-flash"><datalist id="a_gm">${GEM_MODELS.map(m=>`<option value="${m}">`).join('')}</datalist>
    <p class="muted small">flash는 빠르고 무료 사용량이 넉넉하다. pro는 글이 더 좋지만 느리다.</p>`
+   :k==='vertex'?`<p class="muted small">Google Cloud의 Vertex AI로 Gemini를 부른다. 둘 중 하나만 채우면 된다.<br>① <b>API 키</b>: Google Cloud 콘솔 → Vertex AI → (Vertex AI Studio의) API 키. 프로젝트를 비우면 키만으로 부르는 간편 방식, 채우면 그 프로젝트로 부른다.<br>② <b>액세스 토큰</b>: <code>gcloud auth print-access-token</code>으로 받은 토큰과 프로젝트 ID. 토큰은 한 시간쯤 지나면 끝나서 다시 넣어야 한다.</p>
+   <label for="a_key">Vertex AI API 키</label><input type="password" id="a_key" value="${esc(p.key)}" autocomplete="off" placeholder="AQ.… 또는 AIza…">
+   <label for="a_tok">또는 액세스 토큰</label><input type="password" id="a_tok" value="${esc(p.tok)}" autocomplete="off" placeholder="ya29.…">
+   <div class="row wrap"><div style="flex:1;min-width:140px"><label for="a_proj">프로젝트 ID</label><input type="text" id="a_proj" value="${esc(p.proj)}" autocomplete="off" placeholder="my-project-123"></div><div style="flex:1;min-width:120px"><label for="a_loc">리전</label><input type="text" id="a_loc" list="a_locs" value="${esc(p.loc)}" autocomplete="off" placeholder="global"><datalist id="a_locs">${['global','us-central1','asia-northeast3','asia-northeast1','europe-west4'].map(m=>`<option value="${m}">`).join('')}</datalist></div></div>
+   <label for="a_model">모델</label><input type="text" id="a_model" list="a_gm" value="${esc(p.model)}" autocomplete="off" placeholder="gemini-2.5-flash"><datalist id="a_gm">${GEM_MODELS.map(m=>`<option value="${m}">`).join('')}</datalist>
+   <p class="muted small">요금은 Google Cloud 결제 계정으로 나간다. 서울 리전은 asia-northeast3.</p>`
    :`<div class="row wrap">${OAI_PRE.map((x,i)=>`<button class="ghost" data-a="apre" data-i="${i}" style="padding:6px 10px">${esc(x[0])}</button>`).join('')}</div>
    <label for="a_base">API 주소 (/chat/completions 앞부분까지)</label><input type="text" id="a_base" value="${esc(p.base)}" autocomplete="off" placeholder="https://openrouter.ai/api/v1">
    <label for="a_key">API 키</label><input type="password" id="a_key" value="${esc(p.key)}" autocomplete="off">
@@ -9328,7 +9334,7 @@ function aiCfgHTML(a){const k=a.prov,p=aiCur(a),pre=k==='openai'?oaiPre(p):null;
    <label for="a_freq">저절로 끼어드는 AI 사건</label><select id="a_freq">${[[0,'끔 · 올해의 나날에서 고를 때만'],[.15,'가끔 · 한 해에 15%'],[.3,'자주 · 한 해에 30%']].map(([v,l])=>`<option value="${v}" ${+a.freq===v?'selected':''}>${l}</option>`).join('')}</select>`;}
 // 설정 창에 보이는 AI 칸을 읽는다. 칸은 지금 보이는 AI(a.prov)의 것이고, 'AI' 선택이 바뀌었으면 그다음에 바꾼다
 function readAiForm(a){const g=id=>document.getElementById(id),p=a.p[a.prov];if(!g('a_prov'))return a;
- p.key=g('a_key').value.trim();p.model=g('a_model').value.trim();if(g('a_base'))p.base=g('a_base').value.trim();if(g('a_relay'))a.relay=g('a_relay').checked;
+ p.key=g('a_key').value.trim();p.model=g('a_model').value.trim();if(g('a_base'))p.base=g('a_base').value.trim();if(g('a_tok'))p.tok=g('a_tok').value.trim();if(g('a_proj'))p.proj=g('a_proj').value.trim();if(g('a_loc'))p.loc=g('a_loc').value.trim()||'global';if(g('a_relay'))a.relay=g('a_relay').checked;
  a.freq=+g('a_freq').value;a.prov=g('a_prov').value;return a;}
 function aiModalHTML(){const m=modal,c=acfg(),busy=!!m.busy;return `<div class="modal" data-a="mbg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mt"><h3 id="mt">AI 이야기꾼</h3>
   ${aiReady(c)?`<p class="muted small" style="margin:0">지금까지의 삶과 인연을 읽고 이번 해의 이야기를 새로 짓는다. 바라는 이야기가 있으면 적는다. 비워 두면 AI가 고른다.</p>
@@ -9410,7 +9416,7 @@ function aiLoose(t){const s=String(t||'').replace(/^﻿/,'').replace(/```(?:json
  const x=s.slice(a,b+1);try{return JSON.parse(x);}catch(e){return JSON.parse(x.replace(/,\s*([}\]])/g,'$1'));}}
 async function aiCall(sys,user,spec){spec=spec||{schema:AI_SCHEMA,shape:JSON_SHAPE};const c=acfg();if(!aiReady(c))throw new Error('설정에서 쓸 AI의 키와 모델을 넣어 주세요.');
  if(c.prov==='anthropic')return claudeCall(c,sys,user,spec.schema);
- for(let i=0;i<2;i++){const tx=await (c.prov==='gemini'?gemCall:oaiCall)(c,sys,user+spec.shape+(i?JSON_STRICT:''));try{return aiLoose(tx);}catch(e){}}
+ for(let i=0;i<2;i++){const tx=await (c.prov==='gemini'||c.prov==='vertex'?gemCall:oaiCall)(c,sys,user+spec.shape+(i?JSON_STRICT:''));try{return aiLoose(tx);}catch(e){}}
  throw new Error('AI 응답을 읽지 못했어요. 다시 해 보거나 다른 모델을 써 보세요.');}
 async function claudeCall(c,sys,user,schema){const p=aiCur(c);
  const fb=/opus-5-5|sonnet-5-5/.test(p.model); // 안전 분류기가 거절하면 서버가 다른 모델로 이어 쓴다
@@ -9429,8 +9435,14 @@ async function claudeCall(c,sys,user,schema){const p=aiCur(c);
 async function gemCall(c,sys,user){const p=aiCur(c);
  const body={systemInstruction:{parts:[{text:sys}]},contents:[{role:'user',parts:[{text:user}]}],generationConfig:{maxOutputTokens:16000,responseMimeType:'application/json'},
   safetySettings:['HARM_CATEGORY_HARASSMENT','HARM_CATEGORY_HATE_SPEECH','HARM_CATEGORY_SEXUALLY_EXPLICIT','HARM_CATEGORY_DANGEROUS_CONTENT'].map(k=>({category:k,threshold:'BLOCK_ONLY_HIGH'}))};
- const r=await aiFetch(c,`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(p.model.trim())}:generateContent`,{method:'POST',headers:{'content-type':'application/json','x-goog-api-key':p.key.trim()},body:JSON.stringify(body)},'Google');
- if(!r.ok)throw new Error(aiErr(r.status,await r.text(),'Gemini'));
+ const vx=c.prov==='vertex',m=encodeURIComponent(p.model.trim()),who=vx?'Vertex AI':'Gemini';
+ let url=`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`,hd={'content-type':'application/json'};
+ if(vx){const loc=(p.loc||'global').trim(),proj=(p.proj||'').trim(),host=loc==='global'?'aiplatform.googleapis.com':`${loc}-aiplatform.googleapis.com`;
+  url=proj?`https://${host}/v1/projects/${encodeURIComponent(proj)}/locations/${encodeURIComponent(loc)}/publishers/google/models/${m}:generateContent`:`https://aiplatform.googleapis.com/v1/publishers/google/models/${m}:generateContent`;
+  if(p.key.trim())hd['x-goog-api-key']=p.key.trim();else hd.authorization='Bearer '+p.tok.trim();}
+ else hd['x-goog-api-key']=p.key.trim();
+ const r=await aiFetch(c,url,{method:'POST',headers:hd,body:JSON.stringify(body)},'Google');
+ if(!r.ok)throw new Error(aiErr(r.status,await r.text(),who));
  const j=await r.json();if(j.promptFeedback&&j.promptFeedback.blockReason)throw new Error(AI_REFUSED);
  const cand=(j.candidates||[])[0];if(!cand)throw new Error(AI_REFUSED);
  if(['SAFETY','PROHIBITED_CONTENT','BLOCKLIST','SPII','RECITATION'].includes(cand.finishReason))throw new Error(AI_REFUSED);
@@ -13752,7 +13764,7 @@ function saveHall(h){try{localStorage.setItem(HKEY,JSON.stringify(h));}catch(e){
 const NAI_URL='https://image.novelai.net/ai/generate-image';
 const NAI_MODELS=[['nai-diffusion-4-5-full','V4.5 Full'],['nai-diffusion-4-5-curated','V4.5 Curated'],['nai-diffusion-5-full','V5 Full'],['nai-diffusion-5-curated','V5 Curated'],['nai-diffusion-4-full','V4 Full']];
 const NAI_Q={'nai-diffusion-5-full':'very aesthetic, masterpiece, best quality','nai-diffusion-5-curated':'very aesthetic, masterpiece, best quality','nai-diffusion-4-5-full':'very aesthetic, masterpiece, no text','nai-diffusion-4-5-curated':'location, masterpiece, no text','nai-diffusion-4-full':'no text, best quality, very aesthetic, absurdres'};
-const GAME_VER='2026.10.26-60';
+const GAME_VER='2026.10.26-61';
 const NAI_NEG='nsfw, nude, lowres, bad anatomy, bad hands, missing fingers, extra digits, text, watermark, signature, logo, worst quality, low quality, blurry, modern clothes, glasses, eyewear, jpeg artifacts';
 const NKEY='murim-nai';
 function ncfg(){let c={};try{c=JSON.parse(localStorage.getItem(NKEY)||'{}');}catch(e){}return Object.assign({key:'',relay:'',model:'nai-diffusion-4-5-full',style:'wuxia, ancient china, hanfu, detailed illustration, cinematic lighting',autoEv:false,autoPc:false,vn:true,neg:NAI_NEG,tnpc:'',tev:'',tmap:'',q:true},c,{pr:Object.assign({},c.pr)});}
@@ -14543,6 +14555,7 @@ function tabHTML(t){const s=S;
   if(t==='pp'){const rows=[];
    if(s.master){const nm=s.master==='drunk'?'취선옹':MASTERS[s.master]?`${MASTERS[s.master].nick} ${MASTERS[s.master].n}`:NPCS[s.master]?`${NPCS[s.master].nick} ${NPCS[s.master].n}`:s.master;rows.push(`<div class="pp"><span class="pn">스승 <b>${esc(nm)}</b></span><span class="pr"></span></div>`);}
    if(s.spouse)rows.push(`<div class="pp"><span class="pn">배우자 ${s.spouse==='plain'?'이웃 고을 사람':`<b>${esc(npcNick(s.spouse,s))}</b> ${esc(NPCS[s.spouse].n)}`}</span><span class="pr">${s.kids?`자식 ${s.kids}`:''}</span></div>`);
+   if(s.harem&&s.harem.length)s.harem.filter(id=>NPCS[id]).forEach(id=>rows.push(`<div class="pp"><span class="pn">첩 <b>${esc(npcNick(id,s))}</b> ${esc(NPCS[id].n)}${s.dead_npc[id]?' <span class="muted">(세상을 떠남)</span>':''}</span><span class="pr">호감 ${Math.round(s.rel[id]||0)}</span></div>`));
    if(s.disciples)rows.push(`<div class="pp"><span class="pn">제자 ${s.disciples}명</span><span class="pr">${s.flags.prodigy?'천재 제자 있음':''}</span></div>`);
    if(s.flags.sib&&s.flags.sib!=='-')rows.push(`<div class="pp"><span class="pn">${esc(s.flags.sib)}</span><span class="pr">사형제</span></div>`);
    if(s.flags.sworn)rows.push(`<div class="pp"><span class="pn">의형제</span><span class="pr"></span></div>`);
