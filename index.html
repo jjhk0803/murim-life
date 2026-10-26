@@ -243,6 +243,8 @@ button.chip.on{background:var(--jade);color:var(--card);border-color:var(--jade)
 .vnsp{position:absolute;top:8%;height:135%;max-width:none;transform:translateX(-50%);filter:drop-shadow(0 4px 10px rgba(0,0,0,.35)) brightness(.5) saturate(.7);transition:filter .25s,transform .25s}
 .vnsp.on{filter:drop-shadow(0 4px 12px rgba(0,0,0,.4));transform:translateX(-50%) translateY(-2%);z-index:2}
 .vnsp.nar{filter:drop-shadow(0 4px 10px rgba(0,0,0,.35)) brightness(.85)}
+/* 내가 말할 때 곁의 인물은 듣는 쪽: 더 어둡게, 조금 아래로 물러난다 */
+.vnsp.lis{filter:drop-shadow(0 4px 10px rgba(0,0,0,.35)) brightness(.22) saturate(.35);opacity:.7;transform:translateX(-50%) translateY(6%)}
 .vnsp.in{animation:vnin .5s ease-out both}
 .vnsp.gone{display:none}
 .sheet.story textarea{width:100%;font:inherit;font-size:.9rem;line-height:1.6;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:inherit;resize:vertical}
@@ -14399,7 +14401,7 @@ function saveHall(h){try{localStorage.setItem(HKEY,JSON.stringify(h));}catch(e){
 const NAI_URL='https://image.novelai.net/ai/generate-image';
 const NAI_MODELS=[['nai-diffusion-4-5-full','V4.5 Full'],['nai-diffusion-4-5-curated','V4.5 Curated'],['nai-diffusion-5-full','V5 Full'],['nai-diffusion-5-curated','V5 Curated'],['nai-diffusion-4-full','V4 Full']];
 const NAI_Q={'nai-diffusion-5-full':'very aesthetic, masterpiece, best quality','nai-diffusion-5-curated':'very aesthetic, masterpiece, best quality','nai-diffusion-4-5-full':'very aesthetic, masterpiece, no text','nai-diffusion-4-5-curated':'location, masterpiece, no text','nai-diffusion-4-full':'no text, best quality, very aesthetic, absurdres'};
-const GAME_VER='2026.10.26-67';
+const GAME_VER='2026.10.26-68';
 const NAI_NEG='nsfw, nude, lowres, bad anatomy, bad hands, missing fingers, extra digits, text, watermark, signature, logo, worst quality, low quality, blurry, modern clothes, glasses, eyewear, jpeg artifacts';
 const NKEY='murim-nai';
 function ncfg(){let c={};try{c=JSON.parse(localStorage.getItem(NKEY)||'{}');}catch(e){}return Object.assign({key:'',relay:'',model:'nai-diffusion-4-5-full',style:'wuxia, ancient china, hanfu, detailed illustration, cinematic lighting',autoEv:false,autoPc:false,vn:true,neg:NAI_NEG,tnpc:'',tev:'',tmap:'',q:true},c,{pr:Object.assign({},c.pr)});}
@@ -15252,7 +15254,7 @@ function vnStep(){const c=VN.cur,root=document.querySelector('.vnfull[data-a="vn
   const n=c.beats.length,i=VN.i;if(i<=0||i>n-1||i>=c.last)return false;const b=c.beats[i],t=root.querySelector('.vnt'),pw=root.querySelector('.vnpw');if(!t||!pw)return false;
   root.classList.remove('vnfade');pw.innerHTML=vnPlate(c.whoOf(b.s,b.n));
   const nt=document.createElement('div');nt.className='vnt'+(b.s?'':' nar');nt.innerHTML=c.line(b);t.replaceWith(nt);
-  const bk=beatKey(S,b);root.querySelectorAll('.vnsp').forEach((el,j)=>{const id=c.cast[j],f=c.first[id];el.classList.remove('in');if(f>i)el.classList.add('gone');else if(el.classList.contains('gone')){el.classList.remove('gone');void el.offsetWidth;el.classList.add('in');}el.classList.toggle('on',bk===id);el.classList.toggle('nar',!b.s);});
+  const bk=beatKey(S,b);root.querySelectorAll('.vnsp').forEach((el,j)=>{const id=c.cast[j],f=c.first[id];el.classList.remove('in');if(f>i)el.classList.add('gone');else if(el.classList.contains('gone')){el.classList.remove('gone');void el.offsetWidth;el.classList.add('in');}el.classList.toggle('on',bk===id);el.classList.toggle('nar',!b.s);el.classList.toggle('lis',b.s==='me');});
   const pv=root.querySelector('.vnpv');if(pv)pv.hidden=false;vnArm(c.key,i,n,b);return true;}
 function vnScreen(S,o){const beats=vnBeats(S,o.text,o.scene);if(!beats.length)beats.push({s:null,t:''});if(VN.k!==o.key){VN.k=o.key;VN.i=0;VN.log=0;}
   const n=beats.length,one=/data-a="next"/.test(o.acts||''),last=one||!o.acts?n-1:n;/* 선택지가 있으면 마지막 대사를 먼저 보이고, 한 번 더 누르면 선택지 */
@@ -15266,7 +15268,7 @@ function vnScreen(S,o){const beats=vnBeats(S,o.text,o.scene);if(!beats.length)be
   const log=VN.log?`<div class="vnlogp" data-a="vnnop"><div class="row" style="justify-content:space-between"><b>지난 대사</b>${tool('vnlog','닫기')}</div><div class="vnlogl">${beats.slice(0,i+1).map(x=>{const w=whoOf(x.s,x.n);return `<p>${w?`<b>${esc(w.n)}</b> `:''}${line(x)}</p>`;}).join('')}</div></div>`:'';
   return `<section class="vnfull ${done?'done':''} ${VN.i?'':'vnfade'}" ${done||VN.log?'':'data-a="vnnext"'} aria-live="polite">
    <div class="vnbg">${o.bg?`<img src="${o.bg}" alt="" decoding="async">`:''}</div>
-   <div class="vnsps">${cast.map((id,j)=>`<img class="vnsp ${bk===id?'on':b.s?'':'nar'} ${first[id]>i?'gone':first[id]===i?'in':''}" style="left:${pos[j]}%" decoding="async" src="${imgURL(castKey(id))}" alt="${esc(id.startsWith('mob:')?MOB[id.slice(4)].n:NPCS[id].n)}">`).join('')}</div>
+   <div class="vnsps">${cast.map((id,j)=>`<img class="vnsp ${bk===id?'on':b.s==='me'?'lis':b.s?'':'nar'} ${first[id]>i?'gone':first[id]===i?'in':''}" style="left:${pos[j]}%" decoding="async" src="${imgURL(castKey(id))}" alt="${esc(id.startsWith('mob:')?MOB[id.slice(4)].n:NPCS[id].n)}">`).join('')}</div>
    <div class="vntop"><div class="vnttl"><b>${ageLabel(S)} · ${esc(o.title)}</b>${o.tags||''}${o.sub?`<span class="vnsub">${esc(o.sub)}</span>`:''}</div>
     <div class="vntools">${o.draw||''}<span class="vnpv" ${i>0?'':'hidden'}>${tool('vnprev','◀','','이전 대사')}</span>${tool('vnlog','기록')}${done?'':tool('vnauto','자동',auto)+tool('vnskip','넘기기 ▶▶')}</div></div>
    ${done?`<div class="vnch ${/data-a="next"/.test(o.acts||'')?'one':''}">${o.panel?`<div class="vnpanel">${o.panel}</div>`:''}${o.acts||''}</div>`:''}
