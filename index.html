@@ -1398,7 +1398,7 @@ E({id:'warBattle',tag:'key',arc:1,t:'전장',
     {t:'무림맹과 함께 싸운다',go:S=>{S.w.demon=2;S.chain='warAfter';const b=battle(S,mkFoe({n:'마교 장로',realm:clamp(S.realm,3,6),q:1.05,kw:['마'],lethal:1}),{ally});if(b.win){A(S,{fame:45,moral:12});deed(S,'정마대전에서 마교 장로를 베었다');}else A(S,{fame:10,moral:5});return fightText(b,'혈전 끝에 마교 장로의 목을 베었다. 전쟁의 물길이 돌았다.','석 달을 싸웠다. 함께 간 동료 절반이 돌아오지 못했다.');}},
     {t:'숨어 지낸다',go:S=>{S.w.demon=2;S.chain='warAfter';A(S,{fame:-5,moral:-3,exp:tb(S)*.5});return '전쟁이 끝난 뒤 아무도 당신이 어디 있었는지 묻지 않았다.';}}];}});
 E({id:'war',tag:'key',arc:1,t:'정마대전',a:[26,75],w:4,if:S=>S.w.demon===1&&S.age>=(S.w.rumorAge||0)+4,
- x:'마교가 검마 사마 율을 선봉에 세우고 대군을 이끌어 중원으로 내려오자, 전선이 셋으로 갈렸다.\n검마가 피 묻은 검을 털며 웃었다. “검은 정사를 가리지 않는다. 가리는 건 언제나 칼을 쥔 사람이지.”',
+ x:S=>S.dead_npc.geomma?'마교가 검마의 빈자리에 새 장로들을 세우고 대군을 이끌어 중원으로 내려오자, 전선이 셋으로 갈렸고, 선봉의 깃발에는 죽은 검마의 이름이 그대로 적혀 있었다.':'마교가 검마 사마 율을 선봉에 세우고 대군을 이끌어 중원으로 내려오자, 전선이 셋으로 갈렸다.\n검마가 피 묻은 검을 털며 웃었다. “검은 정사를 가리지 않는다. 가리는 건 언제나 칼을 쥔 사람이지.”',
  ch:S=>sideOf(S)==='마교'?[{t:'교의 선봉으로 나선다',go:S=>{S.flags.warField='front';S.chain='warBattle';S.loc='섬서';return '십만대산을 내려가는 교도들의 행렬 맨 앞에 섰다.';}},
    {t:'뒤에 남는다',go:S=>{S.w.demon=2;A(S,{contrib:-10});return '교의 깃발이 멀어지는 것을 보았다.';}}]:[
   {t:'무당산을 지킨다',h:'수비전. 무림맹의 도움이 크다.',go:S=>{S.flags.warField='wudang';S.loc='호북';S.chain='warBattle';return '무당산 해검지에 진을 쳤다.';}},
@@ -1591,7 +1591,7 @@ E({id:'pact2',tag:'key',arc:1,t:'핏빛 안개',
    L.push({t:'대표들을 지킨다',go:S=>{const b=battle(S,S.tmp.foe);if(b.win){S.flags.pv+=2;A(S,{fame:25,moral:5});deed(S,'화산 회의에서 대표들을 지켰다');}return pactEnd(S,(b.win?'피투성이가 되어 대표들 앞을 지켰다.':'혈위대에 밀려 쓰러졌다.')+b.rev);}});
    if(sideOf(S)==='마교'||S.moral<=-30)L.push({t:'혼란을 틈타 정파 대표를 벤다',go:S=>{S.flags.pv-=3;A(S,{fame:20,moral:-25,enemies:3,salgi:5});return pactEnd(S,'안개 속에서 칼을 휘둘렀다. 누가 누구를 죽였는지 아무도 몰랐다.');}});
    L.push({t:'몸을 피한다',go:S=>pactEnd(S,'바위 뒤에 숨어 밤을 지새웠다.')});return L;}});
-E({id:'bloodRite',tag:'key',t:'혈천대법',a:[28,75],w:5,if:S=>S.w.blood>=2&&S.w.blood<9&&!S.w.bloodDone,
+E({id:'bloodRite',tag:'key',t:'혈천대법',a:[28,75],w:5,if:S=>S.w.blood>=2&&S.w.blood<9&&!S.w.bloodDone&&!S.dead_npc.hyeolma,
  prep:S=>{S.tmp.vessel=has(S,'slaughter')&&!S.flags.salTamed;S.tmp.foe=npcFoe(S,'hyeolma',{lethal:1});S.loc='청해';},
  x:S=>S.tmp.vessel?"청해의 붉은 호수 위로 혈마 단목 혼이 걸어왔다. '드디어 찾았다. 천살성, 혈천의 그릇.' 천 명의 피가 담긴 제단이 당신을 기다린다.":'혈교가 청해의 붉은 호수에서 혈천대법을 시작했다. 천 명의 피로 하늘을 붉게 물들이는 대법. 완성되면 강호 전체가 피에 잠긴다.\n혈마의 목소리가 호수 위로 울렸다. “피는 거짓말을 하지 않는다. 정파의 피도 마교의 피도 같은 색이다. 나는 그 진실을 하늘에 보여 줄 뿐이다.”',
  ch:S=>{const L=[];const ally=S.flags.ally&&S.flags.ally!=='-';
@@ -8634,7 +8634,7 @@ E({id:'retire',t:'칼을 내려놓다',a:[35,85],w:1.2,if:S=>!S.job&&!S.flags.re
   ...(S.gold>=150?[{t:'상점을 연다',h:'은자 150 · 생업: 상단',go:S=>{S.flags.retire=1;A(S,{gold:-150});if(S.org)leaveOrg(S);setJob(S,'merchant',{lv:2,rep:15,trust:20});S.flags.ja_mer=1;deed(S,'칼을 내려놓고 상점을 열었다');return '칼 대신 저울을 쥐었다. 강호 시절의 이름 덕에 첫 손님들은 다 무림인이었다. 다들 값을 깎지 않았다.';}}]:[]),
   ...(S.lore>=40?[{t:'서당을 연다',h:'생업: 관아(훈장)',go:S=>{S.flags.retire=1;if(S.org)leaveOrg(S);setJob(S,'scholar',{rep:15});deed(S,'칼을 내려놓고 서당을 열었다');return '칼을 쓰던 손으로 천자문을 가르친다. 아이들이 칼싸움 놀이를 할 때면 자세를 고쳐 주고 싶어 손이 근질거렸다.';}}]:[]),
   {t:'아직은 강호다',go:S=>{S.flags.retire=1;A(S,{temper:2});return '칼을 다시 쥐었다. 손이 기억하고 있었다.';}}]});
-E({id:'seekSinui',t:'신의를 찾아서',a:[45,140],w:3,if:S=>!S.job&&!S.flags.sinui&&S.age>=lifespan(S)-8,
+E({id:'seekSinui',t:'신의를 찾아서',a:[45,140],w:3,if:S=>!S.job&&!S.flags.sinui&&!S.dead_npc.pyeon&&S.age>=lifespan(S)-8,
  x:'몸이 예전 같지 않다. 강호에 떠도는 말이 있다. 곤륜 깊은 골짜기에 화타의 후예, 신의(神醫)가 산다고. 그는 사람의 천수를 늘린다고.',
  ch:[{t:'천금을 바친다',h:'은자 300',if:S=>S.gold>=300,go:S=>{S.flags.sinui=1;A(S,{gold:-300});S.flags.sinuiLife=(S.flags.sinuiLife||0)+10;return '신의는 은자를 보지도 않았다. 맥을 짚고 말했다. “욕심이 수명을 갉아먹었구려. 십 년을 더 드리리다. 그 십 년은 덜 욕심내며 사시오.”';}},
   {t:'약초를 구해 오는 일을 맡는다',h:'설산의 영수와 싸워야 한다',go:S=>{S.flags.sinui=1;const b=battle(S,mkFoe({n:'설산의 백호',realm:clamp(S.realm,2,6),q:1}),{spar:1});if(b.win){S.flags.sinuiLife=(S.flags.sinuiLife||0)+12;A(S,{fame:5});}return fightText(b,'설련화를 품에 안고 돌아왔다. 신의가 웃었다. “약값은 이걸로 됐소. 열두 해요.”','백호에게 쫓겨 돌아왔다. 신의는 약 한 첩만 쥐여 주었다.');}},
@@ -9006,7 +9006,7 @@ E({id:'sdBetray',tag:'side',t:'배신자',a:[22,75],w:1.5,if:S=>FACTION(S)==='�
  ch:[{t:'련주의 명을 따른다',h:'공헌↑ 도덕↓',go:S=>{S.flags.sdBetray=1;A(S,{contrib:30,moral:-12,mood:-12});TK(S,'wipc',6);return '흑도의 법은 법이다. 그날 밤 동료의 딸에게 은자 주머니를 두고 왔다. 그것이 당신이 할 수 있는 전부였다.';}},
   {t:'놓아주고 약값을 보탠다',h:'원한 · 도덕↑',go:S=>{S.flags.sdBetray=1;A(S,{moral:8,gold:-Math.min(S.gold,50),enemies:1});return '동료는 딸을 업고 강남으로 떠났고, 련주가 아무것도 묻지 않아서 더 무서웠다.';}},
   {t:'련주 앞에서 사정을 말한다',h:'련주와 겨룰 수도 있다',go:S=>{S.flags.sdBetray=1;const b=battle(S,npcFoe(S,'wipc'),{spar:1});if(b.win||b.r>.6){TK(S,'wipc',12);A(S,{fame:10});return fightText(b,'','')+'련주가 칼을 거두었다. “약한 놈 등치지 않는 게 흑도의 법이라 했지. …그놈 딸 약값은 련에서 낸다. 대신 그놈은 다시는 강북에 오지 마라.”';}TK(S,'wipc',4);return fightText(b,'','련주의 주먹에 나가떨어졌다. 그가 말했다. “말은 칼로 해라. 칼이 모자라면 말도 모자란 거다.” 그래도 동료는 살려 두었다.');}}]});
-E({id:'sdRiver',tag:'side',t:'장강의 밤',a:[18,75],w:2,cd:8,if:S=>FACTION(S)==='사파',
+E({id:'sdRiver',tag:'side',t:'장강의 밤',a:[18,75],w:2,cd:8,if:S=>FACTION(S)==='사파'&&!S.dead_npc.galch,
  prep:S=>{S.met.galch=1;},
  x:'장강용왕 갈 천호의 누선에서 잔치가 열렸다. 수적들이 북을 치고 노래한다. 용왕이 술잔을 들며 물었다. “오늘 밤 내려오는 배가 둘이다. 관아의 세곡선, 그리고 정파 표국의 배. 하나만 턴다. 네가 골라라.”',
  ch:[{t:'세곡선을 턴다',h:'은자·명성',go:S=>{A(S,{gold:60,fame:6,moral:2});TK(S,'galch',8);return '탐관의 쌀을 강변 마을마다 한 섬씩 내려놓았다. 새벽, 강가에서 아이들이 손을 흔들었다. 용왕이 껄껄 웃었다. “좋은 수적이 되겠구나!”';}},
@@ -9297,7 +9297,7 @@ function pwHTML(s){const p=pwOf(s),C={정파:'var(--jade)',사파:'var(--gold)',
 const PW_WAR={
  정파:{foe:S=>S.w.demon>=1?'마교':'사파',x:S=>S.w.demon>=1?'무림맹에서 격문이 돌았다. 마교가 중원에 박아 둔 분타 하나를 친다. 분타가 있는 곳은 평범한 장원이다. 장원의 아이들은 그곳이 무엇인지 모른다.':'무림맹에서 격문이 돌았다. 장강 이남의 흑도 산채를 친다. “백성을 괴롭히는 무리를 쓸어 낸다.” 격문은 아름다웠다. 산채에 사는 이들 절반은 흉년에 쫓겨 온 농사꾼이다.',
    win:'백도의 깃발이 한 고을을 더 덮었다. 고을 사람들이 길가에 나와 절을 했다. 절하는 얼굴이 기쁜지 무서운지는 알 수 없었다.',plot:'싸우기 전에 적의 장부를 빼냈다. 검 한 번 뽑지 않고 거점 셋이 문을 열었다.',talk:'칼을 거두는 자는 살려 준다고 외쳤다. 절반이 칼을 버렸다. 맹의 장로들이 혀를 찼지만, 고을은 불타지 않았다.'},
- 사파:{foe:()=>'정파',x:()=>'사도련 련주 위 패천이 깃발을 올렸다. 강남의 표국 셋과 정파 장원 둘. “빼앗는 게 아니다. 원래 우리 몫이던 걸 찾아오는 거지.” 대청의 흑도인들이 잔을 깨며 함성을 질렀다.',
+ 사파:{foe:()=>'정파',x:S=>S&&S.dead_npc&&S.dead_npc.wipc?'사도련의 새 련주가 선대 련주의 낡은 깃발을 다시 올렸다. 강남의 표국 셋과 정파 장원 둘. “련주께서 살아 계셨으면 이 길을 가셨을 거다.” 대청의 흑도인들이 잔을 깨며 함성을 질렀다.':'사도련 련주 위 패천이 깃발을 올렸다. 강남의 표국 셋과 정파 장원 둘. “빼앗는 게 아니다. 원래 우리 몫이던 걸 찾아오는 거지.” 대청의 흑도인들이 잔을 깨며 함성을 질렀다.',
    win:'표국의 깃발이 내려가고 련의 깃발이 올라갔다. 그날 밤 장강에 배 백 척이 불을 밝혔다. 흑도의 잔치는 사흘 밤낮 이어졌다.',plot:'하오문의 귀를 빌렸다. 정파 장원의 장부가 하룻밤 사이에 련의 손에 들어왔다. 장원 주인은 아침에 일어나 제 땅이 남의 것이 된 걸 알았다.',talk:'표국 총표두와 마주 앉아 술을 마셨다. “통행세는 반으로. 대신 아무도 안 다친다.” 그가 잔을 비웠다. 흑도의 방식이었다.'},
  마교:{foe:()=>'정파',x:()=>'총단에서 동진(東進)의 명이 떨어졌다. 중원의 문파 하나를 무릎 꿇린다. 군사 사공 염이 지도 위에 붉은 점 하나를 찍고 웃었다. “칼은 마지막에 씁니다. 먼저 저들끼리 싸우게 해야지요.”',
    win:'산문의 현판이 떨어졌다. 그 자리에 검은 깃발이 꽂혔다. 무릎 꿇은 제자들 사이로 걸어가며 당신은 그들의 얼굴을 보지 않았다. 보면 기억하게 되니까.',plot:'정파 두 문파 사이에 거짓 서찰 한 통을 흘렸다. 보름 뒤 그들은 서로를 베고 있었다. 교는 칼 한 자루 뽑지 않았다.',talk:'투항하는 자는 교도로 받아 준다고 하자 생각보다 많은 이가 왔는데, 정파의 밥이 생각보다 짰던 모양이다.'}};
@@ -12865,8 +12865,9 @@ Object.assign(WED_SCENE,{
  hongok:S=>`녹림총채에서 올린 혼례는 돼지가 열 마리, 술독이 백 개로 산적의 혼례답게 시끄러웠다.
 ${NN('hongok')}${bat(NN('hongok'))?'은':'는'} 붉은 혼례복 위에 대감도를 멘 채 나타났다.
 ${NN('hongok')}: “벗으라고? 싫어. 혼례 날 칼 벗는 녹림 여자 봤어?”
-녹림왕이 상석에서 술독째 들이켜며 울었다. “우리 홍옥이가… 우리 홍옥이가 시집을….”
-${NN('hongok')}: “형님, 울지 마. 창피해.”
+${S.dead_npc.nokrim?`상석은 비워 두고 녹림왕이 쓰던 술잔만 올려 두었는데, 산적들은 그 잔에 먼저 술을 따르고 나서야 제 잔을 들었다.
+${NN('hongok')}: “형님, 봐. 나 시집간다.”`:`녹림왕이 상석에서 술독째 들이켜며 울었다. “우리 홍옥이가… 우리 홍옥이가 시집을….”
+${NN('hongok')}: “형님, 울지 마. 창피해.”`}
 맞절을 하고 고개를 드니 누님이 당신을 보고 있었다. 요염하지도 위험하지도 않은 얼굴로.
 ${NN('hongok')}: “막내가 서방이 되네. 이제 누님이라고 부르면 혼나.”
 당신: “그럼 뭐라고 불러요?”
@@ -13025,7 +13026,7 @@ E({id:'mkVacant',tag:'key',t:'빈 옥좌',a:[26,95],w:S=>inMk(S)&&S.rank>=3&&S.r
  x:S=>`천마전의 옥좌가 비어 있었다. ${S.flags.cmHeir?'혁련 무악이 폐관에 들며 남긴 말대로.':'천마가 쓰러진 뒤 교는 석 달 동안 주인이 없었다.'} 강자존의 교에 빈 옥좌는 피를 부른다. ${(S.flags.mkSama||{}).geomma?'옥좌를 노리는 장로 하나가 당신 앞을 막았다.':'검마 사마 율이 옥좌 앞에 서서 검을 반 치 뽑았다.'}`,
  ch:[{t:'옥좌를 빼앗는다',h:'비무',go:S=>{const b=battle(S,S.tmp.foe,{spar:1,safe:1});if(b.win){const got=mkBecome(S);return fightText(b,`차가운 옥좌에 앉자 천마전이 이름 하나를 외쳤다. ${got}`,'');}hurtS(S,30,'빈 옥좌');return fightText(b,'','밀려났다. 다음 해를 기약했다.');}}]});
 /* 천마가 된 뒤: 마교천하로 가는 출정 */
-const MK_MARCH=[['사도련을 굴복시킨다','사도련 총단. 련주 위 패천이 의리의 깃발 아래 흑도를 묶어 두었다. 천마의 사자가 당신의 말을 전했다. “따르든가, 지든가.”','wipc','사파'],
+const MK_MARCH=[['사도련을 굴복시킨다','사도련 총단. 련주 위 패천이 의리의 깃발 아래 흑도를 묶어 두었다. 사자가 당신이 일러 준 두 마디를 그대로 전했다. “따르든가, 지든가.”','wipc','사파'],
  ['무림맹을 친다','무림맹 총단. 정천신산 제갈 휘가 바둑판 앞에 앉아 천마의 군세를 셈하고 있었다.','maengju','정파'],
  ['소림의 산문에 선다','숭산 소림. 천 년 동안 무너지지 않은 산문. 방장 현오 대사가 홀로 산문 앞에 섰다.','hyeono','정파']];
 E({id:'mkMarch',tag:'key',t:'천마의 출정',title:S=>`천마의 출정 · ${MK_MARCH[S.flags.mkMarchN||0][0]}`,a:[28,99],w:S=>S.flags.cmMe&&inMk(S)&&(S.flags.mkMarchN||0)<3?6:0,cd:2,
@@ -14115,7 +14116,7 @@ const npcAge=(S,id)=>npcAge0(id)+(S.age-16);
 function npcFate(S,id){const F=S.fateN||(S.fateN={});if(F[id]==null){const p=NPCS[id]||{},a0=npcAge0(id);let f=64+(p.realm||2)*4+R(-6,10);
    if(ELDERS.includes(id)||a0>=60)f=Math.max(f,a0+R(20,40));if(isRom(id))f=Math.max(f,78+R(0,18));F[id]=f;}
   let f=F[id];if(S.spouse===id||S.lover===id||(S.harem||[]).includes(id))f=Math.max(f,86);return f;}
-function fateYear(S){if(S.age<20)return;for(const id in NPCS){if(S.dead_npc[id]||FATE_KEEP.has(id)||id===S.master||(S.org&&LEADER[S.org]===id&&S.rank<4))continue;
+function fateYear(S){if(S.age<20)return;for(const id in NPCS){if(S.dead_npc[id]||FATE_KEEP.has(id)||id===S.master||fateHold(S,id))continue;
   if(npcAge(S,id)<npcFate(S,id))continue;
   if(ELDERS.includes(id)&&S.met[id]&&(S.rel[id]||0)>=35&&!S.flags.nextEv&&!S.chain){S.flags.fwId=id;S.flags.nextEv='farewell';continue;} // 가까운 노인은 마지막 술잔으로
   S.dead_npc[id]=1;S.flags['fateD_'+id]=S.age;
@@ -15491,6 +15492,24 @@ async function sndPush(m){const c=ncfg(),repo=(c.ghRepo||ghDefault()).trim().rep
     SNDMAN=man;SNDMV=ver;say(`소리 ${up}개를 올렸어요. 잠시 뒤(보통 1~2분) 이 주소로 들어오는 사람 모두에게 들려요.`);}
   catch(e){say('올리지 못했어요: '+e.message);}finally{m.pushing=0;soon();}}
 
+/* ══ 78: 세상을 떠난 사람이 말하지 않게 · 이름 겹침으로 그림이 바뀌지 않게 ══════════
+   사건 글에서 ‘이름: “대사”’로 말하는 인물을 미리 모아 두고(EV_SPK), 그중 누가 천명을 다했으면 그 사건은 나오지 않는다.
+   이미 죽음을 셈하는 사건(dead_npc를 보는 사건)과 회상·장례·작별은 그대로 둔다. */
+const EV_SPK=(()=>{const full={},giv={},cnt={};for(const id in NPCS){const n=NPCS[id].n;if(!n)continue;full[n]=id;const nk=NPCS[id].nick;if(nk&&nk.length>=2){cnt[nk]=(cnt[nk]||0)+1;giv[nk]=id;}const g=n.split(' ').pop();if(g!==n&&g.length>=2){cnt[g]=(cnt[g]||0)+1;giv[g]=id;}}
+  const o={};for(const e of EV){let src='';try{src=String(e.x||'')+String(e.ch||'')+String(e.prep||'');if(Array.isArray(e.ch))src+=e.ch.map(c=>String(c.go||'')+String(c.t||'')).join('\n');}catch(_){}
+    if(/dead_npc|funeral|farewell/.test(src)||/funeral|farewell|grave|mem|ghost|dream|fw/i.test(e.id))continue;const s=new Set();let m;
+    const r1=/\$\{NN\('(\w+)'\)\}\s*:\s*“/g;while((m=r1.exec(src)))if(NPCS[m[1]])s.add(m[1]);
+    const r2=/(?:^|\n|`|')([^\n:“`'$\{\}]{2,12}?)\s*:\s*“/g;while((m=r2.exec(src))){const n=m[1].trim();const id=full[n]||(cnt[n]===1?giv[n]:null);if(id)s.add(id);}
+    if(s.size)o[e.id]=[...s];}return o;})();
+const spkDead=(S,id)=>{const L=EV_SPK[id];return !!(L&&S.dead_npc&&L.some(x=>S.dead_npc[x]));};
+{const _el=eligible;eligible=function(S,e){if(!_el(S,e))return false;return !spkDead(S,e.id);};}
+/* 천명에서 빼는 사람: 지금 몸담은 곳의 사람(가까운 노인의 작별은 그대로), 아직 다 풀지 못한 인연의 보호자·화자 */
+function fateHold(S,id){const p=NPCS[id];if(!p)return false;
+  if(S.org&&LEADER[S.org]===id)return true;
+  if(S.org&&p.org===S.org&&!(ELDERS.includes(id)&&S.met[id]&&(S.rel[id]||0)>=35))return true;
+  for(const x in NPCS){const q=NPCS[x];if(q.guard===id&&S.met[x]&&!S.dead_npc[x])return true;}
+  for(const k in EV_SPK){const m=/^lv_(\w+?)_\d$/.exec(k);if(m&&m[1]!==id&&S.met[m[1]]&&!S.dead_npc[m[1]]&&!S.seen[k]&&EV_SPK[k].includes(id))return true;}
+  return false;}
 const EVM=Object.fromEntries(EV.map(e=>[e.id,e]));
 try{devAddAll();}catch(e){}
 EVM.ai=AI_EV;
@@ -15821,7 +15840,7 @@ function saveHall(h){try{localStorage.setItem(HKEY,JSON.stringify(h));}catch(e){
 const NAI_URL='https://image.novelai.net/ai/generate-image';
 const NAI_MODELS=[['nai-diffusion-4-5-full','V4.5 Full'],['nai-diffusion-4-5-curated','V4.5 Curated'],['nai-diffusion-5-full','V5 Full'],['nai-diffusion-5-curated','V5 Curated'],['nai-diffusion-4-full','V4 Full']];
 const NAI_Q={'nai-diffusion-5-full':'very aesthetic, masterpiece, best quality','nai-diffusion-5-curated':'very aesthetic, masterpiece, best quality','nai-diffusion-4-5-full':'very aesthetic, masterpiece, no text','nai-diffusion-4-5-curated':'location, masterpiece, no text','nai-diffusion-4-full':'no text, best quality, very aesthetic, absurdres'};
-const GAME_VER='2026.10.26-77';
+const GAME_VER='2026.10.26-78';
 const NAI_NEG='nsfw, nude, lowres, bad anatomy, bad hands, missing fingers, extra digits, text, watermark, signature, logo, worst quality, low quality, blurry, modern clothes, glasses, eyewear, jpeg artifacts';
 const NKEY='murim-nai';
 function ncfg(){let c={};try{c=JSON.parse(localStorage.getItem(NKEY)||'{}');}catch(e){}return Object.assign({key:'',relay:'',model:'nai-diffusion-4-5-full',style:'wuxia, ancient china, hanfu, detailed illustration, cinematic lighting',autoEv:false,autoPc:false,vn:true,neg:NAI_NEG,tnpc:'',tev:'',tmap:'',q:true,steps:28,scale:5,rescale:0},c,{pr:Object.assign({},c.pr)});}
@@ -16672,14 +16691,19 @@ function foeBox(){const f=S.tmp.foe;if(!f)return '';const p=perceive(S,f);const 
 let VN={k:'',i:0,tk:'',t:0};
 const vnAuto=()=>{try{return localStorage.getItem('murim-vnauto')==='1';}catch(e){return false;}};
 const vnOn=()=>ncfg().vn!==false;
-function vnNames(S){const o=[];for(const id in NPCS){const p=NPCS[id];if(!p.n)continue;o.push([p.n,id]);const g=p.n.split(' ').pop();if(g!==p.n&&g.length>=2)o.push([g,id]);const k=safe(()=>npcNick(id,S));if(k&&k.length>=2){o.push([k,id]);o.push([k+' '+p.n,id]);}}
+/* 호칭과 같은 이름(대사·사태·노인·노파·주모…)은 ‘이름:’ 줄에서도 그 사람으로 읽지 않고, 보통 낱말과 같은 이름(무명·소화·연화…)은 지문 속 주어로 읽지 않는다. 이름 앞에 한글이 바로 붙어 다른 낱말의 일부가 되면(‘화연이’ 속 ‘연이’ 같은) 그것도 버린다 */
+const VN_TITLE=/^(대사|사태|노인|노파|주모|도사|진인|선사|장로|대협|소협|여협|낭자|공자|소저|부인|어르신|노야|노선배|선배|사형|사매|사제|사저|사부|도장|방장|장문|문주|가주|교주|맹주|대인|대장|두령|채주|객주|점소이|의원|아씨|아가씨|할멈|영감|노형|아우|형님|누님)$/;
+const VN_GENERIC=/^(무명|공명|신의|소화|홍의|백련|연화)$|^(대사|사태|노인|노파|주모|도사|진인|선사|장로|대협|소협|여협|낭자|공자|소저|부인|어르신|노야|노선배|선배|사형|사매|사제|사저|사부|도장|방장|장문|문주|가주|교주|맹주|대인|대장|두령|채주|객주|점소이|의원|아씨|아가씨|할멈|영감|노형|아우|형님|누님)$/;
+const vnNameEnd=(t,j,n)=>!/[가-힣]/.test(t[j-n-1]||'');
+function vnNames(S){const o=[];for(const id in NPCS){const p=NPCS[id];if(!p.n)continue;o.push([p.n,id]);const g=p.n.split(' ').pop();if(g!==p.n&&g.length>=2&&!VN_TITLE.test(g))o.push([g,id]);const k=safe(()=>npcNick(id,S));if(k&&k.length>=2){if(!VN_TITLE.test(k))o.push([k,id]);o.push([k+' '+p.n,id]);}}
   const cnt={};o.forEach(([n])=>cnt[n]=(cnt[n]||0)+1);const mine=myNames(S);return [...mine.map(n=>[n,'me']),...o.filter(([n])=>cnt[n]===1&&!mine.includes(n))].sort((a,b)=>b[0].length-a[0].length);}
 /* 내 이름: 성을 뗀 이름까지. 같은 이름의 인물이 있어도 내 이름으로 읽는다 */
 function myNames(S){const n=S&&S.name;if(!n)return [];const L=[n];const sur=(SUR||[]).filter(x=>n.startsWith(x)&&n.length>x.length).sort((a,b)=>b.length-a.length)[0];if(sur){const g=n.slice(sur.length);if(g.length>=2)L.push(g);}return L;}
 function vnWho(S,name,NM){name=name.trim();if(/^(당신|나)$/.test(name))return 'me';if(name==='붉은 눈의 홍의')return 'hongui';const f=NM.find(([n])=>n===name);return f?f[1]:null;}
 // 한 문장 안에서 가장 뒤(또는 앞)에 나오는 주어를 찾는다
 function vnSubj(S,t,NM,fromEnd,back){if(!t)return undefined;const hits=[];
-  for(const [n,id] of NM){let i=t.indexOf(n);while(i>=0){hits.push([i,id]);i=t.indexOf(n,i+n.length);}}
+  {const H=[];for(const [n,id] of NM){if(VN_GENERIC.test(n))continue;let i=t.indexOf(n);while(i>=0){H.push([i,id,n.length]);i=t.indexOf(n,i+n.length);}}
+   for(const h of H)if(!H.some(o=>o!==h&&o[2]>h[2]&&o[0]<=h[0]&&o[0]+o[2]>=h[0]+h[2])&&vnNameEnd(t,h[0]+h[2],h[2]))hits.push([h[0],h[1]]);}
   const pr=/(그녀|그)(가|는|의)(?![가-힣]*[을를])/g;let m;while((m=pr.exec(t)))if(!/[가-힣]$/.test(t.slice(0,m.index)))hits.push([m.index,back]);
   const me=/당신(이|은|도)\s*(\S+\s*)?(말했|답했|물었|외쳤|중얼|대꾸|대답했|불렀|속삭)/g;while((m=me.exec(t)))hits.push([m.index,'me']);
   if(!hits.length)return undefined;hits.sort((a,b)=>a[0]-b[0]);return (fromEnd?hits[hits.length-1]:hits[0])[1];}
