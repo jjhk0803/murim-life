@@ -149,7 +149,15 @@ button.chip.on{background:var(--jade);color:var(--card);border-color:var(--jade)
 /* 선택지 판은 밝은 바탕이라 어두운 화면에서도 글자를 어둡게 둔다 */
 .fchips{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 10px}.fchip{padding:7px 12px;font-size:.92rem;background:rgba(246,243,235,.95);color:#1c2420;border:1px solid #b9b19d}.fchip:hover{background:#fff}.free-h{margin:10px 0 4px;text-shadow:0 1px 3px rgba(0,0,0,.6)}.free-h .muted{color:inherit;opacity:.8}.flog{display:flex;flex-direction:column;gap:6px;margin:8px 0}.frow{border-left:3px solid var(--line);padding-left:8px}
 .vnpanel .flog,.vnpanel .free-h,.vnpanel .frow p{color:#1c2420}
-.vnbody .delta .chip.up{color:#cdebd9;border-color:#7fb596;background:rgba(40,80,60,.35)}.vnbody .delta .chip.dn{color:#f4c4b8;border-color:#c98476;background:rgba(110,40,30,.3)}.vnpanel .foe{background:#f6f3eb}.vnpanel .foe .fn{color:#1c2420}.vnpanel .foe .fv{color:#4d5650}.vnpanel .foe .fv em{color:#1c2420;font-weight:600}
+.vnbody .delta .chip.up{color:#cdebd9;border-color:#7fb596;background:rgba(40,80,60,.35)}.vnbody .delta .chip.dn{color:#f4c4b8;border-color:#c98476;background:rgba(110,40,30,.3)}.vnpanel .foe{background:#f6f3eb}
+/* 미연시 연출: 타격·외침 */
+@keyframes vnshake{0%,100%{transform:translate(0,0)}15%{transform:translate(-7px,3px)}30%{transform:translate(6px,-4px)}45%{transform:translate(-5px,2px)}60%{transform:translate(4px,-2px)}80%{transform:translate(-2px,1px)}}
+.vnfull.vnshake{animation:vnshake .42s ease-out}
+.vnflash{position:absolute;inset:0;pointer-events:none;opacity:0;z-index:3}.vnflash.go{animation:vnflash .38s ease-out}
+@keyframes vnflash{0%{opacity:.75;background:radial-gradient(circle at 50% 45%,rgba(255,250,240,.9),rgba(200,40,30,.35) 70%)}100%{opacity:0}}
+.vnsp.jump{animation:vnjump .45s ease-out}@keyframes vnjump{0%,100%{translate:0 0}35%{translate:0 -3%}}
+.vnsp.recoil{animation:vnrecoil .45s ease-out}@keyframes vnrecoil{0%,100%{translate:0 0}25%{translate:4% 1%}55%{translate:-1% 0}}
+.facegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}.fcell{display:flex;flex-direction:column;align-items:center;gap:3px;border:1px solid var(--line);border-radius:8px;padding:6px}.fcell img{height:96px;object-fit:contain}.vnpanel .foe .fn{color:#1c2420}.vnpanel .foe .fv{color:#4d5650}.vnpanel .foe .fv em{color:#1c2420;font-weight:600}
 .choices{display:flex;flex-direction:column;gap:8px;margin-top:4px}
 .choice{text-align:left;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px 14px;cursor:pointer;display:flex;flex-direction:column;gap:2px}
 .choice:hover{border-color:var(--jade);background:var(--jade-soft)}
@@ -698,7 +706,7 @@ function battle(S,f,o){o=o||{};const k=kwSet(S);const fk=f.kw||[];
   const r=my/fo;let fr=r>=1?.35/(r*r):.35+.5*(1-r);
   if(fk.includes('독')){if(has(S,'dokche')){A(S,{ng:2});fr-=.05;}else fr+=.12*(1-S.rp/100);} if(fk.includes('마')&&S.rm<50)A(S,{mood:-6});
   fr*=dmgMult(S); if(S.flags.heukmi)fr*=S.flags.heukmi>=2?.86:.93; if((S.flags.jjS||0)>=3)fr*=.85; if(S.flags.gwihon)fr*=.9; if(r<.6&&f.lethal)fr=Math.max(fr,1.1); if(o.spar)fr=Math.min(fr,.3); if(o.safe)fr=Math.min(fr,Math.max(0,(S.hp-5)/hpMax(S)));
-  hurt(S,Math.round(hpMax(S)*fr),o.cause||`${f.nick?f.nick+' ':''}${jo(f.n,'과','와')}의 싸움`);
+  {const w0=S.wound||0;hurt(S,Math.round(hpMax(S)*fr),o.cause||`${f.nick?f.nick+' ':''}${jo(f.n,'과','와')}의 싸움`);if(o.spar)S.wound=w0;} // 비무는 부상을 남기지 않는다
   if(r>=1&&k.has('혈'))A(S,{hp:Math.round(hpMax(S)*.1),moral:-1});
   if(k.has('마')||k.has('혈'))A(S,{moral:-1,temper:1});
   if(r>=1&&f.lethal){const sl=has(S,'slaughter')&&!S.flags.salTamed;A(S,{salgi:sl?6:3,mood:sl?8:-3});if(has(S,'seongol'))A(S,{mood:-10,cult:-3});}
@@ -8406,7 +8414,7 @@ const INN_LV=['','작은 객잔','이층 객잔','객방 서른 칸','천하객�
 const JOB_HINT={merchant:'봇짐 → 점포 → 상단 → 천하상회. 사들인 물건은 이듬해에 팔린다. 신용이 높을수록 남는다.',scholar:'동시(수재) → 향시(거인) → 전시(진사) → 현령·지부·감찰어사·대학사. 학문이 시험을 가른다.',inn:'평판 60이면 이름난 객잔 주인, 150이면 천하객잔의 주인. 무림인 사건 대신 객잔 사건이 일어난다.',smith:'단조 40 대장장이, 70 명장. 신병이기를 벼리면 신장으로 불린다.',doctor:'의술 25 의원 · 50 명의 · 70 약왕 · 85 의선(도덕 20 이상) · 95 신의(고친 환자 80명 이상).'};
 /* 점소이 사건은 문파(하오문 말고)·다른 생업·강호로 나간 뒤에는 그친다 */
 const waiterOn=S=>!!S.flags.waiter&&(!S.org||S.org==='haomun')&&(!S.job||S.job==='inn')&&!S.flags.jianghu;
-const JOB_OK=new Set(['talk','talk2','visit','rescue','intro','feud','farewell','romeo','harem','haremLife','meet','suitor','propose','marry','child','kidsGrown','illness','famine','sage','kneel','overhear','guest','innRaid','innRise','guya','order','haoInfo','hermit','retire','ascend','birth','cfWork','cfGuardYear','dscNews']);
+const JOB_OK=new Set(['talk','talk2','visit','rescue','intro','feud','farewell','romeo','harem','haremLife','meet','suitor','propose','marry','child','kidsGrown','illness','famine','sage','kneel','overhear','guest','innRaid','innRise','guya','order','haoInfo','hermit','retire','ascend','funeral','birth','cfWork','cfGuardYear','dscNews']);
 function jobTitle(S){const b=S.biz||{};
   if(S.job==='inn')return !b.owner?'점소이':b.rep>=150?'천하객잔의 주인':b.rep>=60?'이름난 객잔 주인':'객잔 주인';
   if(S.job==='smith')return b.divine?'신장':S.forge>=70?'명장':S.forge>=40?'대장장이':'대장간 견습';
@@ -9351,8 +9359,8 @@ E({id:'eraLife',tag:'power',t:'천하의 나날',title:S=>S.w.era&&PW_SIDE[S.w.e
   :[{t:'참는다',go:S=>{A(S,{cult:3,mood:-5});return '참았다. 참는 것도 칼을 가는 일이다.';}},{t:'내 깃발을 위해 움직인다',h:'세력이 조금 살아난다',if:S=>!!mySide(S),go:S=>{pwAdd(S,mySide(S),1);A(S,{contrib:10,mind:2});return '밤마다 사람을 만났다. 하나, 또 하나. 깃발은 그렇게 다시 선다.';}},{t:'제 살길을 찾는다',go:S=>{A(S,{savvy:4,gold:20});return '깃발이 무엇이든 장사는 된다. 당신은 그 사실이 조금 서글펐다.';}}]});
 
 /* ══ 연애: 인연이 깊어지면 고백하고, 연인이 되어 함께 시간을 보내다 혼인한다 ══ */
-const LOVE_X={m:['eunha','yeonhwa','soryeong','seola','uihyang','sohwa','yohr','myoyeong','binghu'],f:['seolhan','mukya','nangcheong','hongchil','unhae','seokdol','songhak','nangis']}; // 이야기(LOVE)는 없지만 마음이 깊어지면 연인이 될 수 있는 사람들
-const romList=S=>[...loveList(S),...LOVE_X[S.sex==='m'?'m':'f'],...(S.flags&&S.flags.ngAdult&&S.flags.ngDone==='saved'&&(S.sex==='m'||S.master==='sobaek')?[ngId(S)]:[]),...(S.flags&&S.flags.cf&&S.flags.cf.sex!==S.sex&&(S.flags.cf.love||0)>=1&&!S.flags.cf.dead?['cfriend']:[])].filter(id=>NPCS[id]);
+const LOVE_X={m:['eunha','yeonhwa','soryeong','seola','uihyang','sohwa','yohr','myoyeong','binghu'],f:['rival','seolhan','mukya','nangcheong','hongchil','unhae','seokdol','songhak','nangis']}; // 이야기(LOVE)는 없지만 마음이 깊어지면 연인이 될 수 있는 사람들
+const romList=S=>[...loveList(S),...LOVE_X[S.sex==='m'?'m':'f'].filter(id=>id!=='rival'||(S.seen&&S.seen.rvMeet&&!S.dead_npc.rival)),...(S.flags&&S.flags.ngAdult&&S.flags.ngDone==='saved'&&(S.sex==='m'||S.master==='sobaek')?[ngId(S)]:[]),...(S.flags&&S.flags.cf&&S.flags.cf.sex!==S.sex&&(S.flags.cf.love||0)>=1&&!S.flags.cf.dead?['cfriend']:[])].filter(id=>NPCS[id]);
 const lover=S=>S.lover&&NPCS[S.lover]&&!S.dead_npc[S.lover]&&!loveBlocked(S,S.lover)&&S.spouse!==S.lover&&!S.flags['noMarry_'+S.lover]?S.lover:null;
 const propCands=S=>romList(S).filter(id=>((S.rel[id]||0)>=70||(S.lover===id&&(S.rel[id]||0)>=55&&(S.flags['dates_'+id]||0)>=1))&&!S.dead_npc[id]&&!S.flags['noMarry_'+id]&&!loveBlocked(S,id)&&(LOVE[id]||S.lover===id)).sort((a,b)=>(b===S.lover)-(a===S.lover)||S.rel[b]-S.rel[a]);
 const CONFESS={
@@ -14257,6 +14265,161 @@ function devAllHTML(){const m=modal,G=devGraph(),evs=EV.filter(e=>e.id!=='focus'
    <p class="small" style="margin:0">사건 <b>${evs.length}</b>개 · 갈래 ${gs.length}개 · 고친 것 ${ed} · 직접 만든 것 ${us}${np?` · 그림 프롬프트 없음 ${np}`:''}. 갈래를 눌러 펼치고, 사건을 누르면 글·확률·조건·선택지 효과를 고친다.</p>
    <div class="dvall">${gs.map(card).join('')}</div></div></div>`;}
 
+/* ══ 소리: 배경음·효과음 (ElevenLabs로 만들거나 파일로 넣는다) ══
+   소리는 이 브라우저(IndexedDB 'snd:' 칸)에만 저장된다. 키도 이 브라우저에만. */
+const SND_KEY='murim-sound';
+const SND_DEF={on:true,bgm:.45,sfx:.7,el:'',music:true,dur:60,pr:{}};
+function sndCfg(){let o={};try{o=JSON.parse(localStorage.getItem(SND_KEY)||'{}');}catch(e){}return Object.assign({},SND_DEF,o,{pr:Object.assign({},o.pr)});}
+function sndSave(c){try{localStorage.setItem(SND_KEY,JSON.stringify(c));}catch(e){}}
+const SND_SLOTS={
+ 'bgm:title':['배경음 · 타이틀','Chinese wuxia main theme, guzheng and bamboo flute, slow and majestic, ink painting mood, instrumental, seamless loop'],
+ 'bgm:life':['배경음 · 평상시','calm ancient Chinese village music, soft guqin and gentle dizi flute, peaceful, instrumental, seamless loop'],
+ 'bgm:battle':['배경음 · 싸움','intense wuxia battle music, fast taiko drums, erhu and pipa tremolo, heroic tension, instrumental, seamless loop'],
+ 'bgm:love':['배경음 · 인연','romantic Chinese melody, erhu and guzheng duet, tender, moonlit night, instrumental, seamless loop'],
+ 'bgm:sad':['배경음 · 슬픔·장례','mournful Chinese funeral music, distant suona and slow erhu, grief, instrumental, seamless loop'],
+ 'bgm:dark':['배경음 · 마도','dark ominous wuxia music, low war drums, dissonant strings, demonic cult, instrumental, seamless loop'],
+ 'sfx:hit':['효과음 · 타격','heavy martial arts punch impact with cloth whoosh'],
+ 'sfx:sword':['효과음 · 칼','two steel swords clashing, sharp metallic ring'],
+ 'sfx:page':['효과음 · 대사 넘김','very soft paper rustle'],
+ 'sfx:choice':['효과음 · 선택','soft wooden temple block click'],
+ 'sfx:level':['효과음 · 경지 돌파','mystical rising chime with deep gong, surge of energy'],
+ 'sfx:coin':['효과음 · 은자','a few silver coins dropping into a cloth pouch'],
+ 'sfx:heart':['효과음 · 두근','soft heartbeat with gentle wind chime'],
+ 'sfx:bell':['효과음 · 종','distant temple bell toll with long reverb']};
+const sndPrompt=k=>(sndCfg().pr[k]||'').trim()||SND_SLOTS[k][1];
+const SNDU={},SNDCHK={};
+function sndUrl(k){if(SNDU[k])return SNDU[k];if(!(k in SNDCHK)){SNDCHK[k]=0;imgGet('snd:'+k).then(b=>{SNDCHK[k]=1;if(b){SNDU[k]=URL.createObjectURL(b);if(k.startsWith('bgm:'))sndTick(true);if(modal&&modal.t==='snd')soon();}});}return null;}
+async function sndStore(k,b){await imgPut('snd:'+k,b);if(SNDU[k])URL.revokeObjectURL(SNDU[k]);SNDU[k]=URL.createObjectURL(b);SNDCHK[k]=1;}
+async function sndDel(k){try{const db=await idb();await new Promise(res=>{const t=db.transaction('img','readwrite');t.objectStore('img').delete('snd:'+k);t.oncomplete=res;t.onerror=res;});}catch(e){}if(SNDU[k])URL.revokeObjectURL(SNDU[k]);delete SNDU[k];SNDCHK[k]=1;}
+const BG={el:null,k:null,blocked:false};
+function sndFade(el,v,cb){const step=()=>{const d=v-el.volume;if(Math.abs(d)<.04){el.volume=Math.max(0,Math.min(1,v));cb&&cb();return;}el.volume=Math.max(0,Math.min(1,el.volume+Math.sign(d)*.04));setTimeout(step,50);};step();}
+function bgmPlay(k){const c=sndCfg();if(!c.on||!k){if(BG.el){const o=BG.el;sndFade(o,0,()=>o.pause());BG.el=null;BG.k=null;}return;}
+  const u=sndUrl(k);if(!u)return;if(BG.k===k&&BG.el&&!BG.el.paused){sndFade(BG.el,c.bgm);return;}
+  const old=BG.el,el=new Audio(u);el.loop=true;el.volume=0;BG.el=el;BG.k=k;el.play().then(()=>{BG.blocked=false;sndFade(el,c.bgm);}).catch(()=>{BG.blocked=true;});if(old)sndFade(old,0,()=>old.pause());}
+function sfx(k){const c=sndCfg();if(!c.on)return;const u=sndUrl('sfx:'+k);if(!u)return;try{const a=new Audio(u);a.volume=c.sfx;a.play().catch(()=>{});}catch(e){}}
+function sceneBgmKey(){if(typeof S==='undefined'||!S||S.phase==='birth'||S.phase==='end')return 'bgm:title';const e=S.cur&&EVM[S.cur];
+  if(S.dead||(e&&(e.id==='funeral'||/마지막|장례|떠나다/.test(e.t||''))))return 'bgm:sad';if(S.tmp&&S.tmp.foe&&S.phase==='event')return 'bgm:battle';
+  if(e&&(e.tag==='love'||/^lv_/.test(e.id)))return 'bgm:love';if(darkOf(S))return 'bgm:dark';return 'bgm:life';}
+let SNDT=0;function sndTick(now){clearTimeout(SNDT);SNDT=setTimeout(()=>{try{bgmPlay(sceneBgmKey());}catch(e){}},now?0:120);}
+document.addEventListener('click',()=>{if(BG.blocked){BG.blocked=false;BG.k=null;sndTick(true);}},true);
+function sndRes(chips){if(!chips)return;const t=chips.map(c=>c.t).join(' ');if(/경지가/.test(t))sfx('level');else if(/은자가 (크게 )?늘었다/.test(t))sfx('coin');}
+async function elGen(k){const c=sndCfg();if(!c.el.trim())throw new Error('소리 설정에서 ElevenLabs 키를 먼저 넣어 주세요.');const pr=sndPrompt(k),music=k.startsWith('bgm:')&&c.music!==false;
+  const path=music?'/v1/music?output_format=mp3_44100_128':'/v1/sound-generation?output_format=mp3_44100_128';
+  const body=music?{prompt:pr,music_length_ms:Math.round(Math.min(300,Math.max(10,+c.dur||60))*1000),model_id:'music_v1',force_instrumental:true}:{text:pr,duration_seconds:k.startsWith('bgm:')?22:2,prompt_influence:.4};
+  const u='https://api.elevenlabs.io'+path,relay=(ncfg().relay||'').trim(),go=url=>fetch(url,{method:'POST',headers:{'xi-api-key':c.el.trim(),'Content-Type':'application/json'},body:JSON.stringify(body)});
+  let r;try{r=await go(u);}catch(e){if(!relay)throw new Error('ElevenLabs에 바로 연결하지 못했어요. 그림 설정의 중계 서버 주소를 넣어 보세요(최신 proxy/worker.js에 ElevenLabs가 들어 있어요).');r=await go(naiUrl(ncfg(),u));}
+  if(!r.ok){let t='';try{t=(await r.text()).slice(0,200);}catch(e){}throw new Error(r.status===401?'ElevenLabs 키가 맞지 않아요.':(r.status===402||/paid|subscription|plan|quota|credit/i.test(t))?'요금제나 크레딧이 모자라요. 배경음 작곡(Music)은 유료 요금제에서 된다. 아래 ‘효과음 엔진으로 배경음 만들기’를 켜면 짧은 반복음으로 만든다.':`ElevenLabs 오류 ${r.status}: ${t}`);}
+  await sndStore(k,new Blob([await r.arrayBuffer()],{type:'audio/mpeg'}));}
+function sndHTML(){const c=sndCfg(),m=modal;const row=(k,i)=>{const [n]=SND_SLOTS[k],has=!!sndUrl(k)||SNDCHK[k]===0&&false,busy=(m.busy||{})[k];
+  return `<div class="plate" style="display:flex;flex-direction:column;gap:6px"><div class="row" style="justify-content:space-between"><b>${esc(n)}</b><span class="small ${has?'':'muted'}">${has?'있음':'없음'}</span></div>
+   <textarea id="sp_${i}" rows="2" placeholder="${esc(SND_SLOTS[k][1])}">${esc(c.pr[k]||'')}</textarea>
+   <div class="row wrap"><button class="ghost" data-a="sndgen" data-k="${k}" ${busy?'disabled':''}>${busy?'만드는 중…':has?'다시 만들기':'ElevenLabs로 만들기'}</button>${has?`<button class="ghost" data-a="sndplay" data-k="${k}">▶ 듣기</button><button class="ghost" data-a="snddel" data-k="${k}">지우기</button>`:''}<label class="ghost btnl" for="sf_${i}">파일에서 넣기</label><input type="file" id="sf_${i}" data-sk="${k}" accept="audio/*" hidden></div></div>`;};
+  return `<div class="modal" data-a="mbg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mt"><div class="row" style="justify-content:space-between"><h3 id="mt" style="margin:0">소리</h3><button class="ghost" data-a="mclose">${m.back?'← 설정':'닫기'}</button></div>
+   <label class="row"><input type="checkbox" id="sd_on" ${c.on?'checked':''}> 소리를 켠다</label>
+   <div class="row wrap" style="gap:12px"><label class="small">배경음 크기 <input type="range" id="sd_bgm" min="0" max="1" step="0.05" value="${c.bgm}"></label><label class="small">효과음 크기 <input type="range" id="sd_sfx" min="0" max="1" step="0.05" value="${c.sfx}"></label></div>
+   <label for="sd_el">ElevenLabs API 키</label><input id="sd_el" type="password" autocomplete="off" value="${esc(c.el)}" placeholder="elevenlabs.io → Developers → API Keys">
+   <p class="muted small" style="margin:0">키는 이 브라우저에만 저장되고 어디에도 올라가지 않는다. 효과음은 무료 크레딧으로도 만들 수 있고, 배경음 작곡(Music)은 유료 요금제에서 된다.</p>
+   <label class="row"><input type="checkbox" id="sd_mus" ${c.music!==false?'checked':''}> 배경음은 작곡(Music)으로 만든다 <span class="muted small">(끄면 효과음 엔진으로 22초 반복음)</span></label>
+   <label class="small">작곡 길이(초) <input type="number" id="sd_dur" min="10" max="300" value="${esc(c.dur)}" style="width:5em"></label>
+   ${m.err?`<p class="status">${esc(m.err)}</p>`:''}
+   <p class="grp-t" style="margin:6px 0 0">칸마다 프롬프트(영어)를 고칠 수 있다. 비우면 기본 프롬프트.</p>
+   ${Object.keys(SND_SLOTS).map(row).join('')}</div></div>`;}
+
+/* ══ 미연시 연출: 타격·외침·표정 ══ */
+const HIT_RE=/퍽|쾅|콰|쨍|챙|베었|찔렀|내리쳤|후려|날아왔|부딪|튕겨|처박|쓰러졌|맞았|피가 튀|피를 토|칼이 .{0,6}(닿|스쳤|박혔)|주먹이|발길질/;
+const CLASH_RE=/칼이 부딪|쨍|챙|검이 맞부|칼날이/;
+const FACES=[['기쁨','happy'],['웃음','laughing'],['슬픔','sad'],['화남','angry'],['놀람','surprised'],['부끄럼','embarrassed'],['걱정','worried'],['결의','determined'],['아픔','hurt'],['의기양양','smug'],['수줍음','shy'],['반함','love']];
+const FACE_RE=[['laughing',/하하|하하하|깔깔|크하하|푸하/],['angry',/감히|이놈|죽고 싶|용서 못|닥쳐|건방|이 녀석이|괘씸/],['hurt',/크윽|윽\.|아파|으윽|피가/],['sad',/흑|눈물|슬프|미안해|보고 싶|떠나지 마/],['surprised',/뭐\?|어\?|설마|정말\?|!\?|세상에/],['embarrassed',/부끄|얼굴이 붉|귀가 빨|그, 그|아, 아니/],['love',/좋아해|사랑|연모/],['worried',/괜찮|걱정|조심|다치지/],['determined',/반드시|맹세|지키겠|기필코|두고 봐/],['smug',/흥|훗|그럼 그렇지|내 그럴 줄/],['happy',/고마워|다행|기뻐|좋다|웃었/]];
+const faceOf=t=>{for(const [k,re] of FACE_RE)if(re.test(t||''))return k;return null;};
+const faceSrc=k=>{const l=localURL(k);if(l)return l;return MAN&&typeof MAN[k]==='string'&&REPO_ON?IMG_BASE+MAN[k]+(MANV[k]?'?v='+MANV[k]:''):null;};
+function vnBeatFx(b,tag){if(!b||VN.fxk===tag)return;VN.fxk=tag;const root=document.querySelector('.vnfull');if(!root)return;const t=b.t||'';
+  root.querySelectorAll('.vnsp').forEach(el=>{const id=el.dataset.id;if(!id||id.startsWith('mob:'))return;const base=imgURL(castKey(id));let u=base;
+    if(id===b.s){const f=faceOf(t);if(f){const fu=faceSrc(castKey(id)+'~'+f);if(fu)u=fu;}}if(u&&el.getAttribute('src')!==u)el.setAttribute('src',u);});
+  const on=root.querySelector('.vnsp.on');
+  if(HIT_RE.test(t)){root.classList.remove('vnshake');void root.offsetWidth;root.classList.add('vnshake');let fl=root.querySelector('.vnflash');if(!fl){fl=document.createElement('div');fl.className='vnflash';root.appendChild(fl);}fl.classList.remove('go');void fl.offsetWidth;fl.classList.add('go');
+    if(on){on.classList.remove('recoil');void on.offsetWidth;on.classList.add('recoil');}sfx(CLASH_RE.test(t)?'sword':'hit');}
+  else if(on&&b.s&&/!/.test(t)){on.classList.remove('jump');void on.offsetWidth;on.classList.add('jump');}}
+/* 표정 만들기: NovelAI 표정 변환(Emotion)으로 스탠딩의 얼굴만 바꾼다 */
+async function imgB64Fit(u,W,H){const bm=await createImageBitmap(await (await fetch(u)).blob());const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,W,H);const s=Math.min(W/bm.width,H/bm.height),w=bm.width*s,h=bm.height*s;x.drawImage(bm,(W-w)/2,(H-h)/2,w,h);return c.toDataURL('image/png').split(',')[1];}
+async function naiEmotion(u,emo,lv){const c=ncfg();if(!c.key.trim())throw new Error('설정에서 NovelAI 토큰을 먼저 넣어 주세요.');const image=await imgB64Fit(u,832,1216);
+  let r;try{r=await fetch(naiUrl(c,'https://image.novelai.net/ai/augment-image'),{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+c.key.trim()},body:JSON.stringify({req_type:'emotion',width:832,height:1216,image,prompt:`${emo};;`,defry:lv||0})});}
+  catch(e){throw new Error('NovelAI에 연결하지 못했어요. 설정의 중계 서버 주소를 확인해 주세요.');}
+  if(!r.ok){let t='';try{t=(await r.text()).slice(0,160);}catch(e){}throw new Error(r.status===401?'NovelAI 토큰이 맞지 않아요.':r.status===402?'Anlas가 모자라거나 구독이 필요해요.':`NovelAI 오류 ${r.status}: ${t}`);}
+  let b=new Blob([await unzipFirst(new Uint8Array(await r.arrayBuffer()))],{type:'image/png'});try{const cb=await cutBg(b);if(cb)b=cb;}catch(e){}return b;}
+async function faceGen(k,en){const base=imgSrc(k);if(!base)throw new Error('먼저 이 인물의 스탠딩이 있어야 표정을 만들 수 있어요.');const fk=k+'~'+en;BUSY.add(fk);render();
+  try{const b=await naiEmotion(base.u,en,+(ncfg().defry||0));await imgPut(fk,b);setImg(fk,b);}finally{BUSY.delete(fk);render();}}
+function faceSectionHTML(k){const port=k.startsWith('st:')&&!k.includes('~');if(!port)return '';
+  return `<p class="grp-t" style="margin:6px 0 0">표정</p><p class="muted small" style="margin:0">이 스탠딩으로 NovelAI 표정 변환을 돌려 얼굴만 바꾼다. 미연시에서 그 인물이 말할 때 대사에 맞는 표정이 나온다(웃음·화남·슬픔·놀람…). 한 장마다 Anlas가 들 수 있다.</p>
+   <div class="facegrid">${FACES.map(([ko,en])=>{const fk=k+'~'+en,u=faceSrc(fk),busy=BUSY.has(fk);return `<div class="fcell">${u?`<img src="${u}" alt="${esc(ko)}">`:'<span class="muted small">없음</span>'}<b class="small">${esc(ko)}</b><span class="row" style="gap:4px"><button class="chip" data-a="fgen" data-k="${esc(fk)}" ${busy?'disabled':''}>${busy?'만드는 중':u?'다시':'만들기'}</button>${u&&localURL(fk)?`<button class="chip" data-a="fdel" data-k="${esc(fk)}">지우기</button>`:''}</span></div>`;}).join('')}</div>
+   <div class="row wrap"><button class="ghost" data-a="fgenall" data-k="${esc(k)}">빈 표정 한꺼번에 만들기</button><label class="small">변화 정도 <select id="n_defry">${[0,1,2,3,4,5].map(v=>`<option value="${v}" ${+(ncfg().defry||0)===v?'selected':''}>${v===0?'강하게':v===5?'약하게':v}</option>`).join('')}</select></label></div>`;}
+
+/* ══ 장례: 가까운 사람이 세상을 떠나면 ══ */
+function funQueue(S){const F=S.flags.fun||(S.flags.fun={}),Q=S.flags.funQ||(S.flags.funQ=[]);
+  if(!S.flags.funInit){S.flags.funInit=1;for(const id in S.dead_npc)F[id]=1;const c=cf(S);if(c&&c.dead)F.cf=1;return;}
+  for(const id in S.dead_npc){if(F[id]||!NPCS[id]||id==='cfriend')continue;F[id]=1;const close=S.spouse===id||(S.harem||[]).includes(id)||S.lover===id||S.flags.masterDead===id||(id==='rival'&&S.met.rival)||(S.met[id]&&(S.rel[id]||0)>=55);if(close&&!S.flags['rj_'+id])Q.push(id);}
+  const c=cf(S);if(c&&c.dead&&!F.cf){F.cf=1;Q.push('cf');}}
+const funName=id=>id==='cf'?cfN(S):NPCS[id]?NPCS[id].n:'그 사람';
+const funRole=(S,id)=>id==='cf'?(S.spouse==='cfriend'?'반려':'동무'):S.spouse===id?'반려':(S.harem||[]).includes(id)?'반려':S.flags.masterDead===id?'사부':id==='rival'?'평생의 맞수':S.lover===id?'연인':'벗';
+E({id:'funeral',tag:'family',t:'장례',title:S=>S.tmp.fid?`장례 · ${funName(S.tmp.fid)}`:'장례',a:[6,200],force:S=>(S.flags.funQ||[]).length>0&&!S.chain&&!S.dead,
+ prep:S=>{S.tmp.fid=(S.flags.funQ||[]).shift();S.tmp.wx=pick(['비가 내렸다','눈이 내렸다','바람이 불었다','하늘이 지나치게 맑았다']);},
+ x:S=>{const id=S.tmp.fid,n=funName(id),role=funRole(S,id),dk=darkOf(S);
+  const head=role==='반려'?`${n}의 장례에서 당신은 상주가 되었다.${S.kids?' 아이들이 당신 소매를 붙잡고 서 있었다.':''}`:role==='사부'?`사부 ${n}의 장례에서 당신은 제자로서 상복을 입었다.`:role==='평생의 맞수'?`${jI(n)} 죽었다는 소식을 처음엔 믿지 않았다. 그 독종이 죽을 리가 없었다. 그런데 관 속의 얼굴은 정말로 그였다.`:`${n}의 장례에 갔다.`;
+  return `${head} ${S.tmp.wx}.\n${dk?'교의 법대로 시신은 불에 태워 보냈다. 연기가 곧게 올라갔다.':'관이 땅에 내려가고 흙이 덮였다. 흙 떨어지는 소리가 이렇게 큰 줄 처음 알았다.'}\n${role==='평생의 맞수'?`조문객들이 수군거렸다. “그 사람 평생 저분을 이기겠다고 쫓아다녔다지.” 누군가 관 위에 낡은 붕대 한 줄을 올려놓았다. 당신이었다.`:role==='동무'?`고향 사람 몇이 왔다. 개울가에서 둘이 신을 잃고 울던 걸 기억하는 사람들이었다.`:role==='사부'?`사부의 옛 벗들이 하나둘 와서 술을 한 잔씩 부었다. 그들이 당신을 보며 말했다. “저 녀석이 그 제자인가.”`:''}`;},
+ ch:S=>{const id=S.tmp.fid,n=funName(id),role=funRole(S,id),dk=darkOf(S);return [
+  {t:'장례를 크게 치른다',h:'은자 · 명성·도덕',go:S=>{A(S,{gold:-Math.min(S.gold,40),fame:3,moral:2,mood:-6});if(dk&&S.org)A(S,{contrib:5});return `조문객이 사흘 동안 끊이지 않았다. 당신은 한 사람 한 사람에게 고개를 숙였다. ${n}${bat(n)?'이':'가'} 이렇게 많은 사람을 남기고 갔다는 것이, 이상하게 위로가 되었다.`;}},
+  {t:'홀로 무덤을 지킨다',h:'수양·심상',go:S=>{A(S,{cult:4,mood:4});return `사람들이 다 돌아간 뒤에도 무덤 앞에 앉아 있었다. 밤이 되자 별이 떴다. ${role==='평생의 맞수'?'“다음 판은 저승에서 하자.” 대답은 없었다. 그 녀석이라면 분명 먼저 덤볐을 텐데.':'할 말이 많았는데 하나도 하지 못했다. 그래도 새벽이 될 때까지 곁에 있었다.'}`;}},
+  {t:'유품 하나를 챙긴다',h:role==='평생의 맞수'||role==='사부'?'깨달음':'심상·수양',go:S=>{if(role==='평생의 맞수'||role==='사부'){A(S,{exp:tb(S)*.6,mu:3});return role==='사부'?'사부의 낡은 비급 한 권을 품에 넣었다. 여백마다 사부의 글씨가 빼곡했다. 밤마다 그 글씨를 따라 읽었다.':'그 녀석의 피 묻은 붕대를 챙겼다. 펼쳐 보니 안쪽에 당신을 이기기 위한 초식이 깨알같이 적혀 있었다. 그 초식들이 다 당신의 약점이었다.';}
+    A(S,{mood:6,cult:2});return role==='동무'?`${S.flags.cfToken?'개울에서 주운 납작한 돌이 나왔다. 열 살 때 당신이 쥐여 준 그 돌이었다.':'낡은 고무신 한 짝이 나왔다. 평생 버리지 않았던 모양이다.'} 품에 넣었다.`:role==='반려'?`${n}${bat(n)?'이':'가'} 늘 쓰던 머리 장신구를 챙겼다. 아침마다 그것을 손에 쥐고 하루를 시작했다.`:`${n}의 술병 하나를 챙겼다. 반쯤 남아 있었다. 그 반은 언젠가 같이 마시자던 몫이었다.`;}}];}});
+
+/* ══ 라이벌 「독종」 진 태호 ══
+   무림인으로 사는 주인공 앞에만 나타난다. 주인공에 맞춰 사는 녀석이라 주인공이 약하면 약하고, 천하제일이면 그 바로 아래까지 강해진다. 질 때마다 더 강해져서 돌아온다.
+   미워할 수 없는 놈이다. 여자 주인공이면 이기면 혼인해 달라고 덤빈다. */
+Object.assign(NPCS,{rival:{n:'진 태호',nick:'독종',org:null,lv:S=>Math.max(1,S.realm||1),q:1,hide:0,hs:0,kw:['강','쾌'],sex:'m',love:'근골',d:'어디서 굴러먹다 왔는지 모를 떠돌이 무인. 한 번 정한 상대는 이길 때까지 쫓아온다. 질 때마다 더 강해져서 돌아온다.'}});
+Object.assign(NPC_BIO,{rival:'출신도 사문도 말하지 않는다. 처음 당신에게 진 날부터 당신을 이기는 것이 삶의 전부가 되었다. 주루에서는 그를 독종이라 부른다. 독하게 지고, 독하게 수련하고, 독하게 다시 온다.'});
+const rvOk=S=>!S.job&&!S.dead_npc.rival&&(!!S.org||!!S.master||S.realm>=2);
+const rvRec=S=>`통산 ${S.flags.rvW||0}승 ${S.flags.rvL||0}패`;
+/* 늘 주인공 바로 아래. 천하제일이어도 그 밑까지 따라온다 */
+function rvFoe(S,extra){const f=npcFoe(S,'rival',extra);f.pow=Math.max(10,Math.round(pow(S)*(.86+Math.random()*.12)));return f;}
+E({id:'rvMeet',tag:'side',t:'독종',a:[13,26],w:S=>rvOk(S)&&!S.seen.rvMeet?5:0,
+ x:S=>`${S.org?`${ORGS[S.org].n} 산문 아래 장터`:'장터 한복판'}에서 누가 당신 앞을 막아섰다. 또래였다. 머리를 붉은 천으로 아무렇게나 묶었고, 두 팔뚝에 붕대를 칭칭 감았다.\n진 태호: “네가 ${S.name}이냐. 요즘 이 바닥에서 좀 한다는.”\n당신: “누군데.”\n진 태호: “진 태호. 기억해 둬라. 오늘부터 너를 이길 사람 이름이니까.”\n구경꾼들이 웃었다. 그는 웃지 않았다. 주먹에 감은 붕대가 피로 얼룩져 있었다. 오늘 아침에도 누군가와 싸우고 온 모양이었다.`,
+ ch:[{t:'받아 준다',h:'비무',go:S=>{S.met.rival=1;const b=battle(S,rvFoe(S),{spar:1});if(b.win){S.flags.rvW=(S.flags.rvW||0)+1;TK(S,'rival',12);A(S,{fame:3});return fightText(b,'그는 쓰러지고 또 일어났다. 열한 번째에 일어났을 때 구경꾼들이 질려서 박수를 쳤다. 열두 번째에는 일어나지 못했다. 그래도 바닥에 누운 채 손가락을 들어 당신을 가리켰다.\n진 태호: “…다음엔 내가 이긴다.”\n그날부터 장터 사람들은 그를 독종이라 불렀다.','');}
+    S.flags.rvL=(S.flags.rvL||0)+1;TK(S,'rival',10);A(S,{exp:tb(S)*.4});return fightText(b,'','그가 이겼다. 그런데 이긴 놈이 더 놀란 얼굴이었다.\n진 태호: “…뭐야. 이겼네. 아니, 이건 무효다. 네가 방심했어. 다음에 제대로 붙자.”\n이긴 쪽이 무효를 외치는 건 처음 보았다. 그날부터 장터 사람들은 그를 독종이라 불렀다.');}},
+  {t:'상대하지 않는다',h:'구력 · 그래도 따라온다',go:S=>{S.met.rival=1;TK(S,'rival',6);A(S,{tongue:2,cult:2});return '못 들은 척 지나갔다. 그는 사흘 동안 당신을 따라다녔다. 밥을 먹으면 맞은편에 앉았고, 잠을 자면 문 앞에 앉았다. 나흘째 아침, 당신이 졌다는 듯 한숨을 쉬자 그가 씩 웃었다. “그럼 내일 붙는 거다.”';}}]});
+E({id:'rvDuel',tag:'side',t:'독종이 또 왔다',title:S=>`독종이 또 왔다 · ${rvRec(S)}`,a:[14,95],w:S=>rvOk(S)&&S.seen.rvMeet?2.6:0,cd:3,
+ prep:S=>{S.tmp.k=pick(['fall','snow','inn','mad']);S.tmp.foe=rvFoe(S);},
+ x:S=>{const k=S.tmp.k;return (k==='fall'?`폭포 아래에서 수련하다 돌아오니 바위 위에 진 태호가 앉아 있었다. 온몸이 젖어 있었다. 당신보다 먼저 와서 당신보다 오래 폭포를 맞은 모양이었다.`
+  :k==='snow'?`눈 오는 밤, 문을 두드리는 소리가 났다. 진 태호였다. 어깨에 눈이 한 자나 쌓여 있었다.\n진 태호: “석 달 동안 산에 처박혀 있었다. 이번엔 진짜다.”`
+  :k==='inn'?`객잔에서 국수를 먹는데 맞은편 의자가 끌리는 소리가 났다. 진 태호가 앉으며 당신 국수 그릇을 제 앞으로 당겨 갔다.\n진 태호: “이긴 사람이 먹는 거다. 붙자.”`
+  :`진 태호가 나타났다. 얼굴에 처음 보는 흉터가 셋 늘어 있었다.\n진 태호: “너 이기려고 이것저것 해 봤다. 독도 먹어 봤고 벼랑에서도 떨어져 봤다. 안 죽더라.”`)+`\n${rvRec(S)}. 그는 그 숫자를 당신보다 정확히 외우고 있었다.`;},
+ ch:S=>[{t:'정식으로 겨룬다',h:'비무 · 늘 당신 바로 아래까지 따라온다',go:S=>{const b=battle(S,S.tmp.foe,{spar:1});if(b.win){S.flags.rvW=(S.flags.rvW||0)+1;TK(S,'rival',5);A(S,{fame:2,exp:tb(S)*.2});return fightText(b,pick(['이번에도 이겼다. 그런데 한 수 차이였다. 그는 바닥에 누워 하늘을 보며 웃었다. “한 수. 다음엔 반 수다.”','이겼다. 그가 일어나 붕대를 새로 감으며 말했다. “네 왼발이 반 박자 늦다. 다음엔 거기다.” 맞는 말이었다. 당신도 몰랐던 버릇이었다.']),'');}
+    S.flags.rvL=(S.flags.rvL||0)+1;TK(S,'rival',6);A(S,{exp:tb(S)*.5});return fightText(b,'',pick(['졌다. 그가 승리를 외치며 객잔 탁자 위로 뛰어올랐다가 머리를 들보에 박았다. 이긴 놈이 더 아파 보였다.','졌다. 그는 기뻐하지 않았다. “이건 네가 지친 날이었다. 다음엔 네가 제일 좋은 날 붙자.” 독종은 이겨도 독종이었다.']));}},
+  {t:'술로 겨룬다',h:'심상·호감',go:S=>{TK(S,'rival',8);A(S,{mood:12});return '세 번째 술독에서 그가 먼저 쓰러졌다. 쓰러지면서도 당신 소매를 붙잡고 중얼거렸다. “술은… 졌다… 무공은… 아직…” 당신은 그를 업어 객방에 눕혔다. 다음 날 그는 아무것도 기억하지 못한다고 우겼다.';}},
+  {t:'“오늘은 안 한다”',h:'수양 · 그는 선물을 두고 간다',go:S=>{TK(S,'rival',4);A(S,{cult:3,hp:8});return `그가 한참 노려보다가 돌아섰다. 다음 날 아침 문 앞에 보따리 하나가 놓여 있었다. 금창약과 육포, 그리고 쪽지 한 장. ‘다 나아서 붙자. 아픈 놈 이겨 봤자 소용없다.’`;}}]});
+E({id:'rvSave',tag:'side',t:'등을 맡기다',a:[20,70],w:S=>rvOk(S)&&S.seen.rvMeet&&!S.seen.rvSave&&(S.rel.rival||0)>=25?3:0,
+ prep:S=>{S.tmp.foe=mkFoe({n:'복면 자객 무리',realm:clamp(S.realm,2,8),q:1.15,group:1});},
+ x:S=>`밤길에 자객 열둘이 당신을 에워쌌다. 칼끝이 사방에서 좁혀 들어왔다. 그때 담장 위에서 누가 뛰어내렸다.\n진 태호: “비켜. 이놈은 내가 이길 놈이다. 너희가 먼저 손대면 안 되지.”\n그가 당신 등에 등을 붙였다. 붕대 감은 주먹에서 피가 떨어지고 있었다. 여기까지 달려오며 이미 몇을 쓰러뜨린 모양이었다.`,
+ ch:[{t:'등을 맡기고 싸운다',h:'싸움 · 독종이 함께',go:S=>{const b=battle(S,S.tmp.foe,{ally:1.45});TK(S,'rival',15);A(S,{fame:b.win?8:2});return fightText(b,'둘이서 열둘을 쓰러뜨렸다. 마지막 놈이 달아나자 그가 털썩 주저앉았다.\n진 태호: “착각하지 마라. 너를 구한 게 아니라 내 상대를 지킨 거다.”\n당신: “알아.”\n진 태호: “…알면 됐고.” 그의 귀가 빨갰다.','쓰러지기 직전, 그가 당신을 어깨에 둘러메고 지붕을 넘었다. 깨어나 보니 그가 밤새 약을 갈아 대고 있었다. “다 나으면 붙는다. 그것만 알아 둬.”');}},
+  {t:'“네 상대는 나 하나다”라며 그를 먼저 빼낸다',h:'도덕·호감',go:S=>{TK(S,'rival',18);A(S,{moral:4});hurt(S,15,'자객의 칼');return '당신이 그를 담 너머로 밀어내고 혼자 칼을 받았다. 자객들은 결국 물러갔다. 담 너머에서 그가 씩씩거리며 돌아왔다. “누가 너더러 날 지키래! 너는 내가 이겨야 할 사람이라고!” 그날 그는 처음으로 당신 앞에서 울었다. 화가 나서 운 거라고 끝까지 우겼다.';}}]});
+E({id:'rvLove',tag:'love',t:'독종의 청혼',a:[19,45],w:S=>S.sex==='f'&&rvOk(S)&&S.seen.rvMeet&&(S.rel.rival||0)>=45&&!S.spouse&&!(lover(S)&&S.lover!=='rival')&&S.age-(S.last.rvLove??-99)>=3?6:0,
+ x:S=>`진 태호가 평소보다 일찍 왔다. 붕대를 새로 감았고, 머리를 묶은 붉은 천도 새것이었다. 그리고 웬일로 칼을 뽑지 않았다.\n진 태호: “오늘은… 조건을 걸고 붙자.”\n당신: “무슨 조건.”\n진 태호: “내가 이기면, 혼인해 줘.”\n당신이 아무 말도 하지 않자 그의 얼굴이 목까지 시뻘게졌다.\n진 태호: “…지면 다시는 이 말 안 한다. 아니, 지면 다음에 또 한다. 이길 때까지.”`,
+ ch:S=>[{t:'“그 조건, 받겠다”',h:'비무 · 지면 혼인한다 · 이겨도…',go:S=>{const b=battle(S,rvFoe(S),{spar:1});TK(S,'rival',10);
+    if(!b.win||S.lover==='rival'||(S.rel.rival||0)>=70){S.spouse='rival';S.lover=null;S.flags.wedAge=S.age;S.flags.rvWed=1;A(S,{mood:25,fame:10});deed(S,'평생의 맞수 독종 진 태호와 혼인했다');S.chain='wedding';
+      return fightText(b,'이겼다. 그런데 쓰러진 그가 너무 서럽게 하늘을 보고 있어서, 당신이 먼저 말했다. “…한 판 졌다고 치자.” 그가 벌떡 일어났다. 너무 빨리 일어나서 다시 넘어졌다.','졌다. 아니, 진 건지 져 준 건지 당신도 모른다. 그가 넋이 나간 얼굴로 서 있다가 갑자기 하늘을 향해 소리를 질렀다. 장터 사람들이 모두 돌아보았다.')+'\n혼례 날 그는 칼 대신 꽃을 들고 왔다. 꽃을 든 손이 칼을 든 손보다 떨렸다.';}
+    S.flags.rvRej=(S.flags.rvRej||0)+1;return fightText(b,'이겼다. 그는 바닥에 누운 채 한참 말이 없다가 씩 웃었다. “그럼 다음에 또 청혼한다. 이길 때까지.” 정말로 그럴 것 같아서, 당신은 웃음을 참지 못했다.','');}},
+  {t:'“지금은 아니다”',h:'호감 · 그는 기다린다',go:S=>{TK(S,'rival',5);A(S,{cult:2});return '그가 고개를 푹 숙였다가 들었다. “알았다. 그럼 더 세져서 온다. 네가 아니라고 못 할 만큼.” 그날 밤 폭포 쪽에서 사람 우는 소리가 났다는 소문이 돌았다.';}}]});
+E({id:'rvBro',tag:'side',t:'맞수의 술잔',a:[24,60],w:S=>S.sex==='m'&&rvOk(S)&&S.seen.rvMeet&&!S.seen.rvBro&&(S.rel.rival||0)>=45?3:0,
+ x:S=>`진 태호가 술 두 병을 들고 왔다. 칼은 등에 멘 채였다.\n진 태호: “오늘은 안 붙는다. ${rvRec(S)}. 생각해 보니 내가 너랑 붙은 날이 내 인생에서 제일 잘 산 날들이더라.”\n그가 잔을 내밀었다.\n진 태호: “의형제 하자. 그래도 붙는 건 계속 붙는다.”`,
+ ch:[{t:'잔을 받는다',h:'의형제 · 호감',go:S=>{S.flags.sworn=S.flags.sworn||'rival';TK(S,'rival',15);A(S,{mood:15});deed(S,'독종 진 태호와 의형제를 맺었다');return '잔을 부딪쳤다. 그가 먼저 비우고 말했다. “형님은 내가 한다. 내가 한 살 많을 거다. 아마.” 둘 다 제 나이를 정확히 몰랐다. 그래서 그날부터 이긴 사람이 형님을 하기로 했다.';}},
+  {t:'“의형제는 됐고, 평생 맞수로 하자”',h:'호감·깨달음',go:S=>{TK(S,'rival',10);A(S,{exp:tb(S)*.3});return `그가 잠깐 멍하니 있다가 크게 웃었다. “좋다. 그게 더 좋다.” 그날 둘은 술을 다 마시고 새벽에 또 붙었다. ${rvRec(S)}에서 하나가 더 늘었다.`;}}]});
+E({id:'rvOld',tag:'side',t:'마지막 판',a:[60,120],w:S=>rvOk(S)&&S.seen.rvMeet&&!S.seen.rvOld?3:0,
+ x:S=>`진 태호가 지팡이를 짚고 왔다. 머리는 하얗게 셌는데 붉은 천은 그대로였다. 팔뚝의 붕대도.\n진 태호: “${rvRec(S)}. 셈이 맞지?”\n당신: “맞다.”\n진 태호: “마지막 판이다. 이번엔… 이기든 지든 이게 마지막이다. 무릎이 말을 안 들어서.”`,
+ ch:[{t:'마지막으로 겨룬다',h:'비무',go:S=>{const b=battle(S,rvFoe(S),{spar:1});if(b.win)S.flags.rvW=(S.flags.rvW||0)+1;else S.flags.rvL=(S.flags.rvL||0)+1;TK(S,'rival',10);A(S,{cult:4,mood:10});deed(S,`평생의 맞수 독종과 마지막 판을 겨루었다 (${rvRec(S)})`);
+    return fightText(b,'이겼다. 그가 지팡이를 짚고 일어나 웃었다. “평생 한 번을 제대로 못 이겼네. 그래도 덕분에 여기까지 왔다. 너 아니었으면 나는 장터 건달로 죽었을 거다.”','졌다. 그가 한참 서 있다가 지팡이를 던지고 하늘에 대고 웃었다. 늙은 웃음이 산을 울렸다. “봤냐! 봤냐! 이겼다!” 당신도 웃었다. 평생 이렇게 기쁘게 진 적은 없었다.');}},
+  {t:'“비긴 걸로 하자”',h:'수양·호감',go:S=>{TK(S,'rival',12);A(S,{cult:6,mood:12});return '그가 한참 당신을 보다가 고개를 끄덕였다. “비긴 거다. 평생 처음으로 비겼네.” 둘은 나란히 앉아 해가 질 때까지 아무 말도 하지 않았다. 그게 평생 겨룬 두 사람의 마지막 판이었다.';}}]});
+function sndReadForm(){const c=sndCfg(),g=id=>document.getElementById(id);const on=g('sd_on');if(on)c.on=on.checked;const bv=g('sd_bgm');if(bv)c.bgm=+bv.value;const sv=g('sd_sfx');if(sv)c.sfx=+sv.value;const el=g('sd_el');if(el)c.el=el.value.trim();const mu=g('sd_mus');if(mu)c.music=mu.checked;const du=g('sd_dur');if(du)c.dur=+du.value||60;
+  Object.keys(SND_SLOTS).forEach((k,i)=>{const t=g('sp_'+i);if(t){const v=t.value.trim();if(v)c.pr[k]=v;else delete c.pr[k];}});sndSave(c);if(!c.on)bgmPlay(null);else if(BG.el)BG.el.volume=c.bgm;else sndTick(true);}
+{const r0=render;render=function(){r0();try{sndTick();}catch(e){}};} // 그릴 때마다 장면에 맞는 배경음
+
 const EVM=Object.fromEntries(EV.map(e=>[e.id,e]));
 try{devAddAll();}catch(e){}
 EVM.ai=AI_EV;
@@ -14516,7 +14679,7 @@ function diffChips(a,b){const c=[];
   const dp=b.pow-a.pow;if(Math.abs(dp)>=1&&Math.abs(dp)>=a.pow*.01)c.push({t:`전투력이 ${Math.abs(dp)>=a.pow*.2?'크게 ':''}${dp>0?'올랐다':'떨어졌다'}`,up:dp>0});
   return c;}
 function finish(S,title,pickTxt,text,before,major){worldWatch(S);
-  S.res={title,pick:pickTxt,text:smoothProse(String(text)),chips:diffChips(before,SNAP(S))};
+  S.res={title,pick:pickTxt,text:smoothProse(String(text)),chips:diffChips(before,SNAP(S))};try{sndRes(S.res.chips);}catch(e){}
   addLog(S,`${title} — ${pickTxt}. ${String(text).split('\n')[0]}`,major);
   S.phase='result';save();render();}
 function choose(i){const e=EVM[S.cur];const c=evChoices(S,e)[i];if(!c)return;
@@ -14538,7 +14701,7 @@ function deathCard(S){S.phase='death';const c=S.dead;
 function nextYear(){if(S.dead){endLife();return;}
   if(S.age<YOUNG&&!S.flags.half&&S.phase!=='birth'){S.flags.half=1;let id=null;try{id=chooseEvent(S);}catch(e){}if(id&&id!=='focus'){openEvent(S,id);view='ev';resetScroll=true;save();render();return;}}
   S.flags.half=0;
-  passive(S);try{fateYear(S);}catch(e){}metTrack(S,'year');if(S.dead){deathCard(S);addLog(S,S.res.text,1);save();render();return;}
+  passive(S);try{fateYear(S);funQueue(S);}catch(e){}metTrack(S,'year');if(S.dead){deathCard(S);addLog(S,S.res.text,1);save();render();return;}
   let id=chooseEvent(S);if(aiTake(S,id))id='ai';openEvent(S,id);view='ev';resetScroll=true;save();render();aiPrefetch();}
 
 /* 평가 */
@@ -14587,7 +14750,7 @@ function saveHall(h){try{localStorage.setItem(HKEY,JSON.stringify(h));}catch(e){
 const NAI_URL='https://image.novelai.net/ai/generate-image';
 const NAI_MODELS=[['nai-diffusion-4-5-full','V4.5 Full'],['nai-diffusion-4-5-curated','V4.5 Curated'],['nai-diffusion-5-full','V5 Full'],['nai-diffusion-5-curated','V5 Curated'],['nai-diffusion-4-full','V4 Full']];
 const NAI_Q={'nai-diffusion-5-full':'very aesthetic, masterpiece, best quality','nai-diffusion-5-curated':'very aesthetic, masterpiece, best quality','nai-diffusion-4-5-full':'very aesthetic, masterpiece, no text','nai-diffusion-4-5-curated':'location, masterpiece, no text','nai-diffusion-4-full':'no text, best quality, very aesthetic, absurdres'};
-const GAME_VER='2026.10.26-73';
+const GAME_VER='2026.10.26-74';
 const NAI_NEG='nsfw, nude, lowres, bad anatomy, bad hands, missing fingers, extra digits, text, watermark, signature, logo, worst quality, low quality, blurry, modern clothes, glasses, eyewear, jpeg artifacts';
 const NKEY='murim-nai';
 function ncfg(){let c={};try{c=JSON.parse(localStorage.getItem(NKEY)||'{}');}catch(e){}return Object.assign({key:'',relay:'',model:'nai-diffusion-4-5-full',style:'wuxia, ancient china, hanfu, detailed illustration, cinematic lighting',autoEv:false,autoPc:false,vn:true,neg:NAI_NEG,tnpc:'',tev:'',tmap:'',q:true,steps:28,scale:5,rescale:0},c,{pr:Object.assign({},c.pr)});}
@@ -14881,7 +15044,7 @@ function makeZip(files){const enc=new TextEncoder(),parts=[],cen=[];let off=0; /
   return new Blob([...parts,...cen,e.buffer],{type:'application/zip'});}
 async function exportPack(g){g.busy=1;g.msg='묶음을 만드는 중…';render();
   try{const db=await idb();const keys=await new Promise((res,rej)=>{const q=db.transaction('img').objectStore('img').getAllKeys();q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);});
-    const ks=keys.filter(k=>typeof k==='string'&&!k.startsWith('pc:')&&!k.startsWith('prev:')&&!k.startsWith('raw:')&&!k.startsWith('wk:')&&!/^ev:lv_/.test(k));if(!ks.length)throw new Error('내보낼 내 그림이 없어요. 먼저 그림을 그리거나 넣어 주세요.');
+    const ks=keys.filter(k=>typeof k==='string'&&!k.startsWith('snd:')&&!k.startsWith('pc:')&&!k.startsWith('prev:')&&!k.startsWith('raw:')&&!k.startsWith('wk:')&&!/^ev:lv_/.test(k));if(!ks.length)throw new Error('내보낼 내 그림이 없어요. 먼저 그림을 그리거나 넣어 주세요.');
     await MANP;const man=Object.assign({},MAN||{}),files=[];
     for(const k of ks){let b=await imgGet(k);if(!b)continue;if(g.webp!==false)b=await toWebp(b);const u8=new Uint8Array(await b.arrayBuffer()),ty=imgType(u8);const p=repoPath(k,ty==='image/webp'?'webp':ty==='image/jpeg'?'jpg':'png');man[k]=p;files.push(['img/'+p,u8]);}
     files.push(['img/index.json',new TextEncoder().encode(JSON.stringify({v:1,files:man},null,1))]);download(makeZip(files),'murim-img.zip');
@@ -14905,7 +15068,7 @@ async function ghPush(g){const c=ncfg(),repo=(c.ghRepo||ghDefault()).trim().repl
     let man={},ver={};const mf=await api(`/contents/img/index.json?ref=${encodeURIComponent(br)}`,{ok404:1});
     if(mf&&mf.content){try{const j=JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(mf.content.replace(/\s/g,'')),ch=>ch.charCodeAt(0))));man=Object.assign({},j.files||j);ver=Object.assign({},j.ver||{});}catch(e){}}
     const old=JSON.stringify(man);
-    const db=await idb();const keys=(await new Promise((res,rej)=>{const q=db.transaction('img').objectStore('img').getAllKeys();q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);})).filter(k=>typeof k==='string'&&!/^(pc|raw|wk|prev):/.test(k)&&!/^ev:lv_/.test(k));
+    const db=await idb();const keys=(await new Promise((res,rej)=>{const q=db.transaction('img').objectStore('img').getAllKeys();q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);})).filter(k=>typeof k==='string'&&!/^(pc|raw|wk|prev|snd):/.test(k)&&!/^ev:lv_/.test(k));
     if(!keys.length)throw new Error('올릴 내 그림이 없어요. 먼저 그림을 그리거나 넣어 주세요.');
     const entries=[];let done=0,skip=0;
     const one=async k=>{let b=await imgGet(k);if(!b)return;if(g.webp!==false)b=await toWebp(b);
@@ -15072,6 +15235,14 @@ Object.assign(EV_TAGS,{
 Object.assign(EV_TAGS,{
  cfMsVisit:'eccentric old master dropping from a tree in a mountain hermitage yard, two children staring, afternoon light',
  cfMsDays:'two young people with wooden swords in a secluded mountain clearing, hermit hut, old master watching from a rock'});
+Object.assign(EV_TAGS,{
+ funeral:'funeral procession in an ancient chinese village, white mourning cloth banners, grave mound, incense smoke, overcast sky',
+ rvMeet:'crowded ancient chinese market street, a scruffy young martial artist with bandaged fists blocking the way, onlookers',
+ rvDuel:'two martial artists facing off beside a waterfall, spray and mist, dramatic tension',
+ rvSave:'night alley ambush, masked assassins surrounding two fighters back to back, moonlight, drawn blades',
+ rvLove:'young martial artist with a new red headband awkwardly offering a duel in a sunny courtyard, plum blossoms',
+ rvBro:'two martial artists sharing wine jars on a rooftop at dusk, swords resting beside them',
+ rvOld:'two white-haired old martial artists facing each other on a mountain peak at sunset, one leaning on a cane'});
 Object.assign(EV_TAGS,{confess:'moonlit courtyard, plum tree, stone lantern',date:'river of floating lanterns at night festival, bridge',loveSpark:'rainy ancient chinese street, eaves, puddles, lantern glow',matchmaker:'tea house interior, register book and brush on table',wedding:'traditional chinese wedding hall, red silk, double happiness, candles',wedLife:'quiet courtyard house in morning, tea set on veranda, plum tree',loveJourney:'winding mountain road, autumn trees, distant pass',pastBond:'old stone bridge over a quiet river at dusk, red thread tied to a willow branch, falling peach blossom petals, paper lanterns, dreamlike nostalgic haze, no humans',meet:'crowded inn entrance, banners, afternoon',chilEscape:'assassin removing mask at dawn river, fight aftermath',honguiRescue:'blood cult altar collapsing, hero carrying priestess in red',namgungDuel:'two middle-aged swordsmen dueling in courtyard, witness',yeomCase:'constable and martial artist rescuing children from bandit den',heartFind:'ancient manuscript in ruined taoist temple, dust, candle light',pwWar:'martial sect army marching under banners, dust, generals',dom:'vast crowd raising swords before grand hall, banners filling sky',eraLife:'town street under faction banners, patrolling martial artists',enemyMeet:'two rival martial artists facing each other on mountain road, tense',romeo:'star-crossed lovers, moonlight, two swords, rival sects',harem:'tense tea table in inn, several beautiful people glaring',haremLife:'lively household courtyard, family breakfast',visit:'old friend visiting, doorway, warm light',rescue:'friend at bedside, medicine, candle',intro:'friend introducing stranger at inn table',feud:'two masters with drawn swords at riverbank, sunset',farewell:'old master on deathbed, two wine cups',sama:'four demonic masters drinking in dark tavern, candles',jpDescend:'mountain sect gate, master seeing off disciple, dawn',jpPurge:'noble villain in mansion, chained children, swordsman confronting',jpMercy:'martial alliance hall, kneeling young prisoner, elders',jpVillage:'fishing village in reeds, pirates, lone hero',jpSpring:'disciples sword dancing under blossoms, petals',sdDance:'drunken swordsman dancing with sword, riverside tavern, moon',sdLoyalty:'breaking prison gate at dawn, two outlaws on horse',sdRain:'duel on bridge in rain, straw hats',sdBetray:'underworld boss on large chair, wine, dim hall',sdRiver:'pirate ship feast on yangtze river at night, drums',mgScheme:'sinister man arranging chrysanthemums, dark palace garden',mgPlan:'strategist with go board, candle, scheming',mgMad:'mad old swordsman laughing in ruined shrine',mgTrial:'demonic cult arena, two young fighters',mgYoma:'seductive demonic woman with fan, red lanterns',mgFeast:'wedding feast, poisoned wine, maid with blue nails',talk:'two people talking, tea house, wuxia',talk2:'two people talking at night, lantern',docVenom:'doctor testing poison herb, dark hands',docDokma:'poison master, purple miasma, dark clinic',docSubdue:'doctor subduing thugs with poison mist',docAssassin:'rich man offering gold to doctor, candle',docMartialHeal:'old martial artist teaching doctor',docDisciple:'child at herbal shop door',docHerb:'cliff herb guarded by white snake',innName:'inn signboard being carved',innStory:'storyteller performing in inn, crowd',innTax:'magistrate clerk with ledger at inn',innFestival:'lantern festival, inn decorated with lanterns',innDrunk:'drunken old man walking in inn',smithApprentice:'child at forge door',smithContest:'smiths clashing swords, competition',smithCursed:'cursed red sword on anvil',lifePath:'crossroads, inn, smithy, herbal clinic, young person with bundle',jn_bandit:'mountain bandit fortress, wooden palisade, bandit chief',jn_jangsu:'river pirates boat, yangtze rapids',jn_beggar:'beggars under bridge, rain',jn_haomun:'inn back door, waiter whispering',jn_demon:'black mountains, demonic cult envoy on black horse',jn_blood:'crimson lake, blood cult priest',factionTop:'martial arts duel on great stage, elders watching',sadoMeet:'underworld meeting hall, many factions, banners',innBacker:'thugs in chinese inn, overturned table',innDish:'chinese kitchen, steaming noodles, chef',innInfo:'old woman drinking tea in inn corner',innBrawl:'martial artists fighting in inn',innWar:'refugees at inn gate, war',innFugitive:'wounded man hiding in inn storeroom',innRival:'two inns facing across street, cooking contest',innLegend:'old cook with cleaver, peeling radish',innLegend2:'old cook handing cleaver, sunset inn',innRich:'pouch of silver on inn table',innOld:'old innkeeper behind counter, lantern',smithOrg:'blacksmith forge, sect envoys',smithOre:'blacksmith holding meteorite ore',smithSeries:'swords on rack, carved names',smithTang:'hidden weapon blueprint, needles',smithDivine:'divine sword glowing in forge, lightning',smithFame:'hero with sword defending village',smithWar:'forge full of spears, war',smithBlade:'smith holding own sword, leaving forge',docPlague:'plague town, doctor with medicine',docWounded:'wounded martial artist at clinic door, dawn',docPoison:'poisoned boy, doctor with needles',docPalace:'imperial palace bedchamber, physician',docElixir:'glowing pill in alchemy furnace',docLife:'old doctor writing prescription, candle',docWar:'battlefield field hospital',docTurn:'herbal clinic, poison and medicine',retire:'old swordsman putting sword on beam',seekSinui:'snowy valley, hermit doctor hut',sage:'old master and young martial artist talking, tea, mist',momHands:'mother washing clothes, cracked hands, child',fatherBack:'father carrying child on back, dusk',homeLetter:'letter, brush writing, candle',momSilk:'silk robe, mother smiling, village house',parentDeath:'deathbed, holding hands, candle',orphanRoots:'two nameless graves on hill',kneel:'palace eunuch palanquin, crowd kneeling, one person standing',unbowedPoem:'scholars reading poem, academy',helpless:'child hiding behind well, burning village',vowEnd:'old one-armed man drinking alone in inn',lvWed:'married couple, morning, courtyard',lvOld:'old couple holding hands, plum blossoms',lvFate:'distant figure, letter, wind'});
 /* 인물끼리 장면: 두 사람의 스탠딩이 앞에 서므로 배경은 사람 없는 그 장소만 그린다 */
 Object.assign(EV_TAGS,{
@@ -15309,14 +15480,16 @@ function traitsHTML(s,full){const t=s.traits.map(k=>`<span class="chip t" title=
   ['극양지체','극음지체'].forEach(k=>{if(s.flags[k])t.push(`<span class="chip t">${k}</span>`);});if(s.flags.hwangol)t.push('<span class="chip t">환골탈태</span>');
   return t.length?`<div class="chips">${t.join('')}</div>${full?`<div class="muted small">${s.traits.map(k=>`<b>${TRAITS[k].n}</b> ${esc(TRAITS[k].d)} <span style="color:var(--seal)">제약: ${esc(TCON[k]||'없음')}</span>`).join('<br>')}</div>`:''}`:'';}
 function portrait(k,label,cls){const f=ST_FORM[k.slice(3)];const u=imgURL(k)||(k.startsWith('st:')?(imgURL('npc:'+k.slice(3))||(f&&f.fb?imgURL('st:'+f.of):null)):null);return `<button class="portrait ${u?'has':''} ${cls||''}" data-a="draw" data-k="${esc(k)}" aria-label="${esc(label)} 그림">${u?`<img src="${u}" alt="">`:BUSY.has(k)?'그리는 중':'그림'}</button>`;}
+Object.assign(NPC_TAGS,{rival:'1boy, solo, young man, sharp eyes, messy black hair tied with a red cloth, scarred knuckles, dark blue worn martial outfit, bandaged forearms, cocky grin'});
 function basePrompt(k){const [t,id]=k.split(/:(.+)/);if(t==='mob'){const m=MOB[id];return (m?m.t:'1boy, solo')+(m&&m.face?'':', faceless, no facial features, blank face')+', cowboy shot, standing, white background';}if(t==='st'){const g=ST_FORM[id]?ST_FORM[id].t:ST_BASE[id]?ST_BASE[id][1]:NPC_TAGS[id];return (typeof g==='function'?g(S):g)+', cowboy shot, standing, white background';}return t==='bg'?loveBgPrompt(id):t==='wp'?(WPN_IMG_TAGS[id]||'one chinese weapon'):t==='cg'?cgPrompt(id):t==='pc'?pcPrompt(S):t==='npc'?npcPrompt(id,S):t==='map'?MAP_TAG:t==='reg'?(REG_TAGS[id]||'ancient chinese landscape')+', scenery, wide shot, cinematic composition, no humans':evPrompt(id);}
 function slotPrompt(k){const p=ncfg().pr[k];return p&&p.trim()?p:basePrompt(k);}
-function modalHTML(){if(!modal)return '';if(modal.t==='dev')return devHTML();if(modal.t==='story')return storyListHTML();if(modal.t==='storyEv')return storyEvHTML();
+function modalHTML(){if(!modal)return '';if(modal.t==='snd')return sndHTML();if(modal.t==='dev')return devHTML();if(modal.t==='story')return storyListHTML();if(modal.t==='storyEv')return storyEvHTML();
   if(modal.t==='nai'){const c=modal.c;return `<div class="modal" data-a="mbg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mt"><h3 id="mt">설정 <span class="muted small" style="font-weight:400">· 판 ${GAME_VER}</span></h3>${S.phase!=='birth'&&S.phase!=='end'?`<div class="row" style="justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:10px"><span class="small muted">이번 생을 접고 처음으로 돌아간다.</span><button class="ghost" data-a="quit">${modal.sure?'정말 포기한다':'처음으로'}</button></div>`:''}<p class="grp-t" style="margin:0">그림</p>
    <label class="row"><input type="checkbox" id="n_repo" ${c.useRepo!==false?'checked':''}> 게임에 들어 있는 기본 그림을 쓴다</label>
    <p class="muted small" style="margin:0">끄면 내가 그린 그림만 쓴다. 내 그림체로 전부 새로 그리고 싶을 때 끈다. 켜 두어도 내가 그리거나 넣은 그림이 있는 칸은 내 그림이 먼저 나온다.</p>
    <button class="ghost" data-a="gal" style="padding:8px 10px">그림체 고르기 · 그림 관리 (지도·인물·사건) →</button>
    <button class="ghost" data-a="dev" style="padding:8px 10px">개발 스페이스 · 모든 사건의 글·확률·조건·효과·보상을 고치기 →</button>
+   <button class="ghost" data-a="snd" style="padding:8px 10px">소리 · 배경음과 효과음 (ElevenLabs로 만들기) →</button>
    <label class="row"><input type="checkbox" id="n_vn" ${c.vn!==false?'checked':''}> 대화를 미연시처럼 한 줄씩 보여 준다 (화면을 누르면 다음 대사)</label>
    <p class="grp-t" style="margin:0">NovelAI로 직접 그리기 (선택)</p>
    <p class="muted small">인물 스탠딩과 사건 장면을 NovelAI로 그린다. 토큰은 이 브라우저에만 저장되고, 깃허브에 올리는 파일에는 들어가지 않는다. 그림 한 장마다 구독 등급에 따라 Anlas가 들 수 있다.</p>
@@ -15350,6 +15523,7 @@ function modalHTML(){if(!modal)return '';if(modal.t==='dev')return devHTML();if(
    ${modal.err?`<p class="status">${esc(modal.err)}</p>`:''}${busy?'<p class="status">그리는 중… 창을 닫아도 계속 그린다.</p>':''}
    <div class="row wrap" style="justify-content:space-between"><span class="row wrap"><button class="ghost" data-a="mclose">${modal.back?'← 목록으로':'닫기'}</button><label class="ghost btnl" for="n_file">파일에서 넣기</label><input type="file" id="n_file" accept="image/*" hidden>${local?'<button class="ghost" data-a="nsavefile">파일로 저장</button><button class="ghost" data-a="ndel">내 그림 지우기</button>':''}</span>
    ${(()=>{if(!(k in PREVK)){PREVK[k]=0;imgGet('prev:'+k).then(b=>{if(b){PREVK[k]=1;soon();}});}return PREVK[k]&&!busy?'<button class="ghost" data-a="nprev">이전 그림으로</button>':'';})()}<button class="go" data-a="ngen" ${busy?'disabled':''}>${u?'NovelAI로 다시 그리기':'NovelAI로 그리기'}</button></div>
+   ${faceSectionHTML(k)}
    <p class="muted small">${port?'세로 832×1216':'가로 1216×832'} · 다른 곳에서 그렸다면 프롬프트를 복사해 쓰고, 받은 그림을 '파일에서 넣기'로 넣는다.${k.startsWith('pc:')?'':` 여러 장 넣기용 파일 이름: <b>${fileName(k)}</b>`}${local?' · 내 그림을 지우면 저장소 그림이 있을 때 그것으로 돌아간다.':''}</p></div></div>`;}
 function galHTML(){const g=modal,c=ncfg(),T=[['style','그림체'],['map','지도'],['st','인물'],['mob','모브'],['ev','사건'],['bg','인연 배경'],['wp','병기'],['cg','CG']];
   const head=`<div class="row" style="justify-content:space-between"><h3 id="mt" style="margin:0">그림 관리</h3><button class="ghost" data-a="mclose">닫기</button></div>
@@ -15467,7 +15641,7 @@ const vnLeft=(cast,first,j,i)=>{const id=cast[j],at=Math.max(i,first[id]??0),vis
    o:{key,text,scene,bg,title,tags,sub,draw,end(마지막에 대사창 아래 붙일 것),panel(선택지 위 패널),acts(선택지 버튼들)} */
 const vnPlate=who=>who?`<div class="vnplate ${who.me?'me':''}">${who.k?`<small>${esc(who.k)}</small>`:''}${esc(who.n)}</div>`:'';
 /* 자동 넘김: 지금 대사를 읽을 시간만큼 기다렸다가 다음으로 */
-function vnArm(key,i,n,b){const done=i>=(VN.cur&&VN.cur.last!=null?VN.cur.last:n-1);if(!vnAuto()||done||VN.log){clearTimeout(VN.t);return;}if(VN.tk===key+'|'+i)return;VN.tk=key+'|'+i;clearTimeout(VN.t);
+function vnArm(key,i,n,b){setTimeout(()=>{try{vnBeatFx(b,key+'|'+i);}catch(e){}},30);const done=i>=(VN.cur&&VN.cur.last!=null?VN.cur.last:n-1);if(!vnAuto()||done||VN.log){clearTimeout(VN.t);return;}if(VN.tk===key+'|'+i)return;VN.tk=key+'|'+i;clearTimeout(VN.t);
   const wait=()=>{if(VN.k!==key||VN.i!==i)return;if(modal||view!=='ev'||document.hidden||VN.log){VN.t=setTimeout(wait,800);return;}vnAdvance();};VN.t=setTimeout(wait,1400+b.t.length*55);}
 /* 다음 대사: 마지막 대사가 아니면 화면 전체를 다시 그리지 않고 글·이름표·인물 강조만 바꾼다(배경과 인물 그림을 다시 불러오지 않아 끊기지 않는다) */
 function vnAdvance(){VN.i++;if(!vnStep())render();}
@@ -15489,7 +15663,7 @@ function vnScreen(S,o){const beats=vnBeats(S,o.text,o.scene);if(!beats.length)be
   const log=VN.log?`<div class="vnlogp" data-a="vnnop"><div class="row" style="justify-content:space-between"><b>지난 대사</b>${tool('vnlog','닫기')}</div><div class="vnlogl">${beats.slice(0,i+1).map(x=>{const w=whoOf(x.s,x.n);return `<p>${w?`<b>${esc(w.n)}</b> `:''}${line(x)}</p>`;}).join('')}</div></div>`:'';
   return `<section class="vnfull ${done?'done':''} ${VN.i?'':'vnfade'}" ${done||VN.log?'':'data-a="vnnext"'} aria-live="polite">
    <div class="vnbg">${o.bg?`<img src="${o.bg}" alt="" decoding="async">`:''}</div>
-   <div class="vnsps">${cast.map((id,j)=>`<img class="vnsp ${bk===id?'on':b.s==='me'?'lis':b.s?'':'nar'} ${first[id]>i?'gone':first[id]===i?'in':''}" style="left:${vnLeft(cast,first,j,i)}%" decoding="async" src="${imgURL(castKey(id))}" alt="${esc(id.startsWith('mob:')?MOB[id.slice(4)].n:NPCS[id].n)}">`).join('')}</div>
+   <div class="vnsps">${cast.map((id,j)=>`<img class="vnsp ${bk===id?'on':b.s==='me'?'lis':b.s?'':'nar'} ${first[id]>i?'gone':first[id]===i?'in':''}" style="left:${vnLeft(cast,first,j,i)}%" data-id="${esc(id)}" decoding="async" src="${imgURL(castKey(id))}" alt="${esc(id.startsWith('mob:')?MOB[id.slice(4)].n:NPCS[id].n)}">`).join('')}</div>
    <div class="vntop"><div class="vnttl"><b>${ageLabel(S)} · ${esc(o.title)}</b>${o.tags||''}${o.sub?`<span class="vnsub">${esc(o.sub)}</span>`:''}</div>
     <div class="vntools">${o.draw||''}<span class="vnpv" ${i>0?'':'hidden'}>${tool('vnprev','◀','','이전 대사')}</span>${tool('vnlog','기록')}${done?'':tool('vnauto','자동',auto)+tool('vnskip','넘기기 ▶▶')}</div></div>
    ${done?`<div class="vnch ${/data-a="next"/.test(o.acts||'')?'one':''}">${o.panel?`<div class="vnpanel">${o.panel}</div>`:''}${o.acts||''}</div>`:''}
@@ -15679,9 +15853,9 @@ app.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b||b
   else if(a==='rname'){S.base.name=S.name=randName(S.sex);render();}
   else if(a==='sex'){S.base.sex=b.dataset.v;S=buildFate(S.base,S.yc);render();}
   else if(a==='start'){const c=ycCost(S.yc),v=ycPts();if(c>v.pts)return;v.pts-=c;ycSave(v);S.name=document.getElementById('nm').value.trim()||randName(S.sex);view='ev';resetScroll=true;addLog(S,`${ORIGINS.find(o=>o.id===S.origin).n}로 태어났다.`,1);openEvent(S,chooseEvent(S));save();render();if(ncfg().autoPc)autoDraw('pc:'+S.lifeId,pcPrompt(S),true);}
-  else if(a==='ch')choose(+b.dataset.i);
+  else if(a==='ch'){sfx('choice');choose(+b.dataset.i);}
   else if(a==='cgref'){const c=ncfg();c.cgRef=c.cgRef===false;nsave(c);render();}
-  else if(a==='vnnext'){vnAdvance();}
+  else if(a==='vnnext'){sfx('page');vnAdvance();}
   else if(a==='vnlog'){VN.log=VN.log?0:1;render();}
   else if(a==='vnnop'){}
   else if(a==='vnauto'){try{localStorage.setItem('murim-vnauto',vnAuto()?'0':'1');}catch(e){}VN.tk='';render();}
@@ -15762,6 +15936,13 @@ app.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b||b
   else if(a==='dvog'&&modal&&modal.t==='dev'){const g=b.dataset.v;modal.og=modal.og||{};modal.og[g]=!modal.og[g];render();}
   else if(a==='dvgmap'&&modal&&modal.t==='dev'){modal.tab='map';modal.root=b.dataset.id;render();}
   else if(a==='dvglist'&&modal&&modal.t==='dev'){modal.tab='list';modal.f='g:'+b.dataset.v;modal.n=200;render();}
+  else if(a==='snd'){modal={t:'snd',back:modal};render();}
+  else if(a==='sndgen'&&modal&&modal.t==='snd'){const k=b.dataset.k;modal.busy=modal.busy||{};modal.busy[k]=1;modal.err='';render();elGen(k).then(()=>{if(k.startsWith('bgm:'))sndTick(true);}).catch(er=>{if(modal&&modal.t==='snd')modal.err=er.message||String(er);}).finally(()=>{if(modal&&modal.busy)delete modal.busy[k];render();});}
+  else if(a==='sndplay'){const k=b.dataset.k,u=sndUrl(k);if(u){if(k.startsWith('bgm:'))bgmPlay(k);else{const au=new Audio(u);au.volume=sndCfg().sfx;au.play().catch(()=>{});}}}
+  else if(a==='snddel'){sndDel(b.dataset.k).then(()=>{sndTick(true);render();});}
+  else if(a==='fgen'){const fk=b.dataset.k,i=fk.lastIndexOf('~');if(modal)modal.err='';faceGen(fk.slice(0,i),fk.slice(i+1)).catch(er=>{if(modal)modal.err=er.message||String(er);render();});}
+  else if(a==='fgenall'){const k=b.dataset.k;if(modal)modal.err='';(async()=>{for(const [,en] of FACES){if(faceSrc(k+'~'+en))continue;try{await faceGen(k,en);}catch(er){if(modal)modal.err=er.message||String(er);render();break;}}})();}
+  else if(a==='fdel'){const fk=b.dataset.k;(async()=>{try{const db=await idb();await new Promise(res=>{const t=db.transaction('img','readwrite');t.objectStore('img').delete(fk);t.oncomplete=res;t.onerror=res;});}catch(e){}setImg(fk,null);render();})();}
   else if(a==='dvopen'){modal={t:'storyEv',id:b.dataset.id,back:modal};render();}
   else if(a==='dvroot'&&modal&&modal.t==='dev'){modal.root=b.dataset.id;modal.q='';render();const w=document.querySelector('.dvwrap');if(w){w.scrollLeft=0;w.scrollTop=0;}}
   else if(a==='stf'){modal.f=b.dataset.v;modal.n=60;render();}
@@ -15777,12 +15958,12 @@ app.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b||b
   else if(a==='mbg'){if(ev.target===b)closeModal();}
   else if(a==='quit'){if(modal&&modal.sure){S=newFate();modal=null;tab='ab';view='ev';resetScroll=true;save();render();}else if(modal){modal.sure=1;render();}}
 });
-let stQT=0;app.addEventListener('input',ev=>{const id=ev.target.id||'';if(modal&&modal.t==='dev'&&id==='dv_q2'){modal.q2=ev.target.value;modal.n=80;clearTimeout(stQT);stQT=setTimeout(()=>{render();const el=document.getElementById('dv_q2');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}},250);return;}if(modal&&modal.t==='dev'&&id==='dv_q'){modal.q=ev.target.value;clearTimeout(stQT);stQT=setTimeout(()=>{render();const el=document.getElementById('dv_q');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}},250);return;}if(!modal||!/^(st|se)_/.test(id))return;
+let stQT=0;app.addEventListener('input',ev=>{const id=ev.target.id||'';if(modal&&modal.t==='snd'&&(/^sd_/.test(id)||/^sp_/.test(id))){sndReadForm();return;}if(modal&&modal.t==='dev'&&id==='dv_q2'){modal.q2=ev.target.value;modal.n=80;clearTimeout(stQT);stQT=setTimeout(()=>{render();const el=document.getElementById('dv_q2');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}},250);return;}if(modal&&modal.t==='dev'&&id==='dv_q'){modal.q=ev.target.value;clearTimeout(stQT);stQT=setTimeout(()=>{render();const el=document.getElementById('dv_q');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}},250);return;}if(!modal||!/^(st|se)_/.test(id))return;
   if(id==='st_q'){modal.q=ev.target.value;modal.n=60;clearTimeout(stQT);stQT=setTimeout(render,200);}
   else if(id==='st_memo'){STORY.memo=ev.target.value;ssave();}
   else if(id==='st_repo'||id==='st_branch'||id==='st_tok'){const c=ncfg();c[{st_repo:'ghRepo',st_branch:'ghBranch',st_tok:'ghToken'}[id]]=ev.target.value.trim();nsave(c);}
   else if(id.startsWith('se_')&&modal.t==='storyEv'){(modal.d||(modal.d={}))[id.slice(3)]=ev.target.type==='checkbox'?ev.target.checked:ev.target.value;}});
-app.addEventListener('change',ev=>{const id=ev.target.id||'';if(modal&&modal.t==='storyEv'&&id.startsWith('se_')){(modal.d||(modal.d={}))[id.slice(3)]=ev.target.type==='checkbox'?ev.target.checked:ev.target.value;}if(id==='dv_depth'&&modal&&modal.t==='dev'){modal.depth=+ev.target.value;render();return;}if(ev.target.dataset&&ev.target.dataset.dvk&&modal&&modal.t==='dev'){(modal.hide||(modal.hide={}))[ev.target.dataset.dvk]=!ev.target.checked;render();return;}if(id==='st_on'){STORY.on=ev.target.checked;ssave();}
+app.addEventListener('change',ev=>{const id=ev.target.id||'';if(ev.target.dataset&&ev.target.dataset.sk&&ev.target.files&&ev.target.files[0]){const k=ev.target.dataset.sk;sndStore(k,ev.target.files[0]).then(()=>{if(k.startsWith('bgm:'))sndTick(true);render();});return;}if(modal&&modal.t==='snd'&&/^sd_/.test(id))sndReadForm();if(id==='n_defry'){const c=ncfg();c.defry=+ev.target.value;nsave(c);}if(modal&&modal.t==='storyEv'&&id.startsWith('se_')){(modal.d||(modal.d={}))[id.slice(3)]=ev.target.type==='checkbox'?ev.target.checked:ev.target.value;}if(id==='dv_depth'&&modal&&modal.t==='dev'){modal.depth=+ev.target.value;render();return;}if(ev.target.dataset&&ev.target.dataset.dvk&&modal&&modal.t==='dev'){(modal.hide||(modal.hide={}))[ev.target.dataset.dvk]=!ev.target.checked;render();return;}if(id==='st_on'){STORY.on=ev.target.checked;ssave();}
   else if(id==='st_file'&&ev.target.files&&ev.target.files[0]){ev.target.files[0].text().then(t=>{const j=JSON.parse(t),src=j.사건||j.ev||{};let n=0;if(j.새사건){STORY.add=Object.assign(STORY.add||{},j.새사건);devAddAll();}for(const k in src){if(!EVM[k])continue;const o={...src[k]};delete o.이름;STORY.ev[k]=o;n++;}if(j.전체메모||j.memo)STORY.memo=j.전체메모||j.memo;ssave();modal.msg=`사건 ${n}개를 불러왔어요.`;render();}).catch(e=>{modal.msg='불러오지 못했어요: '+e.message;render();});}});
 app.addEventListener('input',ev=>{if(ev.target.id==='evinp'){S.tmp.inp=ev.target.value;return;}if(ED&&modal&&modal.t==='edit'){const id=ev.target.id;if(id==='e_tol'||id==='e_size'){ED[id==='e_tol'?'tol':'size']=+ev.target.value;const v=document.getElementById(id+'v');if(v)v.textContent=ev.target.value;return;}}if(ev.target.id==='nm'&&S.phase==='birth'){S.name=S.base.name=ev.target.value;}if(ev.target.id==='cname'&&S.tmp.craft)S.tmp.craft.name=ev.target.value;if(ev.target.id==='fname'&&S.tmp.forge)S.tmp.forge.name=ev.target.value;if(ev.target.id==='n_prompt'&&modal){modal.prompt=ev.target.value;savePr(modal.k,modal.prompt);const f=document.getElementById('n_full');if(f)f.textContent=fullPrompt(modal.k,modal.prompt);}
   if(modal&&modal.t==='gal'&&/^g_gh/.test(ev.target.id)){const c=ncfg(),v=id=>{const e=document.getElementById(id);return e?e.value.trim():'';};c.ghRepo=v('g_ghRepo');c.ghBranch=v('g_ghBranch')||'main';c.ghToken=v('g_ghToken');nsave(c);return;}

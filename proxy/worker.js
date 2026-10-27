@@ -14,6 +14,7 @@ const ALLOW_HOSTS = [
   'us-central1-aiplatform.googleapis.com', 'asia-northeast3-aiplatform.googleapis.com', 'asia-northeast1-aiplatform.googleapis.com', 'europe-west4-aiplatform.googleapis.com',
   'openrouter.ai', 'api.openai.com', 'api.deepseek.com', 'ollama.com', // OpenAI 방식
   'api.anthropic.com',
+  'api.elevenlabs.io', // 소리(배경음·효과음)
 ];
 
 function cors(req) {
@@ -37,7 +38,7 @@ export default {
     try { target = new URL(new URL(req.url).searchParams.get('u')); } catch (e) { return new Response('bad url', { status: 400, headers: cors(req) }); }
     if (target.protocol !== 'https:' || !ALLOW_HOSTS.includes(target.hostname)) return new Response('host not allowed', { status: 403, headers: cors(req) });
     const h = new Headers();
-    for (const k of ['authorization', 'content-type', 'accept', 'x-goog-api-key', 'x-api-key', 'anthropic-version', 'anthropic-beta']) { const v = req.headers.get(k); if (v) h.set(k, v); }
+    for (const k of ['authorization', 'content-type', 'accept', 'x-goog-api-key', 'x-api-key', 'anthropic-version', 'anthropic-beta', 'xi-api-key']) { const v = req.headers.get(k); if (v) h.set(k, v); }
     const r = await fetch(target, { method: 'POST', headers: h, body: await req.arrayBuffer() });
     const out = new Response(r.body, r);
     Object.entries(cors(req)).forEach(([k, v]) => out.headers.set(k, v));
