@@ -10626,6 +10626,7 @@ function ageFit(S,e){let m=1;const id=e.id,c=AGE_CAP[id]??(/^duo/.test(id)?55:nu
 /* ══ 어린 날의 이야기 ══════════════════════════════
    여섯 살부터 열 살 문파 시험까지, 그리고 그 뒤로 이어지는 소꿉동무의 이야기.
    동무(S.flags.cf)는 여섯 살 첫 사건에서 생기고, 만두 노인·골목 패거리·열병·서당·약속·시험·이별·편지·재회·마지막 술잔까지 같은 사람이 이어서 나온다. */
+const DSC_NAMES={m:['범이','갑돌','동구','삼봉','귀동','용팔','억쇠','춘복'],f:['꽃님','분이','점순','말순','향단','금례','봉선','연분']};
 const CF_NAMES={m:['돌이','석이','복동','만수','칠성','막동'],f:['순이','연이','옥분','복순','덕이','설이']};
 const cf=S=>S.flags.cf||null;
 const cfN=S=>cf(S)?cf(S).n:'동무';
@@ -10798,7 +10799,7 @@ ${c.n}: “무슨 약속?”
 ${c.n}${bat(c.n)?'이':'가'} 웃었다. 처음 만난 날 개울가에서 울다 웃던, 그 얼굴이었다.
 ${c.n}: “누워 있잖아, 지금. 같이.”`;},
  ch:[{t:'고목 아래 나란히 눕는다',go:S=>{const c=cf(S);c.dead=1;A(S,{mood:-12,cult:8});(S.wu||(S.wu={})).grief=1;deed(S,`소꿉동무 ${c.n}의 마지막을 지켰다`);return `둘은 나란히 누워 나뭇잎 사이로 하늘을 보았다. 여섯 살 그날처럼. 바람이 불었다. 잎사귀가 한꺼번에 소리를 냈다.\n어느 순간 옆에서 숨소리가 멎었지만, 일어나면 정말 끝날 것 같아서 당신은 한참을 그대로 누워 있었다.\n그해 봄, 고목에 새순이 돋았다. 지워진 두 이름 바로 위에서.`;}},
-  {t:'개울에서 신 한 짝을 건져 온다',go:S=>{const c=cf(S);c.dead=1;A(S,{mood:-8,cult:6,moral:3});deed(S,`소꿉동무 ${c.n}의 마지막을 지켰다`);return `장에 가서 신 한 켤레를 샀다. 개울에 한 짝을 띄웠다가 다시 건져 와서 ${c.n}의 발치에 놓았다.\n${c.n}: “…바보 아니야?”\n${S.age-6}년 전과 똑같은 말이었다. ${c.n}${bat(c.n)?'은':'는'} 그 신을 끌어안고 눈을 감았다. 감자 두 알의 셈은, 그날 끝났다.`;}}]});
+  {t:'개울에서 신 한 짝을 건져 온다',go:S=>{const c=cf(S);c.dead=1;A(S,{mood:-8,cult:6,moral:3});deed(S,`소꿉동무 ${c.n}의 마지막을 지켰다`);return `장에 가서 신 한 켤레를 샀다. 개울에 한 짝을 띄웠다가 다시 건져 와서 ${c.n}의 발치에 놓았다.\n${c.n}: “…바보 아니야?”\n${S.age-6}년 전과 똑같은 말이었다. ${c.n}${bat(c.n)?'은':'는'} 그 신을 끌어안고 눈을 감았다. ${cfFirst(S)==='shoe'?'감자 두 알의 셈은':'여섯 살 개울가에서 시작된 셈은'}, 그날 끝났다.`;}}]});
 
 const CHILD_CH={
  bully:[{t:'끼어들어 막는다',h:'근골',go:S=>{TKcf(S,2);A(S,{moral:6,temper:3});if(S.t.bone+R(0,6)+S.realm*2>=8){A(S,{fame:2});return `우두머리의 정강이를 걷어찼다. 녀석이 주저앉는 사이 둘째의 팔을 물었다. 싸움이라기보다 개싸움이었다. 패거리는 코피를 흘리며 흩어졌다.\n${cfN(S)}: “너… 미쳤어?”\n당신: “약값 무사해?”\n${cfN(S)}${bat(cfN(S))?'은':'는'} 엽전 꾸러미를 꼭 쥔 채 울다 웃었다. 그날 이후 골목 아이들은 둘을 건드리지 않았다.`;}
@@ -12050,7 +12051,7 @@ ${n}: “너, 좋아하는 사람 있어?”
   {t:'“너는 내 동무잖아”라고 한다',go:S=>{c.love=0;TKcf(S,1);return `${n}${bat(n)?'이':'가'} 웃었다. 너무 빨리 웃었다.\n${n}: “그치. 당연하지. 그냥 물어본 거야.”\n그날 이후로도 둘은 좋은 동무였다. 평생.`;}}];}});
 /* 다시 만난 날에 손을 잡는 선택지 */
 {const e=EV.find(x=>x.id==='cfReunion');if(e){const oc=e.ch;e.ch=S=>{const L=(typeof oc==='function'?oc(S):oc).slice();if(cfCan(S)&&(cf(S).love||0)>=1&&!S.spouse&&!lover(S))L.push({t:'그 손을 잡는다',h:'연인이 된다',go:S=>{const c=cf(S),n=c.n;S.met.cfriend=1;S.lover='cfriend';S.rel.cfriend=Math.max(S.rel.cfriend||0,72);S.flags.dates_cfriend=1;TKcf(S,3);A(S,{mood:25});deed(S,`소꿉동무 ${jo(n,'과','와')} 연인이 되었다`);
-  return `할 말이 너무 많아서, 당신은 말 대신 손을 내밀었다.\n${n}${bat(n)?'이':'가'} 그 손을 내려다보았다. 개울가에서 신 한 짝을 내밀던 손. 고목 아래서 새끼손가락을 걸던 손.\n${n}: “…이번엔 뭘 주려고.”\n당신: “나.”\n${n}${bat(n)?'이':'가'} 웃다가 울고 울다가 웃다가, 그 손을 잡고 놓지 않았다.\n${n}: “늦었잖아. 열여섯 원소절에 말했어야지.”\n당신: “그때 말했잖아.”\n${n}: “…그랬나. 그럼 내가 늦었네.”`;}});return L;};}}
+  return `할 말이 너무 많아서, 당신은 말 대신 손을 내밀었다.\n${n}${bat(n)?'이':'가'} 그 손을 내려다보았다. ${cfFirst(S)==='shoe'?'개울가에서 제 신 한 짝을 벗어 내밀던 손':cfFirst(S)==='jump'?'개울에서 꽃신을 건져 오던 손':'울지 말라고 등을 두드리던 손'}. 고목 아래서 새끼손가락을 걸던 손.\n${n}: “…이번엔 뭘 주려고.”\n당신: “나.”\n${n}${bat(n)?'이':'가'} 웃다가 울고 울다가 웃다가, 그 손을 잡고 놓지 않았다.\n${n}: “늦었잖아. 열여섯 원소절에 말했어야지.”\n당신: “그때 말했잖아.”\n${n}: “…그랬나. 그럼 내가 늦었네.”`;}});return L;};}}
 E({id:'cfConfess',tag:'love',t:'동무의 혼처',a:[21,35],w:S=>cfCan(S)&&(cf(S).love||0)>=1&&S.seen.cfReunion&&!S.spouse&&S.lover!=='cfriend'&&!S.seen.cfConfess?6:0,
  x:S=>{const n=cfN(S);return `${n}에게서 서찰이 왔다. 짧았다.
 ‘집에서 혼처를 정했다. 이웃 고을 사람이다. 좋은 사람이라고 한다. 다음 달에 간다. 그 전에 한 번만 얼굴 보자. 고목 아래서.’
@@ -12070,7 +12071,7 @@ ${n}: “우리 처음 만난 날 기억나?”
 당신: “신 한 짝.”
 ${n}: “그거. 그날 너 ${cfFirst(S)==='jump'?'신 벗어 줬잖아':'개울에 뛰어들었잖아'}.”
 당신: “${cfFirst(S)==='jump'?'안 벗어 줬는데. 뛰어들었지.':cfFirst(S)==='talk'?'안 뛰어들었는데. 말로 달랬지.':'안 뛰어들었는데. 신 벗어 줬지.'}”
-${n}: “아니야, 뛰어들었어.”
+${n}: “아니야, 내 기억이 맞아.”
 몇십 년째 같은 일로 다투는 둘을 보며 하객들이 웃었고, 둘은 다투면서 맞절을 했다.
 고개를 드니 ${n}${bat(n)?'이':'가'} 품에서 무언가를 꺼냈다. ${cfFirst(S)==='shoe'?`감자 두 알이었다. 삶은 감자.\n${n}: “첫 거래. 이자 쳐서 갚는 거야. 평생 할부로.”`:cfFirst(S)==='jump'?`낡은 꽃신 한 짝이었다. 그날 개울에서 건져 온 그 신.\n${n}: “이거 아직 갖고 있었어. 평생 갖고 있을 거야.”`:`작은 신 한 켤레였다. 장에서 새로 산.\n${n}: “신은 또 사면 된다며. 그래서 샀어. 이제 같이 신고 다니자.”`}`;};
 const CF_CON=S=>{const n=cfN(S);return `고목 아래에 ${n}${bat(n)?'이':'가'} 앉아 있었다. 당신이 혼인했다는 소식을 듣고 사흘을 걸어왔다고 했다.
@@ -12223,7 +12224,7 @@ ${n}: “네가 벤 사람 중에 내가 표행 때 지켜 주던 상단 행수�
 ${n}: “아니. 너를 데리러 왔어. 칼은, 네가 안 따라오면 쓰려고.”
 달빛이 두 칼날에 똑같이 내려앉았다.`;},
  ch:S=>{const n=cfN(S);return [{t:'칼을 맞댄다',h:'목숨을 건 싸움',go:S=>{const b=battle(S,S.tmp.foe);if(b.win){const c=cf(S);c.dead=1;S.dead_npc.cfriend=1;(S.wu||(S.wu={})).grief=1;A(S,{salgi:15,mood:-30,fame:10});deed(S,`소꿉동무 ${jo(n,'을','를')} 베었다`);
-     return fightText(b,`${n}${bat(n)?'이':'가'} 쓰러졌다. 당신이 다가가자 피 묻은 손으로 당신 손목을 잡았다.\n${n}: “…신 한 짝… 아직 갖고 있어. 네가 벗어 준 거.”\n손에서 힘이 빠지자 품에서 여섯 살 아이의 발만 한 작은 신 한 짝이 굴러 나왔다.\n그날 이후 당신은 잠들지 못했다. 살귀가 처음으로 잠들지 못했다.`,'');}
+     return fightText(b,`${n}${bat(n)?'이':'가'} 쓰러졌다. 당신이 다가가자 피 묻은 손으로 당신 손목을 잡았다.\n${n}: “…${cfFirst(S)==='shoe'?'신 한 짝… 아직 갖고 있어. 네가 벗어 준 거.':cfFirst(S)==='jump'?'꽃신… 아직 갖고 있어. 네가 개울에서 건져 준 거.':'신… 아직 갖고 있어. 또 사면 된다던 그 신.'}”\n손에서 힘이 빠지자 품에서 여섯 살 아이의 발만 한 작은 ${cfFirst(S)==='shoe'?'신':'꽃신'} 한 짝이 굴러 나왔다.\n그날 이후 당신은 잠들지 못했다. 살귀가 처음으로 잠들지 못했다.`,'');}
      hurt(S,40,'개울가의 칼');S.flags.salgwi=0;S.flags.smHum=(S.flags.smHum||0)+3;S.flags.smWant=1;A(S,{moral:10,salgi:-15});return fightText(b,'',`${n}의 칼끝이 당신 목 앞에서 멈췄다. 찌르지 않았다.\n${n}: “봐. 너 아직 질 줄 알잖아. 살귀는 지지 않는대. 그러니까 너는 살귀가 아니야.”\n${n}${bat(n)?'은':'는'} 칼을 거두고 당신 옆에 주저앉았다. 둘은 밤새 아무 말 없이 달을 보았다. 새벽에 당신은 처음으로 살막을 떠날 생각을 했다.`);}},
   {t:'칼을 내려놓는다',h:'살귀에서 돌아온다',go:S=>{S.flags.salgwi=0;S.flags.smHum=(S.flags.smHum||0)+4;S.flags.smWant=1;TKcf(S,3);A(S,{moral:12,salgi:-20,mood:10});deed(S,'개울가의 동무 앞에서 칼을 내려놓았다');return `칼을 땅에 내려놓으니 손이 허전했는데, 그 허전함이 오랜만이었다.\n${n}: “…늦었다며.”\n당신: “늦었지. 그래도.”\n${n}${bat(n)?'이':'가'} 다가와 당신을 끌어안았다. 피 냄새가 났을 텐데, 놓지 않았다.\n${n}: “살막에서 나와. 해독약은 내가 구해 놨어.”`;}}];}});
 /* 빠져나가는 길: 결심 → 해독 → 탈출의 밤 */
@@ -14058,7 +14059,7 @@ function oldTrip(S){A(S,{mood:8,exp:tb(S)*.3});const dk=darkOf(S),r=Math.random(
   return dk?`${dk==='blood'?'붉은 달이':'검은 구름이'} 뜬 밤, 옛 교도 몇이 당신을 알아보고 길가에 엎드렸다. 당신은 그들을 지나쳤다. 등 뒤에서 그들이 오래도록 머리를 들지 않았다.`:'강남의 물빛과 새북의 모래바람을 다시 보았다. 젊어서 본 것과 같았다. 보는 눈만 달라져 있었다.';}
 
 /* ── 제자를 들인다: 들이고, 가르치고, 첫 비무, 갈림길, 하산 ── */
-const dsc=S=>S.flags.dsc||null;
+const dsc=S=>{const d=S.flags.dsc||null;if(d&&S.flags.cf&&d.n===S.flags.cf.n){const pool=DSC_NAMES.m.concat(DSC_NAMES.f).filter(n=>n!==S.flags.cf.n);d.n=pool[Math.floor(Math.random()*pool.length)];}return d;}; // 예전 저장: 제자 이름이 소꿉동무와 같으면 그림이 동무로 잡히므로 바꾼다
 const dscN=S=>dsc(S)?dsc(S).n:'제자';
 const DSC_K={bone:'근골',wit:'오성',heart:'마음'};
 const dscChoice=S=>{if(S.age<45||S.job)return [];const d=dsc(S);
@@ -14068,7 +14069,7 @@ function dscTeach(S){const d=dsc(S);d.lv++;A(S,{cult:2,fame:1,mood:4,exp:tb(S)*.
   if(d.lv===3)S.chain='dscDuel';else if(d.lv===6)S.chain='dscCross';else if(d.lv>=9)S.chain='dscLeave';
   return pick([`${jL(n)} 새벽마다 깨웠다. 처음 한 달은 울었고, 둘째 달에는 투덜댔고, 셋째 달에는 먼저 일어나 있었다.`,`${n}의 초식에서 버릇 하나를 찾아냈다. 당신이 젊었을 때와 똑같은 버릇이었다. 고쳐 주려다 웃음이 났다.`,`${jI(n)} 물었다. “사부는 왜 칼을 잡았어요?” 대답하는 데 하룻밤이 걸렸다. 그래도 다 대답하지 못했다.`,`${jI(n)} 처음으로 당신 소매를 스쳤다. 당신은 모른 척했다. 그날 저녁 ${n}의 밥그릇에 고기를 한 점 더 얹었다.`,`${n}에게 ${S.mainW}의 첫 초식을 백 번 시켰다. 백 번째에서야 ${jI(n)} 물었다. “왜 같은 걸 백 번 해요?” 당신은 대답 대신 백한 번째를 시켰다.`]);}
 E({id:'dscTake',tag:'side',t:'제자를 들이다',a:[45,200],
- prep:S=>{S.tmp.d=['m','f','m'].map((sx,i)=>({n:pick(CF_NAMES[i===1?'f':pick(['m','f'])]),k:['bone','wit','heart'][i]}));},
+ prep:S=>{const used=new Set([cf(S)&&cf(S).n,S.name].filter(Boolean));S.tmp.d=['m','f','m'].map((sx,i)=>{const g=i===1?'f':pick(['m','f']),pool=DSC_NAMES[g].filter(n=>!used.has(n)&&!Object.values(NPCS).some(p=>p&&p.n===n)),n=pick(pool.length?pool:DSC_NAMES[g]);used.add(n);return {n,k:['bone','wit','heart'][i]};});},
  x:S=>{const [a,b,c]=S.tmp.d,dk=darkOf(S);return `${dk?`${DARK_NAME[dk]}의 문하에 들겠다는 아이가 있을 줄은 몰랐다. 그런데 셋이나 왔다.`:'제자를 받는다는 소문이 돌자 아이 셋이 찾아왔다.'} 마당에 나란히 무릎을 꿇었다.
 첫째 아이 ${a.n}: 어깨가 넓고 손이 컸다. 지게를 지고 왔다고 했다.
 둘째 아이 ${b.n}: 눈이 빨랐다. 들어오자마자 마당의 목인과 병기 걸이를 다 훑어보았다.
@@ -14142,7 +14143,7 @@ const cfNear=S=>{const c=cf(S);return !!c&&!c.dead&&(!S.seen.cfPart||(c.path==='
 const cfWith=S=>{const c=cf(S);return !!c&&!c.dead&&(cfNear(S)||(c.path==='same'&&!!S.org));};
 /* 동무의 마지막 해: 벗이면 예순 안팎, 연인·반려면 여든을 넘긴다 */
 const cfEnd=S=>{const c=cf(S);if(!c)return 999;const base=c.at3||60;return S.spouse==='cfriend'||S.lover==='cfriend'||(S.harem||[]).includes('cfriend')?Math.max(base+18,80+((c.at3||60)%7)):Math.max(base,62);};
-const cfFirst=S=>{const c=cf(S);return c&&c.first||(c&&c.bond>=3?'shoe':'shoe');};
+const cfFirst=S=>{const c=cf(S);return c&&c.first||(c&&c.bond>=3?'shoe':c&&c.bond===2?'jump':c&&c.bond===1?'talk':'shoe');};
 const yrsGap=n=>n<=1?'한 해 만':n<=3?'몇 해 만':n<10?`${n}년 만`:n<20?'십여 년 만':`${Math.floor(n/10)*10}여 년 만`;
 E({id:'cfTrain',tag:'side',t:'같은 산문의 동무',a:[11,19],w:S=>{const c=cf(S);return c&&!c.dead&&c.path==='same'&&S.org&&S.seen.cfPart?2.4:0;},cd:3,
  prep:S=>{S.tmp.k=pick(['dawn','punish','spar']);},
@@ -14369,7 +14370,7 @@ E({id:'funeral',tag:'family',t:'장례',title:S=>S.tmp.fid?`장례 · ${funName(
   {t:'장례를 크게 치른다',h:'은자 · 명성·도덕',go:S=>{A(S,{gold:-Math.min(S.gold,40),fame:3,moral:2,mood:-6});if(dk&&S.org)A(S,{contrib:5});return `조문객이 사흘 동안 끊이지 않았다. 당신은 한 사람 한 사람에게 고개를 숙였다. ${n}${bat(n)?'이':'가'} 이렇게 많은 사람을 남기고 갔다는 것이, 이상하게 위로가 되었다.`;}},
   {t:'홀로 무덤을 지킨다',h:'수양·심상',go:S=>{A(S,{cult:4,mood:4});return `사람들이 다 돌아간 뒤에도 무덤 앞에 앉아 있었다. 밤이 되자 별이 떴다. ${role==='평생의 맞수'?'“다음 판은 저승에서 하자.” 대답은 없었다. 그 녀석이라면 분명 먼저 덤볐을 텐데.':'할 말이 많았는데 하나도 하지 못했다. 그래도 새벽이 될 때까지 곁에 있었다.'}`;}},
   {t:'유품 하나를 챙긴다',h:role==='평생의 맞수'||role==='사부'?'깨달음':'심상·수양',go:S=>{if(role==='평생의 맞수'||role==='사부'){A(S,{exp:tb(S)*.6,mu:3});return role==='사부'?'여백마다 사부의 글씨가 빼곡한 낡은 비급 한 권을 품에 넣고, 밤마다 그 글씨를 따라 읽었다.':'그 녀석의 피 묻은 붕대를 챙겼다. 펼쳐 보니 안쪽에 당신을 이기기 위한 초식이 깨알같이 적혀 있었다. 그 초식들이 다 당신의 약점이었다.';}
-    A(S,{mood:6,cult:2});return role==='동무'?`${S.flags.cfToken?'개울에서 주운 납작한 돌이 나왔다. 열 살 때 당신이 쥐여 준 그 돌이었다.':'낡은 꽃신 한 짝이 나왔다. 평생 버리지 않았던 모양이다.'} 품에 넣었다.`:role==='반려'?`${n}${bat(n)?'이':'가'} 늘 쓰던 머리 장신구를 챙겼다. 아침마다 그것을 손에 쥐고 하루를 시작했다.`:`${n}의 술병 하나를 챙겼는데, 반쯤 남은 그 술은 언젠가 같이 마시자던 몫이었다.`;}}];}});
+    A(S,{mood:6,cult:2});return role==='동무'?`${S.flags.cfToken?'개울에서 주운 납작한 돌이 나왔다. 열 살 때 당신이 쥐여 준 그 돌이었다.':cfFirst(S)==='shoe'?'낡은 신 한 짝이 나왔다. 여섯 살 때 당신이 벗어 준 그 신을 평생 버리지 않았던 모양이다.':cfFirst(S)==='jump'?'낡은 꽃신 한 짝이 나왔다. 그날 당신이 개울에서 건져 준 그 신을 평생 버리지 않았던 모양이다.':'작은 꽃신 한 켤레가 나왔다. 그 여름 다시 산 신을 평생 버리지 않았던 모양이다.'} 품에 넣었다.`:role==='반려'?`${n}${bat(n)?'이':'가'} 늘 쓰던 머리 장신구를 챙겼다. 아침마다 그것을 손에 쥐고 하루를 시작했다.`:`${n}의 술병 하나를 챙겼는데, 반쯤 남은 그 술은 언젠가 같이 마시자던 몫이었다.`;}}];}});
 
 /* ══ 라이벌 「독종」 진 태호 ══
    무림인으로 사는 주인공 앞에만 나타난다. 주인공에 맞춰 사는 녀석이라 주인공이 약하면 약하고, 천하제일이면 그 바로 아래까지 강해진다. 질 때마다 더 강해져서 돌아온다.
@@ -14436,7 +14437,7 @@ const cgLoveIds=()=>[...new Set(Object.keys(LOVE).concat(LOVE_X.m,LOVE_X.f))].fi
 const cgLid=S=>{const sp=S&&S.spouse;if(!sp)return null;if(sp==='cfriend')return 'cfriend_'+((S.flags.cf&&S.flags.cf.sex)||(S.sex==='m'?'f':'m'));if(sp==='plain')return 'plain_'+(S.sex==='m'?'f':'m');return NPCS[sp]?sp:null;};
 const cgLname=(id,S)=>{if(/^cfriend_/.test(id))return S&&S.flags&&S.flags.cf&&S.flags.cf.n&&cgLid(S)===id?S.flags.cf.n:CG_EXTRA[id].n;return CG_EXTRA[id]?CG_EXTRA[id].n:NPCS[id]?NPCS[id].n:id;};
 const CG_WED={
- cfriend_m:S=>`혼례는 고향 마을 고목 아래에서 올렸다. 개울 건너편에서 신랑이 신 한 짝을 들고 건너왔는데, 여섯 살 그날 떠내려간 그 신은 아니었지만 하객들은 모두 무슨 뜻인지 알고 웃었다. 그는 지금도 아침마다 당신 신을 가지런히 놓아 두고 나간다.`,
+ cfriend_m:S=>`혼례는 고향 마을 고목 아래에서 올렸다. 개울 건너편에서 신랑이 신 한 짝을 들고 건너왔는데, 여섯 살 그날의 그 신은 아니었지만 하객들은 모두 무슨 뜻인지 알고 웃었다. 그는 지금도 아침마다 당신 신을 가지런히 놓아 두고 나간다.`,
  cfriend_f:S=>`혼례는 고향 마을 고목 아래에서 올렸다. 신부는 혼례복 자락을 걷어 올리고 개울 징검다리를 건너왔고, 마지막 돌에서 미끄러질 뻔한 것을 당신이 붙잡자 하객들이 박수를 쳤다. 여섯 살 그날처럼 젖은 발로, 그녀는 이번에는 울지 않고 웃었다.`,
  plain_m:S=>`이웃 고을에서 온 반려는 무공을 모른다. 그래서 당신이 칼을 차고 나갈 때마다 대문 앞에서 오래 서 있고, 돌아오는 날이면 아무것도 묻지 않고 더운 국부터 내온다. 강호가 무엇을 주든, 그 국만큼 따뜻한 것은 없었다.`,
  plain_f:S=>`이웃 고을에서 온 반려는 무공을 모른다. 그래서 당신 옷에 묻은 피를 보고도 묻지 않고, 밤새 빨아 마당 감나무 아래에 널어 둔다. 아침이면 옷은 늘 햇볕 냄새가 났고, 당신은 그 냄새로 집에 돌아왔다는 것을 알았다.`,
@@ -15677,7 +15678,7 @@ function saveHall(h){try{localStorage.setItem(HKEY,JSON.stringify(h));}catch(e){
 const NAI_URL='https://image.novelai.net/ai/generate-image';
 const NAI_MODELS=[['nai-diffusion-4-5-full','V4.5 Full'],['nai-diffusion-4-5-curated','V4.5 Curated'],['nai-diffusion-5-full','V5 Full'],['nai-diffusion-5-curated','V5 Curated'],['nai-diffusion-4-full','V4 Full']];
 const NAI_Q={'nai-diffusion-5-full':'very aesthetic, masterpiece, best quality','nai-diffusion-5-curated':'very aesthetic, masterpiece, best quality','nai-diffusion-4-5-full':'very aesthetic, masterpiece, no text','nai-diffusion-4-5-curated':'location, masterpiece, no text','nai-diffusion-4-full':'no text, best quality, very aesthetic, absurdres'};
-const GAME_VER='2026.10.26-75';
+const GAME_VER='2026.10.26-76';
 const NAI_NEG='nsfw, nude, lowres, bad anatomy, bad hands, missing fingers, extra digits, text, watermark, signature, logo, worst quality, low quality, blurry, modern clothes, glasses, eyewear, jpeg artifacts';
 const NKEY='murim-nai';
 function ncfg(){let c={};try{c=JSON.parse(localStorage.getItem(NKEY)||'{}');}catch(e){}return Object.assign({key:'',relay:'',model:'nai-diffusion-4-5-full',style:'wuxia, ancient china, hanfu, detailed illustration, cinematic lighting',autoEv:false,autoPc:false,vn:true,neg:NAI_NEG,tnpc:'',tev:'',tmap:'',q:true,steps:28,scale:5,rescale:0},c,{pr:Object.assign({},c.pr)});}
