@@ -13778,10 +13778,10 @@ function devAddAll(){for(const id in (STORY.add||{})){const d=STORY.add[id];let 
   Object.assign(e,{draft:devBlank(d),t:d.t||'새 사건',a:d.a||[10,90],w:devBlank(d)?0:d.w!=null?+d.w:1,cd:+d.cd||0,tag:d.tag||'side',x:S=>stFill(S,d.x||''),
     ch:(d.ch&&d.ch.length?d.ch:[{t:'고개를 끄덕인다',r:''}]).map(c=>({t:c.t||'…',h:c.h||'',go:S=>{if(c.fx&&c.fx.length){const fx={};c.fx.forEach(f=>{if(f.k==='hp'&&f.v<0)hurtS(S,-f.v,d.t||'사건');else fx[f.k]=(fx[f.k]||0)+f.v;});A(S,fx);}if(c.js)devRun(c.js,S);if(c.next&&EVM[c.next])S.chain=c.next;return stFill(S,c.r||'');}}))});}}
 /* ── 화면 ── */
-const DEV_TABS=[['all','전체'],['map','지도'],['list','모든 사건'],['send','메모·보내기']];
+const DEV_TABS=[['mind','마인드맵'],['send','메모·보내기']];
 function devHead(m,title){return `<div class="row" style="justify-content:space-between"><h3 id="mt" style="margin:0">${esc(title||'개발 스페이스')}</h3><div class="row"><button class="ghost" data-a="mclose">닫기</button></div></div>
-  <div class="chips" style="display:flex;gap:4px">${DEV_TABS.map(([k,l])=>`<button class="chip ${(m.tab||'map')===k?'on':''}" data-a="dvtab" data-v="${k}">${l}</button>`).join('')}<button class="chip" data-a="dvnew">+ 새 사건</button></div>`;}
-function devHTML(){const m=modal;if(m.tab==='all')return devAllHTML();if(m.tab==='list')return devListHTML();if(m.tab==='send')return devSendHTML();return devMapHTML();}
+  <div class="chips" style="display:flex;gap:4px">${DEV_TABS.map(([k,l])=>`<button class="chip ${(m.tab||'mind')===k?'on':''}" data-a="dvtab" data-v="${k}">${l}</button>`).join('')}<button class="chip" data-a="dvnew">+ 새 사건</button></div>`;}
+function devHTML(){const m=modal;if(m.tab==='send')return devSendHTML();if(m.tab==='list')return devListHTML();if(m.tab==='map')return devMapHTML();return devMindHTML();}
 function devListHTML(){const m=modal,q=(m.q2||'').trim(),f=m.f||'all',G=devGraph();
   let L=EV.filter(e=>e.id!=='focus');
   if(f==='edit')L=L.filter(e=>STORY.ev[e.id]||(STORY.add||{})[e.id]);else if(f==='user')L=L.filter(e=>e.user);else if(f.startsWith('g:'))L=L.filter(e=>devGroup(e)===f.slice(2));else if(f!=='all')L=L.filter(e=>f==='lv'?/^lv_/.test(e.id):e.tag===f&&!/^lv_/.test(e.id));
@@ -14312,9 +14312,9 @@ async function elGen(k){const c=sndCfg();if(!c.el.trim())throw new Error('소리
   if(!r.ok){let t='';try{t=(await r.text()).slice(0,200);}catch(e){}throw new Error(r.status===401?'ElevenLabs 키가 맞지 않아요.':(r.status===402||/paid|subscription|plan|quota|credit/i.test(t))?'요금제나 크레딧이 모자라요. 배경음 작곡(Music)은 유료 요금제에서 된다. 아래 ‘효과음 엔진으로 배경음 만들기’를 켜면 짧은 반복음으로 만든다.':`ElevenLabs 오류 ${r.status}: ${t}`);}
   await sndStore(k,new Blob([await r.arrayBuffer()],{type:'audio/mpeg'}));}
 function sndHTML(){const c=sndCfg(),m=modal;const row=(k,i)=>{const [n]=SND_SLOTS[k],has=!!sndUrl(k)||SNDCHK[k]===0&&false,busy=(m.busy||{})[k];
-  return `<div class="plate" style="display:flex;flex-direction:column;gap:6px"><div class="row" style="justify-content:space-between"><b>${esc(n)}</b><span class="small ${has?'':'muted'}">${has?'있음':'없음'}</span></div>
+  return `<div class="plate" style="display:flex;flex-direction:column;gap:6px"><div class="row" style="justify-content:space-between"><b>${esc(n)}</b><span class="small ${has?'':'muted'}">${SNDU[k]?'내 소리':has?'저장소 소리':'없음'}</span></div>
    <textarea id="sp_${i}" rows="2" placeholder="${esc(SND_SLOTS[k][1])}">${esc(c.pr[k]||'')}</textarea>
-   <div class="row wrap"><button class="ghost" data-a="sndgen" data-k="${k}" ${busy?'disabled':''}>${busy?'만드는 중…':has?'다시 만들기':'ElevenLabs로 만들기'}</button>${has?`<button class="ghost" data-a="sndplay" data-k="${k}">▶ 듣기</button><button class="ghost" data-a="snddel" data-k="${k}">지우기</button>`:''}<label class="ghost btnl" for="sf_${i}">파일에서 넣기</label><input type="file" id="sf_${i}" data-sk="${k}" accept="audio/*" hidden></div></div>`;};
+   <div class="row wrap"><button class="ghost" data-a="sndgen" data-k="${k}" ${busy?'disabled':''}>${busy?'만드는 중…':has?'다시 만들기':'ElevenLabs로 만들기'}</button>${has?`<button class="ghost" data-a="sndplay" data-k="${k}">▶ 듣기</button>`:''}${SNDU[k]?`<button class="ghost" data-a="snddel" data-k="${k}">지우기</button>`:''}<label class="ghost btnl" for="sf_${i}">파일에서 넣기</label><input type="file" id="sf_${i}" data-sk="${k}" accept="audio/*" hidden></div></div>`;};
   return `<div class="modal" data-a="mbg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mt"><div class="row" style="justify-content:space-between"><h3 id="mt" style="margin:0">소리</h3><button class="ghost" data-a="mclose">${m.back?'← 설정':'닫기'}</button></div>
    <label class="row"><input type="checkbox" id="sd_on" ${c.on?'checked':''}> 소리를 켠다</label>
    <div class="row wrap" style="gap:12px"><label class="small">배경음 크기 <input type="range" id="sd_bgm" min="0" max="1" step="0.05" value="${c.bgm}"></label><label class="small">효과음 크기 <input type="range" id="sd_sfx" min="0" max="1" step="0.05" value="${c.sfx}"></label></div>
@@ -14323,6 +14323,9 @@ function sndHTML(){const c=sndCfg(),m=modal;const row=(k,i)=>{const [n]=SND_SLOT
    <label class="row"><input type="checkbox" id="sd_mus" ${c.music!==false?'checked':''}> 배경음은 작곡(Music)으로 만든다 <span class="muted small">(끄면 효과음 엔진으로 22초 반복음)</span></label>
    <label class="small">작곡 길이(초) <input type="number" id="sd_dur" min="10" max="300" value="${esc(c.dur)}" style="width:5em"></label>
    ${m.err?`<p class="status">${esc(m.err)}</p>`:''}
+   <p class="grp-t" style="margin:6px 0 0">모두에게 들려주기</p>
+   <p class="muted small" style="margin:0">내가 만든 소리를 게임 저장소의 snd 폴더에 올리면, 이 주소로 들어오는 모든 사람이 그 소리를 듣는다. 그림 관리의 ‘깃허브에 바로 올리기’에 넣은 저장소와 토큰을 함께 쓴다. 키는 올라가지 않는다.</p>
+   <div class="row wrap"><button class="ghost" data-a="sndpush" ${m.pushing?'disabled':''}>${m.pushing?'올리는 중…':'저장소에 내 소리 올리기'}</button></div>
    <p class="grp-t" style="margin:6px 0 0">칸마다 프롬프트(영어)를 고칠 수 있다. 비우면 기본 프롬프트.</p>
    ${Object.keys(SND_SLOTS).map(row).join('')}</div></div>`;}
 
@@ -15348,6 +15351,146 @@ Object.entries(ARC2).forEach(([id,L])=>{LOVE_ARC[id]=L;L.st.forEach((st,i)=>E({i
   if:S=>romList(S).includes(id)&&S.met[id]&&!S.dead_npc[id]&&!loveBlocked(S,id)&&(S.rel[id]||0)>=[15,35,60][i]&&(i===0||S.seen[`lv_${id}_${i-1}`])&&(!S.spouse||S.spouse===id||(S.harem&&S.harem.includes(id)))&&(!ARC_GATE[id]||ARC_GATE[id](S)),
   x:st.x,ch:st.ch}));});
 
+/* ══ 개발 스페이스: 마인드맵 하나로 ══
+   가운데 ‘무림인생’에서 큰 갈래(성장·정파·사파·마도·생업·인연·강호)로, 갈래를 누르면 그 안의 길로, 길을 누르면 사건으로 펼친다.
+   갈래끼리·길끼리 이어진 사건이 있으면 점선으로 잇고 그 수만큼 굵게 그린다. 사건을 누르면 고치는 화면이 열린다. */
+const MM_B=[['grow','성장'],['jeong','정파'],['sa','사파·흑도'],['ma','마도'],['job','생업'],['love','인연'],['world','강호']];
+const MM_BN=Object.fromEntries(MM_B);
+let MMC=null;
+function mmClass(e){const lv=/^lv_(\w+?)_\d$/.exec(e.id);if(lv)return ['love','p:'+lv[1]];
+  const g=devGroup(e);
+  if(g){if(g==='young'||g==='elder')return ['grow',g];if(/^job_/.test(g))return ['job',g];if(g==='demon'||g==='blood'||g==='salmak')return ['ma',g];
+    if(g.startsWith('세력:')){const f=g.slice(3);return [/마|혈/.test(f)?'ma':/사|흑|녹림|수로|하오/.test(f)?'sa':'jeong',g];}
+    const o=ORGS[g];if(o)return [o.st==='마'?'ma':o.st==='사'?'sa':'jeong',g];}
+  if(e.tag==='love'||e.tag==='family')return ['love','t:'+e.tag];if(e.tag==='arc')return ['grow','t:arc'];if(e.tag==='job')return ['job','t:job'];
+  if(e.tag==='key')return ['world','t:key'];if(e.tag==='sect')return ['jeong','t:sect'];return ['world','t:'+(e.tag||'etc')];}
+const mmSubName=s=>s.startsWith('p:')?`${NPCS[s.slice(2)]?NPCS[s.slice(2)].n:s.slice(2)}`:s.startsWith('t:')?({love:'연애·혼인',family:'가족',arc:'성장 마디',job:'생업 공통',key:'천하대세',sect:'문파 생활',side:'곁이야기',talk:'인물과의 대화',trait:'체질',etc:'그 밖'}[s.slice(2)]||s.slice(2)):devGName(s);
+function mmData(){const G0=devGraph();if(MMC&&MMC.G===G0)return MMC;const evs=EV.filter(e=>e.id!=='focus'&&e.id!=='ai'&&!e.draft),cls={},tree={};
+  for(const e of evs){const [b,s]=mmClass(e);cls[e.id]=[b,s];((tree[b]||(tree[b]={}))[s]||(tree[b][s]=[])).push(e.id);}
+  const age=id=>(EVM[id].a||[0])[0];for(const b in tree)for(const s in tree[b])tree[b][s].sort((x,y)=>age(x)-age(y)||x.localeCompare(y));
+  /* 인연 이야기는 사람이 많으니 한 갈래(‘인연 이야기’) 아래 사람별로 묶는다 */
+  if(tree.love){const ppl=Object.keys(tree.love).filter(s=>s.startsWith('p:'));if(ppl.length){tree.love['인연 이야기']={};for(const p of ppl){tree.love['인연 이야기'][p]=tree.love[p];delete tree.love[p];}}}
+  const G=devGraph(),bl={},sl={};
+  for(const x of G.edges){const A1=cls[x.a],B1=cls[x.b];if(!A1||!B1)continue;
+    if(A1[0]!==B1[0]){const k=[A1[0],B1[0]].sort().join('|');bl[k]=(bl[k]||0)+1;}
+    else if(A1[1]!==B1[1]){const k=A1[0]+'#'+[A1[1],B1[1]].sort().join('|');sl[k]=(sl[k]||0)+1;}}
+  return MMC={tree,cls,bl,sl,n:evs.length,G:G0};}
+/* 한 마디의 아이들: [{k, name, n, leaves:[이름…]}] */
+function mmKids(path){const D=mmData();const age=id=>(EVM[id].a||[0])[0];
+  const evName=id=>String(stName(EVM[id])).slice(0,10);
+  const ids=v=>Array.isArray(v)?v:Object.values(v).flat();
+  if(!path.length)return MM_B.filter(([b])=>D.tree[b]).map(([b,n])=>{const subs=Object.entries(D.tree[b]).sort((x,y)=>ids(y[1]).length-ids(x[1]).length);return {k:b,name:n,n:subs.reduce((s,[,v])=>s+ids(v).length,0),leaves:subs.slice(0,4).map(([s])=>mmSubName(s))};});
+  const b=path[0];let node=D.tree[b];for(const p of path.slice(1))node=node&&!Array.isArray(node)?node[p]:node;
+  if(!node)return [];
+  if(!Array.isArray(node))return Object.entries(node).sort((x,y)=>ids(y[1]).length-ids(x[1]).length).map(([s,v])=>{const L=ids(v);return {k:s,name:mmSubName(s),n:L.length,leaves:Array.isArray(v)?L.slice(0,4).map(evName):Object.keys(v).slice(0,5).map(mmSubName)};});
+  /* 사건 목록: 많으면 나이 마디로 나눈다 */
+  if(node.length>28&&!path[path.length-1].startsWith('@')){const ch=[];for(let i=0;i<node.length;i+=24){const c=node.slice(i,i+24),a0=age(c[0]),a1=age(c[c.length-1]);ch.push({k:'@'+i,name:`${a0}~${a1}세`,n:c.length,leaves:c.slice(0,4).map(evName)});}return ch;}
+  return null;}
+function mmEvents(path){const D=mmData();let node=D.tree[path[0]];for(const p of path.slice(1)){if(p.startsWith('@')){const i=+p.slice(1);return node.slice(i,i+24);}node=node&&!Array.isArray(node)?node[p]:node;}return Array.isArray(node)?node:[];}
+const mmLabel=(path)=>!path.length?'무림인생':path[path.length-1].startsWith('@')?(()=>{const L=mmEvents(path);const age=id=>(EVM[id].a||[0])[0];return `${mmSubName(path[path.length-2])} ${age(L[0])}~${age(L[L.length-1])}세`;})():path.length===1?MM_BN[path[0]]:mmSubName(path[path.length-1]);
+function mmSvg(path,hl){const narrow=typeof innerWidth!=='undefined'&&innerWidth<720,W=narrow?640:1000,H=narrow?900:660,cx=W/2,cy=H/2,RX=narrow?175:340,RY=narrow?330:225;
+  const ink='#3f6b52',paper='#fbf8e6',out=[];const D=mmData();
+  const wob=(x1,y1,x2,y2,s)=>{const mx=(x1+x2)/2,my=(y1+y2)/2,dx=x2-x1,dy=y2-y1,l=Math.hypot(dx,dy)||1,k=(s||.12)*l;return `M${x1.toFixed(1)} ${y1.toFixed(1)} Q${(mx-dy/l*k).toFixed(1)} ${(my+dx/l*k).toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}`;};
+  const tw=t=>Math.max(44,[...String(t)].reduce((s,ch)=>s+(/[ -~]/.test(ch)?8:15.5),0));
+  const center=mmLabel(path),cw=tw(center)+40;
+  const kids=mmKids(path);
+  if(kids){const n=kids.length,many=n>12,pos=kids.map((k,i)=>{const a=-Math.PI/2+i*2*Math.PI/n+(n%2?0:Math.PI/n/2),ring=many&&i%2?.64:1;return {...k,leaves:many?[]:k.leaves,a,x:cx+RX*ring*Math.cos(a),y:cy+RY*ring*Math.sin(a)};});
+    /* 엮임: 같은 층의 갈래끼리 이어진 사건 수 */
+    const link=(p,q)=>!path.length?D.bl[[p.k,q.k].sort().join('|')]||0:path.length===1?D.sl[path[0]+'#'+[p.k,q.k].sort().join('|')]||0:0;
+    for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){const c=link(pos[i],pos[j]);if(!c)continue;const w=Math.min(5,.6+Math.log2(c+1)*.8);
+      out.push(`<path d="${wob(pos[i].x,pos[i].y,pos[j].x,pos[j].y,.08)}" fill="none" stroke="#b07a3a" stroke-width="${w.toFixed(1)}" stroke-dasharray="4 5" opacity=".55"><title>${esc(pos[i].name)} ↔ ${esc(pos[j].name)}: 이어진 사건 ${c}</title></path>`);}
+    for(const p of pos){out.push(`<path d="${wob(cx,cy,p.x,p.y,.1)}" fill="none" stroke="${ink}" stroke-width="${many?1.2:2.4}" stroke-linecap="round" ${many?'opacity=".5"':''}/>`);
+      /* 잔가지 */
+      const m=p.leaves.length;p.leaves.forEach((t,j)=>{const sp=m>3?.85:.6,a=p.a+(m>1?(j/(m-1)-.5)*sp*2:0),r=narrow?66:98,lx=p.x+Math.cos(a)*r*1.25,ly=p.y+Math.sin(a)*r*.9,anc=Math.cos(a)>.25?'start':Math.cos(a)<-.25?'end':'middle';
+        out.push(`<path d="${wob(p.x,p.y,lx,ly,.18)}" fill="none" stroke="${ink}" stroke-width="1.3" opacity=".8"/><text x="${(lx+(anc==='start'?4:anc==='end'?-4:0)).toFixed(1)}" y="${(ly+(Math.sin(a)>.3?14:Math.sin(a)<-.3?-5:4)).toFixed(1)}" font-size="${narrow?17:14}" fill="${ink}" text-anchor="${anc}">${esc(String(t).slice(0,11))}</text>`);});}
+    for(const p of pos){const fs=many?(narrow?17:15):(narrow?21:18),w=tw(p.name)*fs/16+24,h=many?(narrow?38:32):(narrow?48:42),key=[...path,p.k].join('|');
+      out.push(`<g data-a="mmgo" data-v="${esc(key)}" style="cursor:pointer"><ellipse cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" rx="${(w/2).toFixed(1)}" ry="${h/2}" fill="#eef3df" stroke="${ink}" stroke-width="2.2"/><text x="${p.x.toFixed(1)}" y="${(p.y+6).toFixed(1)}" font-size="${fs}" font-weight="700" fill="#24412f" text-anchor="middle">${esc(p.name)}</text><text x="${p.x.toFixed(1)}" y="${(p.y+h/2+15).toFixed(1)}" font-size="${narrow?14:11}" fill="#6c7a63" text-anchor="middle">${many?'':p.n+'개'}</text></g>`);}}
+  else{/* 사건 마디: 사건을 둘레에 놓고, 서로 이어진 것을 선으로 */
+    const L=mmEvents(path),n=L.length,G=devGraph(),set=new Set(L),pos={};
+    L.forEach((id,i)=>{const ring=n>14&&i%2?.68:1,a=-Math.PI/2+i*2*Math.PI/n;pos[id]={x:cx+RX*ring*Math.cos(a),y:cy+RY*ring*Math.sin(a),a};});
+    for(const x of G.edges)if(set.has(x.a)&&set.has(x.b)){const p=pos[x.a],q=pos[x.b];out.push(`<path d="${wob(p.x,p.y,q.x,q.y,.15)}" fill="none" stroke="${DEV_COL[x.k]}" stroke-width="1.5" ${x.k==='go'||x.k==='step'?'':'stroke-dasharray="4 4"'} opacity=".75" marker-end="url(#mmar)"/>`);}
+    for(const id of L){const p=pos[id];out.push(`<path d="${wob(cx,cy,p.x,p.y,.06)}" fill="none" stroke="${ink}" stroke-width="1" opacity=".25"/>`);}
+    for(const id of L){const p=pos[id],e=EVM[id],t=String(stName(e)).slice(0,10),w=tw(t)+18,ed=!!STORY.ev[id],ext=[...(G.fw[id]||[]),...(G.bw[id]||[])].filter(x=>!set.has(x.a)||!set.has(x.b)).length,h=id===hl;
+      out.push(`<g data-a="dvopen" data-id="${esc(id)}" style="cursor:pointer"><rect x="${(p.x-w/2).toFixed(1)}" y="${(p.y-17).toFixed(1)}" width="${w.toFixed(1)}" height="34" rx="16" fill="${h?'#fff0b8':ed?'#e3efe2':'#fffdf3'}" stroke="${h?'#b07a3a':ink}" stroke-width="${h||ed?2.4:1.4}"/><text x="${p.x.toFixed(1)}" y="${(p.y+5).toFixed(1)}" font-size="${narrow?17:14}" fill="#1f2e24" text-anchor="middle">${esc(t)}</text>${ext?`<text x="${(p.x+w/2-2).toFixed(1)}" y="${(p.y-19).toFixed(1)}" font-size="11" fill="#b07a3a" text-anchor="end">↗${ext}</text>`:''}<title>${esc(id)} · ${esc(stAge(e))}${ext?` · 다른 갈래와 이어짐 ${ext}`:''}</title></g>`);}}
+  /* 가운데 */
+  const cbox=`<g ${path.length?'data-a="mmup" style="cursor:pointer"':''}><rect x="${(cx-cw/2).toFixed(1)}" y="${cy-26}" width="${cw.toFixed(1)}" height="52" fill="#fffef6" stroke="${ink}" stroke-width="2.6"/><rect x="${(cx-cw/2+4).toFixed(1)}" y="${cy-22}" width="${(cw-8).toFixed(1)}" height="44" fill="none" stroke="${ink}" stroke-width="1" opacity=".5"/><text x="${cx}" y="${cy+8}" font-size="${narrow?24:21}" font-weight="700" fill="#24412f" text-anchor="middle">${esc(center)}</text>${path.length?`<text x="${cx}" y="${cy+44}" font-size="12" fill="#6c7a63" text-anchor="middle">누르면 한 단계 위로</text>`:''}</g>`;
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-height:74vh;background:${paper};background-image:linear-gradient(#e6e2c4 1px,transparent 1px),linear-gradient(90deg,#e6e2c4 1px,transparent 1px);background-size:28px 28px;border-radius:10px" role="img" aria-label="사건 마인드맵: ${esc(center)}"><defs><marker id="mmar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#7a6a3a"/></marker></defs>${out.join('')}${cbox}</svg>`;}
+function devMindHTML(){const m=modal,path=m.mm||[],D=mmData(),q=(m.mq||'').trim();
+  const hits=q?EV.filter(e=>e.id!=='focus'&&D.cls[e.id]&&(e.id.includes(q)||String(stName(e)).includes(q))).slice(0,14):[];
+  const crumbs=[['','무림인생'],...path.map((p,i)=>[path.slice(0,i+1).join('|'),i===0?MM_BN[p]:p.startsWith('@')?mmLabel(path.slice(0,i+1)).split(' ').pop():mmSubName(p)])];
+  const ed=Object.keys(STORY.ev||{}).length;
+  return `<div class="modal" data-a="mbg"><div class="sheet story dev" role="dialog" aria-modal="true" aria-labelledby="mt" style="max-width:min(1100px,96vw);width:96vw">${devHead(m)}
+   <p class="small" style="margin:0">사건 <b>${D.n}</b>개${ed?` · 고친 것 ${ed}`:''}. 동그라미를 누르면 그 안으로 들어가고, 가운데를 누르면 한 단계 위로 나온다. 갈래 사이의 <span style="color:#b07a3a">점선</span>은 서로 이어진 사건이 있다는 뜻이고, 많이 이어질수록 굵다. 사건을 누르면 글·확률·조건·효과를 고친다.</p>
+   <div class="row wrap" style="gap:6px;align-items:center">${crumbs.map(([k,l],i)=>`<button class="chip ${i===crumbs.length-1?'on':''}" data-a="mmgo" data-v="${esc(k)}">${esc(l)}</button>`).join('<span class="muted">›</span>')}
+    <input id="mm_q" class="evinp" style="flex:1;min-width:150px" placeholder="사건 찾기: 이름이나 id" value="${esc(m.mq||'')}"></div>
+   ${hits.length?`<div class="chips" style="display:flex;flex-wrap:wrap;gap:4px">${hits.map(e=>`<button class="chip" data-a="mmjump" data-id="${esc(e.id)}">${esc(stName(e))} <small>${esc(MM_BN[D.cls[e.id][0]])}</small></button>`).join('')}</div>`:''}
+   ${mmSvg(path,m.mmh)}
+   ${!mmKids(path)?`<p class="muted small" style="margin:0">선: <span style="color:${DEV_COL.go}">━ 바로 이어짐</span> · <span style="color:${DEV_COL.step}">━ 다음 단계</span> · <span style="color:${DEV_COL.seen}">╍ 본 뒤에 열림</span> · <span style="color:${DEV_COL.flag}">┈ 앞 사건의 표시</span> · <span style="color:#b07a3a">↗ 다른 갈래와 이어진 수</span></p>`:''}
+  </div></div>`;}
+/* 사건 하나가 마인드맵의 어디에 있는지 */
+function mmPathOf(id){const D=mmData(),c=D.cls[id];if(!c)return [];const [b,s]=c;if(b==='love'&&s.startsWith('p:'))return ['love','인연 이야기',s];const L=D.tree[b][s];if(Array.isArray(L)&&L.length>28){const i=L.indexOf(id);return [b,s,'@'+(Math.floor(i/24)*24)];}return [b,s];}
+
+/* ══ 기록 옮기기: 다른 기기로 이어서 하기 ══
+   이 브라우저의 ‘murim…’ 저장(지금 삶, 지난 삶들, 결말과 CG, 설정, 이야기 편집…)을 파일이나 글자 묶음으로 내보내고 가져온다.
+   API 키·토큰은 빼고 내보내며, 가져올 때는 이 기기에 이미 있는 키를 그대로 둔다. 그림·소리는 크기가 커서 넣지 않는다. */
+const SV_SECRET=/key|token|secret|pass|^el$/i;
+function svStrip(o){if(Array.isArray(o))return o.map(svStrip);if(o&&typeof o==='object'){const r={};for(const k in o){if(SV_SECRET.test(k))continue;r[k]=svStrip(o[k]);}return r;}return o;}
+function svKeep(local,inc){if(local&&typeof local==='object'&&!Array.isArray(local)){const r=Object.assign({},inc&&typeof inc==='object'?inc:{});for(const k in local){if(SV_SECRET.test(k))r[k]=local[k];else if(local[k]&&typeof local[k]==='object'&&r[k]&&typeof r[k]==='object')r[k]=svKeep(local[k],r[k]);}return r;}return inc;}
+function svPack(){save();const ls={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(!/^murim/.test(k))continue;const v=localStorage.getItem(k);let j;try{j=JSON.parse(v);}catch(e){ls[k]=v;continue;}ls[k]=svStrip(j);}
+  return {app:'murim-life',v:1,ver:GAME_VER,at:new Date().toISOString(),who:S&&S.name||'',age:S&&S.age||0,ls};}
+const svEnc=o=>btoa(unescape(encodeURIComponent(JSON.stringify(o))));
+function svDec(t){t=String(t||'').trim();if(!t)throw new Error('붙여 넣은 내용이 비어 있어요.');let o;try{o=JSON.parse(t);}catch(e){try{o=JSON.parse(decodeURIComponent(escape(atob(t.replace(/\s/g,'')))));}catch(e2){throw new Error('기록 묶음으로 읽을 수 없어요. 내보낸 글자를 빠짐없이 붙여 넣었는지 봐 주세요.');}}
+  if(!o||o.app!=='murim-life'||!o.ls)throw new Error('무림인생 기록이 아니에요.');return o;}
+function svApply(o){for(const k in o.ls){if(!/^murim/.test(k))continue;const inc=o.ls[k];if(typeof inc==='string'){localStorage.setItem(k,inc);continue;}let loc=null;try{loc=JSON.parse(localStorage.getItem(k)||'null');}catch(e){}localStorage.setItem(k,JSON.stringify(svKeep(loc,inc)));}}
+function svHTML(){const m=modal;return `<div class="modal" data-a="mbg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mt"><div class="row" style="justify-content:space-between"><h3 id="mt" style="margin:0">기록 옮기기</h3><button class="ghost" data-a="mclose">${m.back?'← 설정':'닫기'}</button></div>
+  <p class="small" style="margin:0">다른 기기에서 이어서 하려면 여기서 <b>내보내고</b>, 그 기기의 같은 화면에서 <b>가져온다</b>. 지금 삶, 지난 삶들의 기록, 결말과 CG, 설정, 이야기 편집이 함께 옮겨진다.</p>
+  <p class="muted small" style="margin:0">API 키와 토큰은 빼고 내보낸다. 가져올 때 그 기기에 있던 키는 그대로 남는다. 그림과 소리는 크기가 커서 넣지 않으니, 그림 관리·소리 화면의 ‘저장소에 올리기’로 옮긴다.</p>
+  <p class="grp-t" style="margin:6px 0 0">내보내기</p>
+  <div class="row wrap"><button class="go" data-a="svexp">파일로 내보내기</button><button class="ghost" data-a="svcopy">글자로 복사하기</button></div>
+  <p class="grp-t" style="margin:6px 0 0">가져오기</p>
+  <div class="row wrap"><label class="ghost btnl" for="sv_file">파일에서 가져오기</label><input type="file" id="sv_file" accept=".json,application/json,text/plain" hidden></div>
+  <textarea id="sv_txt" rows="4" placeholder="복사해 온 글자 묶음을 여기에 붙여 넣는다">${esc(m.txt||'')}</textarea>
+  <div class="row wrap"><button class="ghost" data-a="svimp">붙여 넣은 기록 가져오기</button></div>
+  ${m.peek?`<p class="small" style="margin:0">가져올 기록: ${esc(m.peek)}</p><div class="row wrap"><button class="go" data-a="svok">이 기록으로 바꾸기</button><button class="ghost" data-a="svno">그만두기</button></div><p class="muted small" style="margin:0">바꾸면 이 기기의 지금 기록은 가져온 기록으로 덮인다.</p>`:''}
+  ${m.msg?`<p class="status">${esc(m.msg)}</p>`:''}</div></div>`;}
+function svPeek(o){modal.pend=o;const s=o.ls[KEY]&&typeof o.ls[KEY]==='object'?o.ls[KEY]:null;modal.peek=`${o.at?o.at.slice(0,16).replace('T',' '):''} · 판 ${o.ver||'?'}${s?` · ${s.name||''} ${s.age||''}세`:''} · 항목 ${Object.keys(o.ls).length}개`;modal.msg='';render();}
+
+/* ══ 소리를 저장소에 올려 모두가 듣게 ══
+   그림과 같은 깃허브 설정(그림 관리 → 깃허브에 바로 올리기의 저장소·토큰)을 쓴다. 저장소의 snd/ 폴더와 snd/index.json에 올린다.
+   이 기기에 내 소리가 없으면 저장소의 소리를 쓴다. */
+let SNDMAN={},SNDMV={};
+const SNDMANP=fetch('snd/index.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(j=>{SNDMAN=j&&j.files||{};SNDMV=j&&j.ver||{};}).catch(()=>{}).then(()=>{try{sndTick(true);}catch(e){}});
+const sndRepoUrl=k=>REPO_ON&&SNDMAN[k]?'snd/'+SNDMAN[k]+(SNDMV[k]?'?v='+SNDMV[k]:''):null;
+{const o=sndUrl;sndUrl=function(k){return o(k)||(SNDCHK[k]===1?sndRepoUrl(k):null);};}
+const sndExt=b=>/wav/.test(b.type)?'wav':/ogg/.test(b.type)?'ogg':/mp4|m4a|aac/.test(b.type)?'m4a':'mp3';
+async function sndPush(m){const c=ncfg(),repo=(c.ghRepo||ghDefault()).trim().replace(/^https?:\/\/github\.com\//,'').replace(/\.git$/,'').replace(/\/$/,''),br=(c.ghBranch||'main').trim(),tok=(c.ghToken||'').trim();
+  const say=t=>{m.err=t;soon();};
+  if(!tok){say('깃허브 토큰이 없어요. 설정 → 그림 관리 → ‘깃허브에 바로 올리기’에서 저장소와 토큰을 먼저 넣어 주세요.');return;}
+  if(!/^[\w.-]+\/[\w.-]+$/.test(repo)){say('저장소는 아이디/이름 꼴로 적어 주세요.');return;}
+  const api=async(p,o)=>{o=o||{};const r=await fetch(`https://api.github.com/repos/${repo}${p}`,{method:o.method||'GET',cache:'no-store',headers:Object.assign({Authorization:'Bearer '+tok,Accept:'application/vnd.github+json'},o.body?{'Content-Type':'application/json'}:{}),body:o.body?JSON.stringify(o.body):undefined});
+    if(!r.ok){if(o.ok404&&r.status===404)return null;throw new Error(r.status===401?'토큰이 맞지 않거나 만료되었어요.':r.status===403?'토큰에 이 저장소의 쓰기 권한이 없어요.':r.status===404?'저장소나 브랜치를 찾지 못했어요.':`GitHub 오류 ${r.status}`);}return r.json();};
+  m.pushing=1;render();
+  try{const db=await idb();const keys=(await new Promise((res,rej)=>{const q=db.transaction('img').objectStore('img').getAllKeys();q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);})).filter(k=>typeof k==='string'&&k.startsWith('snd:')).map(k=>k.slice(4)).filter(k=>SND_SLOTS[k]);
+    if(!keys.length)throw new Error('올릴 내 소리가 없어요. 먼저 만들거나 파일로 넣어 주세요.');
+    say('저장소를 확인하는 중…');
+    const ref=await api(`/git/ref/heads/${encodeURI(br)}`),base=ref.object.sha,bc=await api(`/git/commits/${base}`);
+    const tr=await api(`/git/trees/${bc.tree.sha}?recursive=1`),have=new Map((tr.tree||[]).filter(t=>t.type==='blob').map(t=>[t.path,t.sha]));
+    let man={},ver={};const mf=await api(`/contents/snd/index.json?ref=${encodeURIComponent(br)}`,{ok404:1});
+    if(mf&&mf.content){try{const j=JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(mf.content.replace(/\s/g,'')),ch=>ch.charCodeAt(0))));man=Object.assign({},j.files);ver=Object.assign({},j.ver);}catch(e){}}
+    const entries=[];let up=0,i=0;
+    for(const k of keys){const b=await imgGet('snd:'+k);if(!b)continue;const u8=new Uint8Array(await b.arrayBuffer()),p=k.replace(':','_')+'.'+sndExt(b),path='snd/'+p;
+      if(man[k]&&man[k]!==p&&have.has('snd/'+man[k]))entries.push({path:'snd/'+man[k],mode:'100644',type:'blob',sha:null});
+      man[k]=p;const sha=await gitSha(u8);if(sha)ver[k]=sha.slice(0,10);
+      if(!(sha&&have.get(path)===sha)){const bl=await api('/git/blobs',{method:'POST',body:{content:b64(u8),encoding:'base64'}});entries.push({path,mode:'100644',type:'blob',sha:bl.sha});up++;}
+      say(`올리는 중… ${++i}/${keys.length}`);}
+    if(!up&&!entries.length){say(`바뀐 소리가 없어요. ${keys.length}개 모두 이미 저장소에 있어요.`);return;}
+    entries.push({path:'snd/index.json',mode:'100644',type:'blob',content:JSON.stringify({v:1,files:man,ver},null,1)});
+    const t=await api('/git/trees',{method:'POST',body:{base_tree:bc.tree.sha,tree:entries}});
+    const cm=await api('/git/commits',{method:'POST',body:{message:`소리 ${up}개 올리기 (게임 안 소리 화면에서)`,tree:t.sha,parents:[base]}});
+    await api(`/git/refs/heads/${encodeURI(br)}`,{method:'PATCH',body:{sha:cm.sha}});
+    SNDMAN=man;SNDMV=ver;say(`소리 ${up}개를 올렸어요. 잠시 뒤(보통 1~2분) 이 주소로 들어오는 사람 모두에게 들려요.`);}
+  catch(e){say('올리지 못했어요: '+e.message);}finally{m.pushing=0;soon();}}
+
 const EVM=Object.fromEntries(EV.map(e=>[e.id,e]));
 try{devAddAll();}catch(e){}
 EVM.ai=AI_EV;
@@ -15678,7 +15821,7 @@ function saveHall(h){try{localStorage.setItem(HKEY,JSON.stringify(h));}catch(e){
 const NAI_URL='https://image.novelai.net/ai/generate-image';
 const NAI_MODELS=[['nai-diffusion-4-5-full','V4.5 Full'],['nai-diffusion-4-5-curated','V4.5 Curated'],['nai-diffusion-5-full','V5 Full'],['nai-diffusion-5-curated','V5 Curated'],['nai-diffusion-4-full','V4 Full']];
 const NAI_Q={'nai-diffusion-5-full':'very aesthetic, masterpiece, best quality','nai-diffusion-5-curated':'very aesthetic, masterpiece, best quality','nai-diffusion-4-5-full':'very aesthetic, masterpiece, no text','nai-diffusion-4-5-curated':'location, masterpiece, no text','nai-diffusion-4-full':'no text, best quality, very aesthetic, absurdres'};
-const GAME_VER='2026.10.26-76';
+const GAME_VER='2026.10.26-77';
 const NAI_NEG='nsfw, nude, lowres, bad anatomy, bad hands, missing fingers, extra digits, text, watermark, signature, logo, worst quality, low quality, blurry, modern clothes, glasses, eyewear, jpeg artifacts';
 const NKEY='murim-nai';
 function ncfg(){let c={};try{c=JSON.parse(localStorage.getItem(NKEY)||'{}');}catch(e){}return Object.assign({key:'',relay:'',model:'nai-diffusion-4-5-full',style:'wuxia, ancient china, hanfu, detailed illustration, cinematic lighting',autoEv:false,autoPc:false,vn:true,neg:NAI_NEG,tnpc:'',tev:'',tmap:'',q:true,steps:28,scale:5,rescale:0},c,{pr:Object.assign({},c.pr)});}
@@ -16411,13 +16554,14 @@ function portrait(k,label,cls){const f=ST_FORM[k.slice(3)];const u=imgURL(k)||(k
 Object.assign(NPC_TAGS,{rival:'1boy, solo, young man, sharp eyes, messy black hair tied with a red cloth, scarred knuckles, dark blue worn martial outfit, bandaged forearms, cocky grin'});
 function basePrompt(k){const [t,id]=k.split(/:(.+)/);if(t==='mob'){const m=MOB[id];return (m?m.t:'1boy, solo')+(m&&m.face?'':', faceless, no facial features, blank face')+', cowboy shot, standing, white background';}if(t==='st'){const g=ST_FORM[id]?ST_FORM[id].t:ST_BASE[id]?ST_BASE[id][1]:NPC_TAGS[id];return (typeof g==='function'?g(S):g)+', cowboy shot, standing, white background';}return t==='bg'?loveBgPrompt(id):t==='wp'?(WPN_IMG_TAGS[id]||'one chinese weapon'):t==='cg'?cgPrompt(id):t==='pc'?pcPrompt(S):t==='npc'?npcPrompt(id,S):t==='map'?MAP_TAG:t==='reg'?(REG_TAGS[id]||'ancient chinese landscape')+', scenery, wide shot, cinematic composition, no humans':evPrompt(id);}
 function slotPrompt(k){const p=ncfg().pr[k];return p&&p.trim()?p:basePrompt(k);}
-function modalHTML(){if(!modal)return '';if(modal.t==='snd')return sndHTML();if(modal.t==='dev')return devHTML();if(modal.t==='story')return storyListHTML();if(modal.t==='storyEv')return storyEvHTML();
+function modalHTML(){if(!modal)return '';if(modal.t==='sv')return svHTML();if(modal.t==='snd')return sndHTML();if(modal.t==='dev')return devHTML();if(modal.t==='story')return storyListHTML();if(modal.t==='storyEv')return storyEvHTML();
   if(modal.t==='nai'){const c=modal.c;return `<div class="modal" data-a="mbg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mt"><h3 id="mt">설정 <span class="muted small" style="font-weight:400">· 판 ${GAME_VER}</span></h3>${S.phase!=='birth'&&S.phase!=='end'?`<div class="row" style="justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:10px"><span class="small muted">이번 생을 접고 처음으로 돌아간다.</span><button class="ghost" data-a="quit">${modal.sure?'정말 포기한다':'처음으로'}</button></div>`:''}<p class="grp-t" style="margin:0">그림</p>
    <label class="row"><input type="checkbox" id="n_repo" ${c.useRepo!==false?'checked':''}> 게임에 들어 있는 기본 그림을 쓴다</label>
    <p class="muted small" style="margin:0">끄면 내가 그린 그림만 쓴다. 내 그림체로 전부 새로 그리고 싶을 때 끈다. 켜 두어도 내가 그리거나 넣은 그림이 있는 칸은 내 그림이 먼저 나온다.</p>
    <button class="ghost" data-a="gal" style="padding:8px 10px">그림체 고르기 · 그림 관리 (지도·인물·사건) →</button>
    <button class="ghost" data-a="dev" style="padding:8px 10px">개발 스페이스 · 모든 사건의 글·확률·조건·효과·보상을 고치기 →</button>
-   <button class="ghost" data-a="snd" style="padding:8px 10px">소리 · 배경음과 효과음 (ElevenLabs로 만들기) →</button>
+   <button class="ghost" data-a="snd" style="padding:8px 10px">소리 · 배경음과 효과음 (ElevenLabs로 만들기 · 저장소에 올리기) →</button>
+   <button class="ghost" data-a="sv" style="padding:8px 10px">기록 옮기기 · 다른 기기에서 이어서 하기 (내보내기·가져오기) →</button>
    <label class="row"><input type="checkbox" id="n_vn" ${c.vn!==false?'checked':''}> 대화를 미연시처럼 한 줄씩 보여 준다 (화면을 누르면 다음 대사)</label>
    <p class="grp-t" style="margin:0">NovelAI로 직접 그리기 (선택)</p>
    <p class="muted small">인물 스탠딩과 사건 장면을 NovelAI로 그린다. 토큰은 이 브라우저에만 저장되고, 깃허브에 올리는 파일에는 들어가지 않는다. 그림 한 장마다 구독 등급에 따라 Anlas가 들 수 있다.</p>
@@ -16854,7 +16998,7 @@ app.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b||b
   else if(a==='apre'&&modal&&modal.t==='nai'){readNaiForm();const x=OAI_PRE[+b.dataset.i],o=modal.c.ai.p.openai;o.base=x[1];o.model=x[2];render();}
   else if(a==='mclose')closeModal();
   else if(a==='story'){modal={t:'dev',tab:'list',f:'all',n:80,back:modal};render();}
-  else if(a==='dev'){modal={t:'dev',tab:'all',root:null,depth:6,q:'',f:'all',n:80,back:modal&&modal.t!=='dev'?modal:modal&&modal.back};render();}
+  else if(a==='dev'){modal={t:'dev',tab:'mind',mm:[],root:null,depth:6,q:'',f:'all',n:80,back:modal&&modal.t!=='dev'?modal:modal&&modal.back};render();}
   else if(a==='dvtab'&&modal&&modal.t==='dev'){modal.tab=b.dataset.v;modal.msg='';render();}
   else if(a==='dvnew'){const id=devNewEvent();modal={t:'storyEv',id,back:modal,openSet:1};render();}
   else if(a==='dvai'&&modal&&modal.t==='storyEv')devAiGo();
@@ -16871,6 +17015,16 @@ app.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b||b
   else if(a==='fgen'){const fk=b.dataset.k,i=fk.lastIndexOf('~');if(modal)modal.err='';faceGen(fk.slice(0,i),fk.slice(i+1)).catch(er=>{if(modal)modal.err=er.message||String(er);render();});}
   else if(a==='fgenall'){const k=b.dataset.k;if(modal)modal.err='';(async()=>{for(const [,en] of FACES){if(faceSrc(k+'~'+en))continue;try{await faceGen(k,en);}catch(er){if(modal)modal.err=er.message||String(er);render();break;}}})();}
   else if(a==='fdel'){const fk=b.dataset.k;(async()=>{try{const db=await idb();await new Promise(res=>{const t=db.transaction('img','readwrite');t.objectStore('img').delete(fk);t.oncomplete=res;t.onerror=res;});}catch(e){}setImg(fk,null);render();})();}
+  else if(a==='mmgo'&&modal&&modal.t==='dev'){const v=b.dataset.v||'';modal.mm=v?v.split('|'):[];modal.mmh=null;render();}
+  else if(a==='mmup'&&modal&&modal.t==='dev'){modal.mm=(modal.mm||[]).slice(0,-1);modal.mmh=null;render();}
+  else if(a==='mmjump'&&modal&&modal.t==='dev'){modal.mm=mmPathOf(b.dataset.id);modal.mmh=b.dataset.id;modal.mq='';render();}
+  else if(a==='sv'){modal={t:'sv',back:modal};render();}
+  else if(a==='svexp'&&modal){try{const d=new Date(),p=n=>String(n).padStart(2,'0');download(new Blob([JSON.stringify(svPack())],{type:'application/json'}),`murim-life-${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}.json`);modal.msg='파일을 내려받았어요. 다른 기기의 같은 화면에서 ‘파일에서 가져오기’로 넣으면 이어서 할 수 있어요.';}catch(e){modal.msg='내보내지 못했어요: '+e.message;}render();}
+  else if(a==='svcopy'&&modal){const t=svEnc(svPack());const ok=()=>{modal.msg=`기록을 글자로 복사했어요(${Math.round(t.length/1024)}KB). 다른 기기의 같은 화면에 붙여 넣으세요.`;render();};const no=()=>{modal.txt=t;modal.msg='복사가 막혀서 아래 칸에 넣어 두었어요. 칸을 길게 눌러 전부 선택해 복사하세요.';render();};try{navigator.clipboard.writeText(t).then(ok,no);}catch(e){no();}}
+  else if(a==='svimp'&&modal){const el=document.getElementById('sv_txt');try{svPeek(svDec(el?el.value:''));}catch(e){modal.msg=e.message;render();}}
+  else if(a==='svok'&&modal&&modal.pend){try{svApply(modal.pend);modal.msg='가져왔어요. 다시 불러오는 중…';render();setTimeout(()=>location.reload(),300);}catch(e){modal.msg='가져오지 못했어요: '+e.message;render();}}
+  else if(a==='svno'&&modal){modal.pend=null;modal.peek='';render();}
+  else if(a==='sndpush'&&modal&&modal.t==='snd'&&!modal.pushing){sndPush(modal);}
   else if(a==='dvopen'){modal={t:'storyEv',id:b.dataset.id,back:modal};render();}
   else if(a==='dvroot'&&modal&&modal.t==='dev'){modal.root=b.dataset.id;modal.q='';render();const w=document.querySelector('.dvwrap');if(w){w.scrollLeft=0;w.scrollTop=0;}}
   else if(a==='stf'){modal.f=b.dataset.v;modal.n=60;render();}
@@ -16886,12 +17040,12 @@ app.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b||b
   else if(a==='mbg'){if(ev.target===b)closeModal();}
   else if(a==='quit'){if(modal&&modal.sure){S=newFate();modal=null;tab='ab';view='ev';resetScroll=true;save();render();}else if(modal){modal.sure=1;render();}}
 });
-let stQT=0;app.addEventListener('input',ev=>{const id=ev.target.id||'';if(modal&&modal.t==='snd'&&(/^sd_/.test(id)||/^sp_/.test(id))){sndReadForm();return;}if(modal&&modal.t==='dev'&&id==='dv_q2'){modal.q2=ev.target.value;modal.n=80;clearTimeout(stQT);stQT=setTimeout(()=>{render();const el=document.getElementById('dv_q2');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}},250);return;}if(modal&&modal.t==='dev'&&id==='dv_q'){modal.q=ev.target.value;clearTimeout(stQT);stQT=setTimeout(()=>{render();const el=document.getElementById('dv_q');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}},250);return;}if(!modal||!/^(st|se)_/.test(id))return;
+let stQT=0;app.addEventListener('input',ev=>{const id=ev.target.id||'';if(modal&&modal.t==='snd'&&(/^sd_/.test(id)||/^sp_/.test(id))){sndReadForm();return;}if(modal&&modal.t==='dev'&&id==='mm_q'){modal.mq=ev.target.value;clearTimeout(stQT);stQT=setTimeout(()=>{render();const el=document.getElementById('mm_q');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}},250);return;}if(modal&&modal.t==='dev'&&id==='dv_q2'){modal.q2=ev.target.value;modal.n=80;clearTimeout(stQT);stQT=setTimeout(()=>{render();const el=document.getElementById('dv_q2');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}},250);return;}if(modal&&modal.t==='dev'&&id==='dv_q'){modal.q=ev.target.value;clearTimeout(stQT);stQT=setTimeout(()=>{render();const el=document.getElementById('dv_q');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}},250);return;}if(!modal||!/^(st|se)_/.test(id))return;
   if(id==='st_q'){modal.q=ev.target.value;modal.n=60;clearTimeout(stQT);stQT=setTimeout(render,200);}
   else if(id==='st_memo'){STORY.memo=ev.target.value;ssave();}
   else if(id==='st_repo'||id==='st_branch'||id==='st_tok'){const c=ncfg();c[{st_repo:'ghRepo',st_branch:'ghBranch',st_tok:'ghToken'}[id]]=ev.target.value.trim();nsave(c);}
   else if(id.startsWith('se_')&&modal.t==='storyEv'){(modal.d||(modal.d={}))[id.slice(3)]=ev.target.type==='checkbox'?ev.target.checked:ev.target.value;}});
-app.addEventListener('change',ev=>{const id=ev.target.id||'';if(ev.target.dataset&&ev.target.dataset.sk&&ev.target.files&&ev.target.files[0]){const k=ev.target.dataset.sk;sndStore(k,ev.target.files[0]).then(()=>{if(k.startsWith('bgm:'))sndTick(true);render();});return;}if(modal&&modal.t==='snd'&&/^sd_/.test(id))sndReadForm();if(id==='n_defry'){const c=ncfg();c.defry=+ev.target.value;nsave(c);}if(modal&&modal.t==='storyEv'&&id.startsWith('se_')){(modal.d||(modal.d={}))[id.slice(3)]=ev.target.type==='checkbox'?ev.target.checked:ev.target.value;}if(id==='dv_depth'&&modal&&modal.t==='dev'){modal.depth=+ev.target.value;render();return;}if(ev.target.dataset&&ev.target.dataset.dvk&&modal&&modal.t==='dev'){(modal.hide||(modal.hide={}))[ev.target.dataset.dvk]=!ev.target.checked;render();return;}if(id==='st_on'){STORY.on=ev.target.checked;ssave();}
+app.addEventListener('change',ev=>{const id=ev.target.id||'';if(id==='sv_file'&&modal&&modal.t==='sv'){const f=ev.target.files&&ev.target.files[0];if(f)f.text().then(t=>{try{svPeek(svDec(t));}catch(e){modal.msg=e.message;render();}});return;}if(ev.target.dataset&&ev.target.dataset.sk&&ev.target.files&&ev.target.files[0]){const k=ev.target.dataset.sk;sndStore(k,ev.target.files[0]).then(()=>{if(k.startsWith('bgm:'))sndTick(true);render();});return;}if(modal&&modal.t==='snd'&&/^sd_/.test(id))sndReadForm();if(id==='n_defry'){const c=ncfg();c.defry=+ev.target.value;nsave(c);}if(modal&&modal.t==='storyEv'&&id.startsWith('se_')){(modal.d||(modal.d={}))[id.slice(3)]=ev.target.type==='checkbox'?ev.target.checked:ev.target.value;}if(id==='dv_depth'&&modal&&modal.t==='dev'){modal.depth=+ev.target.value;render();return;}if(ev.target.dataset&&ev.target.dataset.dvk&&modal&&modal.t==='dev'){(modal.hide||(modal.hide={}))[ev.target.dataset.dvk]=!ev.target.checked;render();return;}if(id==='st_on'){STORY.on=ev.target.checked;ssave();}
   else if(id==='st_file'&&ev.target.files&&ev.target.files[0]){ev.target.files[0].text().then(t=>{const j=JSON.parse(t),src=j.사건||j.ev||{};let n=0;if(j.새사건){STORY.add=Object.assign(STORY.add||{},j.새사건);devAddAll();}for(const k in src){if(!EVM[k])continue;const o={...src[k]};delete o.이름;STORY.ev[k]=o;n++;}if(j.전체메모||j.memo)STORY.memo=j.전체메모||j.memo;ssave();modal.msg=`사건 ${n}개를 불러왔어요.`;render();}).catch(e=>{modal.msg='불러오지 못했어요: '+e.message;render();});}});
 app.addEventListener('input',ev=>{if(ev.target.id==='evinp'){S.tmp.inp=ev.target.value;return;}if(ED&&modal&&modal.t==='edit'){const id=ev.target.id;if(id==='e_tol'||id==='e_size'){ED[id==='e_tol'?'tol':'size']=+ev.target.value;const v=document.getElementById(id+'v');if(v)v.textContent=ev.target.value;return;}}if(ev.target.id==='nm'&&S.phase==='birth'){S.name=S.base.name=ev.target.value;}if(ev.target.id==='cname'&&S.tmp.craft)S.tmp.craft.name=ev.target.value;if(ev.target.id==='fname'&&S.tmp.forge)S.tmp.forge.name=ev.target.value;if(ev.target.id==='n_prompt'&&modal){modal.prompt=ev.target.value;savePr(modal.k,modal.prompt);const f=document.getElementById('n_full');if(f)f.textContent=fullPrompt(modal.k,modal.prompt);}
   if(modal&&modal.t==='gal'&&/^g_gh/.test(ev.target.id)){const c=ncfg(),v=id=>{const e=document.getElementById(id);return e?e.value.trim():'';};c.ghRepo=v('g_ghRepo');c.ghBranch=v('g_ghBranch')||'main';c.ghToken=v('g_ghToken');nsave(c);return;}
