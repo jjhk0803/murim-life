@@ -369,6 +369,7 @@ button.chip.on{background:var(--jade);color:var(--card);border-color:var(--jade)
 .frrow b{font-variant-numeric:tabular-nums}.frrow b.up{color:#ffd77a}.frrow b.dn{color:#ff9b8a}
 .frcap{padding:12px 16px 16px}.frcap h3{margin:4px 0 6px;font-size:1.05rem}.frtag{display:inline-block;padding:2px 8px;border-radius:999px;background:#b8743c;color:#fff7e6;font-size:.72rem}.frsay{margin:0 0 6px;color:#f3d58a;font-weight:600}.frcap .small{color:#d8cdbb;margin:0 0 10px}
 .wpcard{display:flex;gap:12px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--card);margin:8px 0}.wpcard img{width:96px;height:96px;object-fit:cover;border-radius:8px}.wpcard-ph{display:grid;place-items:center;width:96px;height:96px;border-radius:8px;background:rgba(0,0,0,.06);font-size:2rem}.wpcard b{display:block}
+.evcard{display:flex;justify-content:center;padding:14px 0}.evcard .frbox{width:min(620px,100%)}.evcard .frcap h3{font-size:1.15rem}
 </style>
 </head><body>
 <div id="app"></div>
@@ -628,10 +629,10 @@ const NPCS={
  hyun:{n:'남궁 현',nick:'창궁옥룡',org:'namgung',lv:S=>clamp(2+Math.floor((S.age-15)/4),2,6),q:1.05,hide:0,hs:0,kw:['강기'],sex:'m',title:'천하제일미남',d:'남궁세가 소가주. 옥으로 깎은 듯한 얼굴.',love:'무위',guard:'gumwang'},
  jegalun:{n:'제갈 운',nick:'백의서생',org:null,lv:S=>clamp(1+Math.floor((S.age-15)/6),1,4),q:.9,hide:.3,hs:60,kw:['변'],sex:'m',title:'강남제일미남',d:'정천신산의 조카. 시와 진법에 능하다.',love:'학문'},
  mugyeol:{n:'당 무결',nick:'독룡',org:'tang',lv:S=>clamp(2+Math.floor((S.age-15)/5),2,5),q:1.0,hide:.2,hs:60,kw:['독','암'],sex:'m',title:'사천제일미남',d:'당가의 차기 가주감. 말이 적고 눈이 깊다.',love:'항독'},
- ha:{n:'혁련 하',nick:'',org:'demon',lv:S=>clamp(2+Math.floor((S.age-14)/4),2,6),q:1.1,hide:.6,hs:90,kw:['마','쾌'],d:'천마의 하나뿐인 자식. 정체를 숨기고 강호를 떠돈다.',love:'무위'}};
-const npcNick=(id,S)=>id==='ha'?(S&&S.sex==='m'?'소마후':'소천마'):id==='cheongun'&&S&&S.flags.cwMa?'독비마검':NPCS[id].nick;
-const loveList=S=>[...(S.sex==='m'?['seorin','soso','hwayeon','sohye']:['hyun','cheongun','jegalun','mugyeol']),'ha'];
-const npcSex=(id,S)=>id==='ha'?(S.sex==='m'?'f':'m'):NPCS[id].sex;
+ ha:{n:'혁련 하',nick:'',org:'demon',lv:S=>clamp(2+Math.floor((S.age-14)/4),2,6),q:1.1,hide:.6,hs:90,kw:['마','쾌'],sex:'f',d:'천마의 하나뿐인 딸. 정체를 숨기고 강호를 떠돈다.',love:'무위'}};
+const npcNick=(id,S)=>id==='ha'?'소마후':id==='cheongun'&&S&&S.flags.cwMa?'독비마검':NPCS[id].nick;
+const loveList=S=>[...(S.sex==='m'?['seorin','soso','hwayeon','sohye','ha']:['hyun','cheongun','jegalun','mugyeol'])];
+const npcSex=(id,S)=>NPCS[id].sex;
 
 /* 무림 X절: 구성원이 적을수록 강하다 */
 const GROUPS=[{n:'무림십이절',realm:4,fame:150},{n:'무림팔절',realm:5,fame:230},{n:'무림오절',realm:6,fame:320},{n:'무림이절',realm:7,fame:450}];
@@ -9095,7 +9096,7 @@ const NPC_BIO={
  hyun:'남궁세가 소가주, 창궁옥룡. 옥으로 깎은 듯한 얼굴과 검왕의 그림자를 함께 물려받았다.',
  jegalun:'정천신산의 조카. 시와 진법에 능하나 몸이 약해 피를 토한다. 반쯤 쓴 시가 서랍에 가득하다.',
  mugyeol:'당가의 차기 가주감, 독룡. 하루에 열 마디도 하지 않는다. 형제가 독살된 날 모두가 그를 의심했다.',
- ha:'천마의 하나뿐인 자식. 정체를 숨기고 강호를 떠돈다. 아버지가 무림을 피로 덮는 것을 원하지 않는다.',
+ ha:'천마의 하나뿐인 딸. 정체를 숨기고 강호를 떠돈다. 아버지가 무림을 피로 덮는 것을 원하지 않는다.',
  hyeono:'소림의 방장. 화를 내는 걸 본 사람이 없다. 대웅전 앞 낙엽을 손수 쓴다. 강호의 악도 그렇게 쓸어야 한다고 믿는다.',
  cheongjin:'무당의 장문인. 백 살 넘은 거북이와 함께 자소궁 뜰을 지킨다. 제자가 위험할 때만 무당에서 제일 빠른 사람이 된다.',
  unhak:'화산 장문인, 매화검존. 매 청운의 사부. 정파는 이길 수 있을 때 멈출 줄 알아서 정파라 가르친다.',
@@ -11978,7 +11979,7 @@ ${c?`창밖에서 ${c}${bat(c)?'이':'가'} 기웃거리는 손에 제 몫의 �
    {t:`${S.flags.cf?cfN(S)+'의 엽전을 돌려준다':'창밖의 눈을 오래 본다'}`,go:S=>{fx(S,'friend');if(cf(S))TKcf(S,2);A(S,{moral:4,mood:-4,cult:3});return cf(S)?`당신은 문을 열고 나가 엽전을 ${jo(cfN(S),'의','의')} 손에 다시 쥐여 주었다.\n당신: “네 설빔 값이잖아.”\n${cfN(S)}: “…설빔 안 입어도 설은 와.”\n둘은 눈 오는 마당에 한참 서 있었고, 그해 설 둘 다 헌 옷을 입었지만 그래도 설은 왔다.`.replace('의의','의'):'눈은 밤새 내렸다. 아침이 되자 세상이 하얗게 덮여 있었다. 아무 일도 없었던 것처럼. 당신은 그게 이상하게 위로가 되었다.';}}];}});
 E({id:'yt14',arc:1,t:'열넷의 빛',a:[14,15],force:S=>!S.seen.yt14&&!S.chain,
  x:S=>{const w=ytWhere(S),m=S.master&&NPCS[S.master]?ngN(S):S.master&&MASTERS[S.master]?MASTERS[S.master].n:null;
-  const who=S.org?`${ORGS[S.org].n}의 장로`:m?`사부`:S.job==='inn'?'객잔에 묵던 늙은 검객':'길에서 만난 늙은 검객';
+  const whoL=S.org?`${ORGS[S.org].n}의 장로`:m?`사부`:S.job==='inn'?'객잔에 묵던 늙은 검객':'길에서 만난 늙은 검객',who=S.org?'장로':m?'사부':'늙은 검객';
   const fa=S.seen.fever?S.last.fever:null,ms=!S.org&&!!m,ko=['','한','두','세','네','다섯','여섯','일곱','여덟','아홉','열','열한','열두','열세'],fy=fa!=null?(ko[fa]||'어린')+' 살':'';
   if(ms)return `열네 살 봄, ${S.flags.ngM&&!S.flags.ngAdult?'다리 밑 움막 앞 공터':w+'의 마당'}에서 혼자 수련을 하고 있었다. 늘 하던 대로, 사부도 아직 잠든 새벽에.
 그날은 사부가 깨어 보고 있었다.
@@ -11991,7 +11992,7 @@ ${m}: “보이지. 겨울을 아는 칼은 무게가 다르다.”
 ${jI(m)} 당신 어깨에 손을 얹었는데, 사부가 당신을 ‘될 놈’이라고 부른 것은 그날이 처음이었다.
 ${m}: “이제부터는 하나만 가르쳐 주마. 나머지는 네가 찾아라.”`;
   return `열네 살 봄, ${w}의 마당에서 혼자 수련을 하고 있었다. 늘 하던 대로, 아무도 보지 않는 새벽에.
-그날은 누가 보고 있었다. ${who}였다.
+그날은 누가 보고 있었다. ${whoL}였다.
 ${who}: “방금 그 초식, 누가 가르쳤느냐.”
 당신: “…아무도요. 그냥 하다 보니.”
 ${who}${bat(who)?'이':'가'} 한참 말이 없었다. 그러다 당신 손목을 잡아 맥을 짚었다.
@@ -15841,8 +15842,8 @@ const hmVessel=S=>!S.dead_npc.hongui&&!S.flags.honguiDone&&!S.flags.hkSaved?'hon
 const wsSide=S=>S.org==='blood'?'혈':FACTION(S)||(S.moral<=-25||(typeof darkOf==='function'&&darkOf(S))?'무악':'무');
 
 /* 맹약의 끝: 백 년 전 이야기를 바로잡는다 */
-{const e=EV.find(x=>x.id==='pactRumor');if(e){e.x='백 년 전, 혈교가 일으킨 혈겁에 중원이 거의 무너질 뻔했다. 정·사·마가 처음이자 마지막으로 손을 잡고 혈교를 몰아냈는데, 그 마지막 싸움이 벌어진 화산 정상에서 천마 혁련 패와 검성 독고 무가 함께 돌아오지 않았다. 셋 다 피를 너무 많이 흘렸기에 화산에서 맹약을 맺었다. “백 년 동안 서로의 땅을 넘지 않는다.”\n그 뒤 정파는 문을 닫고 몸을 추슬렀고, 사파는 그 틈에 세를 불렸으며, 마교는 무너진 혈교를 통째로 삼켜 그 주인을 천마의 발아래 ‘혈마’의 자리에 앉혔다. 혈교의 역혈을 삼킨 마교는 그 뒤로 더 강해졌다고 한다.\n올해로 그 백 년이 끝나 간다. 저잣거리 사람들이 수군댄다.';
-  e.ch=[{t:'이야기꾼에게 혈겁 이야기를 더 조른다',h:'학문',go:S=>{S.w.y0=S.age;A(S,{lore:5,mind:2});hist(S,'백년맹약의 끝이 다가온다는 소문이 돌기 시작했다.');return '이야기꾼은 혈겁 때 하룻밤에 문파 셋이 사라졌고, 그 피가 강을 따라 사흘을 흘렀다고 했는데, 듣는 아이들보다 이야기하는 노인의 손이 더 떨렸다.';}},
+{const e=EV.find(x=>x.id==='pactRumor');if(e){e.x='장터 한복판에 북을 멘 늙은 소리꾼이 자리를 펴자 아이들과 장꾼들이 둘러앉았고, 북채가 두 번 울리며 소리가 시작되었다.\n소리꾼: “어허 들어 보소, 백 년 전 그 하늘은 붉었다네. 혈교가 피를 부르니 강물도 사흘을 붉게 흘렀더라.”\n소리꾼: “정파는 칼을 들고 사파는 배를 띄우고 마교는 산을 내려와, 원수끼리 처음으로 한 줄에 섰다네.”\n소리꾼: “화산 꼭대기 마지막 싸움에 천마 혁련 패, 검성 독고 무, 둘 다 구름 속으로 들어가 돌아오지 않았다네.”\n소리꾼: “남은 셋이 피 묻은 손으로 맹약을 썼으니, 백 년 동안 서로의 땅을 넘지 말자 하였더라.”\n소리꾼: “정파는 문을 닫고 상처를 꿰매고, 사파는 그 틈에 배를 불리고, 마교는 쓰러진 혈교를 통째로 삼켜 그 주인을 천마 발아래 혈마로 앉혔다네. 역혈을 삼킨 마교는 그 뒤로 더 무서워졌다지.”\n북채가 멎자 소리꾼이 목소리를 낮췄다.\n소리꾼: “그런데 말이오, 올해로 그 백 년이 다 차 간다오.”\n장꾼들이 서로 얼굴을 보았는데, 아무도 웃지 않았다.';
+  e.ch=[{t:'소리꾼에게 한 대목을 더 청한다',h:'학문',go:S=>{S.w.y0=S.age;A(S,{lore:5,mind:2});hist(S,'백년맹약의 끝이 다가온다는 소문이 돌기 시작했다.');return '엽전 한 닢을 북 앞에 놓자 소리꾼이 혈겁 대목을 한 번 더 불렀는데, 하룻밤에 문파 셋이 사라지는 대목에서 부르는 노인의 손이 듣는 아이들보다 더 떨렸다.';}},
    {t:'맹약이 깨지면 내게도 기회가 온다',go:S=>{S.w.y0=S.age;A(S,{temper:4});hist(S,'백년맹약의 끝이 다가온다는 소문이 돌기 시작했다.');return '피바람이 불면 이름을 얻을 기회도 온다고, 당신은 그렇게 생각했다.';}},
    {t:'나와는 상관없는 일이다',go:S=>{S.w.y0=S.age;hist(S,'백년맹약의 끝이 다가온다는 소문이 돌기 시작했다.');return '그날 저녁도 평소처럼 밥을 먹었다.';}}];}}
 {const e=EV.find(x=>x.id==='pactCouncil');if(e){e.force=S=>!S.w.pact&&S.seen.pactRumor&&S.age>=(S.w.y0||14)+WS_AGE.council&&!S.chain;
@@ -16008,6 +16009,21 @@ const CV_EV=new Set(['talk','talk2','visit','meet','rescue','sage','intro','feud
 const isCharEv=e=>!!e&&(e.tag==='talk'||e.tag==='love'||CV_EV.has(e.id)||/^(lv_|cf|ng|dsc|rv|mk(Ha|Sama)|hkGuard)/.test(e.id));
 function cvPlace(S,e){let t='';try{t=evTitle(S,e)+' '+evText(S,e);}catch(_){}for(const k in CV)if(CV[k][1].test(t))return k;return S.job==='inn'?'inn':'tea';}
 function cvBg(S,e,nid){if(!isCharEv(e))return null;return imgURL('cv:'+cvPlace(S,e))||null;}
+/* ══ 83: 사건은 먼저 한 장의 그림과 줄거리로 열고, 그다음 배경·인물·지문으로 들어간다 ══ */
+const EV_SUM={};
+function evSummary(S,e){if(EV_SUM[e.id])return typeof EV_SUM[e.id]==='function'?EV_SUM[e.id](S):EV_SUM[e.id];let t='';try{t=evText(S,e);}catch(_){}
+  const L=[];for(const ln of String(t).split(/\n+/)){const x=ln.trim();if(!x)continue;if(/^[^“”]{1,14}[:：]\s*“/.test(x)||/^“/.test(x))break;const pre=x.split('“')[0].trim();if(pre)L.push(pre);if(x.includes('“'))break;if(L.join(' ').length>90)break;}
+  let s=L.join(' ').replace(/\s+/g,' ');const sen=s.split(/(?<=[.!?…])\s+/);let o='';for(const x of sen){if((o+' '+x).length>110&&o)break;o=o?o+' '+x:x;}return o||s.slice(0,110);}
+const evCardNeed=(S,e)=>S.phase==='event'&&!!e&&!['focus','bt','ai'].includes(e.id)&&S.tmp&&S.tmp._card!==S.cur;
+function evCardHTML(S,e){const nid=safe(()=>sceneNpc(S,e)),lv=/^lv_/.test(S.cur)&&nid&&LOVE_BG[nid]?nid:null;
+  const u=imgURL('ev:'+S.cur)||(lv&&imgURL('bg:'+lv))||(REG[S.loc]?imgURL('reg:'+REG_EN[S.loc]):null);
+  return `<section class="evcard fade" aria-live="polite"><div class="frbox"><div class="frimg">${u?`<img src="${u}" alt="">`:`<span class="frph" aria-hidden="true">事</span>`}</div>
+   <div class="frcap"><span class="frtag">${S.age}세${tagChips(e)?' · '+esc(e.tag==='love'?'인연':e.tag==='key'?'천하대세':e.tag==='side'?'곁이야기':e.tag==='talk'?'인물':'사건'):''}</span><h3>${esc(evTitle(S,e))}</h3><p class="frsay" style="font-weight:400;color:#efe3cc">${esc(evSummary(S,e))}</p>
+   <button class="go" data-a="evcard">들어간다 →</button></div></div></section>`;}
+/* 그림 한 장으로 보여 준 줄거리는 이야기 화면에서 되풀이하지 않는다 */
+function evTrim(S,e,tx){if(!S.tmp||S.tmp._card!==S.cur)return tx;let r=String(tx).trimStart();const sum=evSummary(S,e);for(const x of sum.split(/(?<=[.!?…])\s+/)){const t=x.trim();if(t&&r.startsWith(t))r=r.slice(t.length).replace(/^\s+/,'');else break;}return r.trim()?r:tx;}
+/* 이야기 안의 배경: 장소가 보이면 그 장소의 배경, 아니면 지역 그림, 그것도 없으면 사건 그림 */
+function sceneBg(S,e){const k=e?cvPlace(S,e):null;return (k&&imgURL('cv:'+k))||(REG[S.loc]?imgURL('reg:'+REG_EN[S.loc]):null);}
 const EVM=Object.fromEntries(EV.map(e=>[e.id,e]));
 try{devAddAll();}catch(e){}
 EVM.ai=AI_EV;
@@ -16339,7 +16355,7 @@ function saveHall(h){try{localStorage.setItem(HKEY,JSON.stringify(h));}catch(e){
 const NAI_URL='https://image.novelai.net/ai/generate-image';
 const NAI_MODELS=[['nai-diffusion-4-5-full','V4.5 Full'],['nai-diffusion-4-5-curated','V4.5 Curated'],['nai-diffusion-5-full','V5 Full'],['nai-diffusion-5-curated','V5 Curated'],['nai-diffusion-4-full','V4 Full']];
 const NAI_Q={'nai-diffusion-5-full':'very aesthetic, masterpiece, best quality','nai-diffusion-5-curated':'very aesthetic, masterpiece, best quality','nai-diffusion-4-5-full':'very aesthetic, masterpiece, no text','nai-diffusion-4-5-curated':'location, masterpiece, no text','nai-diffusion-4-full':'no text, best quality, very aesthetic, absurdres'};
-const GAME_VER='2026.10.26-82';
+const GAME_VER='2026.10.26-83';
 const NAI_NEG='nsfw, nude, lowres, bad anatomy, bad hands, missing fingers, extra digits, text, watermark, signature, logo, worst quality, low quality, blurry, modern clothes, glasses, eyewear, jpeg artifacts';
 const NKEY='murim-nai';
 function ncfg(){let c={};try{c=JSON.parse(localStorage.getItem(NKEY)||'{}');}catch(e){}return Object.assign({key:'',relay:'',model:'nai-diffusion-4-5-full',style:'wuxia, ancient china, hanfu, detailed illustration, cinematic lighting',autoEv:false,autoPc:false,vn:true,neg:NAI_NEG,tnpc:'',tev:'',tmap:'',q:true,steps:28,scale:5,rescale:0},c,{pr:Object.assign({},c.pr)});}
@@ -16593,10 +16609,9 @@ const STYLE_PRESETS=[['무협 일러스트','wuxia, ancient china, hanfu, detail
 const isPort=k=>/^(pc|npc|st|mob):/.test(k);
 /* 이야기 중에 모습이 바뀌는 인물은 모습마다 그림 칸이 따로 있다. 혁련 하는 주인공과 다른 성별로 나오고, 단 소월·단 소백은 대법을 거꾸로 돌리면 어른이 된다 */
 const ST_FORM={
- ha_m:{of:'ha',n:'혁련 하 · 사내의 모습',t:'1boy, young man, solo, handsome, black and red hanfu, red eyes, long black hair tied, playful smile, dark aura',when:S=>S&&S.sex==='f'},
  sowol_a:{of:'sowol',n:'단 소월 · 어른이 된 뒤',t:'1girl, solo, young woman, long white hair, ancient calm eyes, oversized faded blue robe, hair ribbon, faint smile, wise',when:S=>S&&S.flags&&S.flags.ngAdult,fb:1},
 };
-const ST_BASE={ha:['혁련 하 · 여인의 모습','1girl, young woman, solo, beautiful, black and red hanfu, red eyes, playful smile, dark aura'],
+const ST_BASE={ha:['혁련 하','1girl, young woman, solo, beautiful, black and red hanfu, red eyes, playful smile, dark aura'],
  sowol:['단 소월 · 아이 모습','1girl, solo, child, small girl, long white hair dragging, oversized faded blue robe, sleeves too long, candy stick in mouth, arrogant smirk, ancient eyes'],};
 const stKeyOf=(id,S)=>{for(const f in ST_FORM){const o=ST_FORM[f];if(o.of===id&&o.when(S))return 'st:'+f;}return 'st:'+id;};
 /* 지금 모습의 칸. 어른 모습을 아직 안 그렸으면 아이 모습으로 대신한다 */
@@ -16764,7 +16779,7 @@ const NPC_TAGS={binghu:'1girl, solo, mature beautiful woman, white and silver ro
  seorin:'1girl, solo, young woman, very beautiful, blue and white hanfu, long black hair, sword, elegant',hwayeon:'1girl, solo, young woman, beautiful, colorful hanfu, guqin, folding fan',
  sohye:'1girl, solo, young woman, beautiful, dark green hanfu, purple nails, mischievous smile',hyun:'1boy, solo, young man, very handsome, blue and white hanfu, jade hairpin, sword',
  jegalun:'1boy, solo, young scholar, handsome, white robes, feather fan, gentle smile',mugyeol:'1boy, solo, young man, handsome, dark green robes, quiet, sharp eyes, hidden weapons',
- ha:S=>`${S.sex==='m'?'1girl, young woman':'1boy, young man'}, solo, beautiful, black and red hanfu, red eyes, playful smile, dark aura`};
+ ha:'1girl, young woman, solo, beautiful, black and red hanfu, red eyes, playful smile, dark aura'};
 Object.assign(NPC_TAGS,{hyeono:'1boy, solo, old buddhist abbot, bald, white eyebrows, red and gold kasaya, broom, serene',cheongjin:'1boy, solo, old taoist master, white beard, blue and white robes, hair bun, gentle smile',unhak:'1boy, solo, middle-aged swordsman, elegant, white hanfu with plum blossom pattern, sword, smiling',jeonghye:'1girl, solo, middle-aged buddhist nun, stern, grey robes, sword, wind',unjung:'1boy, solo, middle-aged taoist, white fur-trimmed robes, snow, light footed',tangcw:'1boy, solo, middle-aged man, dark green robes, leather gloves, sly smile, tea cup',paengmj:'1boy, solo, huge muscular man, beard, red and black robes, giant broadsword, shouting',songhak:'1boy, solo, young taoist, blue and white robes, carrying bundles, honest face',baekms:'1boy, solo, middle-aged noble swordsman, white robes, folding fan, hypocritical smile',wipc:'1boy, solo, middle-aged man, black fur cloak, scar, sitting on large chair, arrogant',eunsn:'1girl, solo, old woman, plain clothes, eating sunflower seeds, sharp eyes',galch:'1boy, solo, huge man, pirate captain, straw hat, spear, river boat, pouring wine',nangis:'1boy, solo, wandering swordsman, loose black robes, wine gourd, dancing with sword, moonlight',cheolms:'1boy, solo, one-armed man, amputee, missing arm, empty sleeve, bandit, scar, chopping wood, stoic',eumsg:'1boy, solo, middle-aged man, pale, elegant black robes, chrysanthemum, sinister smile',sagong:'1boy, solo, thin strategist, black robes, go board, candle, cunning',yohr:'1girl, solo, seductive woman, red hanfu, folding fan, dangerous smile, red lanterns',gwangma:'1boy, solo, old man, wild hair, ragged robes, mad laughter, sword, ruined shrine',pyeon:'1girl, solo, woman doctor, plain robes, cutting herbs, calm',gusc:'1boy, solo, old storyteller, white hair, folding fan, inn',yongm:'1boy, solo, escort captain, scars, armor vest, cart, broadsword'});
 Object.assign(NPC_TAGS,{onso:'1girl, solo, beautiful young woman, wandering swordswoman, straw hat on back, sword on back, dark blue travel clothes, calm sharp eyes, ponytail, inn window',
  danhwa:'1girl, solo, young woman blacksmith, rolled-up sleeves, leather apron, slightly singed bangs, holding hammer, soot on cheek, confident grin, forge sparks',
@@ -17214,11 +17229,11 @@ const VN_MEM=/(했었|었었|였었|떠올랐|떠오른|떠올리|생각났|기�
 function vnBeats(S,text,scene){const NM=vnNames(S),out=[];let last=scene||null;
   const lastNpc=()=>last&&last!=='me'?last:scene||null;
   const nar=t=>{let buf='';for(const x of vnSent(t)){if(buf&&(buf+' '+x).length>150){out.push({s:null,t:buf});buf=x;}else buf=buf?buf+' '+x:x;}if(buf)out.push({s:null,t:buf});};
-  for(const p of String(text||'').split(/\n+/).map(x=>x.trim()).filter(Boolean)){
+  for(const p of String(text||'').replace(/([.!?…”])[ \t]+([^\s.!?…“”:]{1,6}(?:[ \t][^\s.!?…“”:]{1,6}){0,3})[ \t]*[:：][ \t]*“/g,'$1\n$2: “').split(/\n+/).map(x=>x.trim()).filter(Boolean)){
     const m=/^([^:“”"\s][^:“”"]{0,11})\s*[:：]\s*(.+)$/.exec(p);
     if(m){const id=vnWho(S,m[1],NM),ln=m[2].trim().replace(/^[“"]/,'').replace(/[”"]$/,'');if(id){out.push({s:id,t:ln});last=id;continue;}
       // 인물 목록에 없는 사람(시비·장로 등)도 ‘이름: “대사”’면 그 이름표로
-      if(/^“/.test(m[2].trim())&&m[1].trim().length<=8){out.push({s:'@',n:m[1].trim(),t:ln});continue;}}
+      if(/^“/.test(m[2].trim())&&m[1].trim().length<=12){out.push({s:'@',n:m[1].trim(),t:ln});continue;}}
     if(VN_MEM.test(p)){nar(p);continue;}
     const parts=p.split(/(“[^”]*”)/).map(x=>x.trim()).filter(Boolean);
     for(let k=0;k<parts.length;k++){const x=parts[k];
@@ -17291,17 +17306,18 @@ function scrollCard(){const e=EVM[S.cur];
      <div><label for="fname">이름 (비우면 '${esc(f.def)}')</label><input id="fname" maxlength="10" value="${esc(f.name)}" placeholder="${esc(f.def)}" autocomplete="off"></div>
      <p class="muted small">단조 ${Math.round(S.forge)} · 예상 등급 ${lo===hi?lo:lo+'~'+hi}${S.flags.smith?' · 구야자의 제자 +1':''}</p>
      <div class="rowbtn"><button class="ghost" data-a="fback">그만둔다</button><button class="go" data-a="forge">벼린다</button></div></section>`;}
-  if(S.phase==='event'){const ch=evChoices(S,e);const nid=sceneNpc(S,e),lvId=nid&&LOVE_BG[nid]&&(e.tag==='love'||/^lv_/.test(S.cur))?nid:null,ek=lvId?'bg:'+lvId:'ev:'+S.cur,eu=imgURL(ek)||(lvId&&!/^lv_/.test(S.cur)?imgURL('ev:'+S.cur):null),su=nid&&imgURL('st:'+nid),bgU=(lvId&&imgURL('bg:'+lvId))||cvBg(S,e,nid)||eu||(REG[S.loc]?imgURL('reg:'+REG_EN[S.loc]):null);
+  if(S.phase==='event'){const ch=evChoices(S,e);const nid=sceneNpc(S,e),lvId=nid&&LOVE_BG[nid]&&(e.tag==='love'||/^lv_/.test(S.cur))?nid:null,ek=lvId?'bg:'+lvId:'ev:'+S.cur,eu=imgURL(ek)||(lvId&&!/^lv_/.test(S.cur)?imgURL('ev:'+S.cur):null),su=nid&&imgURL('st:'+nid),bgU=(lvId&&imgURL('bg:'+lvId))||(vnOn()?sceneBg(S,e):null)||eu||(REG[S.loc]?imgURL('reg:'+REG_EN[S.loc]):null);
     const imgTop=su?`<div class="scene">${bgU?`<img class="sbg" src="${bgU}" alt="">`:''}<img class="sst" src="${su}" alt="${esc(NPCS[nid].n)}"><span class="snm">${esc(safe(()=>npcNick(nid,S)))} ${esc(NPCS[nid].n)}</span></div>`:eu?`<img class="evimg" src="${eu}" alt="">`:'';
     const tx=evText(S,e);
     const tail=`${e.inp?`<input id="evinp" class="evinp" maxlength="12" placeholder="${esc(typeof e.inp==='function'?e.inp(S):e.inp)}" value="${esc(S.tmp.inp||'')}" aria-label="이름">`:''}${foeBox()}
     <div class="choices">${ch.map((c,i)=>`<button class="choice" data-a="ch" data-i="${i}"><span>${esc(c.t)}</span>${c.h?`<span class="h">${esc(c.h)}</span>`:''}</button>`).join('')}</div>`;
     const head=`<div class="yrrow"><div class="yr">${S.age}세의 해${tagChips(e)}</div><button class="ghost" data-a="draw" data-k="${ek}">${BUSY.has(ek)?'그리는 중':eu?'장면':'장면 그리기'}</button></div>`;
+    if(vnOn()&&evCardNeed(S,e))return evCardHTML(S,e);
     if(vnOn()){const inp=e.inp?`<input id="evinp" class="evinp" maxlength="12" placeholder="${esc(typeof e.inp==='function'?e.inp(S):e.inp)}" value="${esc(S.tmp.inp||'')}" aria-label="이름">`:'',fb=foeBox();
-      return vnScreen(S,{key:`${S.lifeId}|${S.age}|e|${S.cur}|${tx.length}`,text:tx,scene:nid,bg:bgU,title:evTitle(S,e),tags:tagChips(e),draw:`<button class="vntool" data-a="draw" data-k="${ek}">${BUSY.has(ek)?'그리는 중':eu?'장면':'장면 그리기'}</button>`,panel:inp+fb,acts:ch.map((c,i)=>`<button class="choice" data-a="ch" data-i="${i}"><span>${esc(c.t)}</span>${c.h?`<span class="h">${esc(c.h)}</span>`:''}</button>`).join('')});}
+      return vnScreen(S,{key:`${S.lifeId}|${S.age}|e|${S.cur}|${tx.length}`,text:evTrim(S,e,tx),scene:nid,bg:bgU,title:evTitle(S,e),tags:tagChips(e),draw:`<button class="vntool" data-a="draw" data-k="${ek}">${BUSY.has(ek)?'그리는 중':eu?'장면':'장면 그리기'}</button>`,panel:inp+fb,acts:ch.map((c,i)=>`<button class="choice" data-a="ch" data-i="${i}"><span>${esc(c.t)}</span>${c.h?`<span class="h">${esc(c.h)}</span>`:''}</button>`).join('')});}
     return `<section class="scroll fade" aria-live="polite">${imgTop}${head}<h2>${esc(evTitle(S,e))}</h2><p>${esc(tx)}</p>${tail}</section>`;}
   const r=S.res;const dead=!!S.dead;
-  if(S.phase==='result'&&e&&vnOn()){warmSoon(S);const nid=sceneNpc(S,e),lvId=nid&&LOVE_BG[nid]&&(e.tag==='love'||/^lv_/.test(S.cur))?nid:null,ek=lvId?'bg:'+lvId:'ev:'+S.cur,eu=imgURL(ek)||(lvId&&!/^lv_/.test(S.cur)?imgURL('ev:'+S.cur):null),bgU=(lvId&&imgURL('bg:'+lvId))||cvBg(S,e,nid)||eu||(REG[S.loc]?imgURL('reg:'+REG_EN[S.loc]):null);
+  if(S.phase==='result'&&e&&vnOn()){warmSoon(S);const nid=sceneNpc(S,e),lvId=nid&&LOVE_BG[nid]&&(e.tag==='love'||/^lv_/.test(S.cur))?nid:null,ek=lvId?'bg:'+lvId:'ev:'+S.cur,eu=imgURL(ek)||(lvId&&!/^lv_/.test(S.cur)?imgURL('ev:'+S.cur):null),bgU=(lvId&&imgURL('bg:'+lvId))||sceneBg(S,e)||eu||(REG[S.loc]?imgURL('reg:'+REG_EN[S.loc]):null);
     const chips=r.chips.length?`<div class="delta">${r.chips.map(c=>`<span class="chip ${c.up?'up':'dn'}">${esc(c.t)}</span>`).join('')}</div>`:'';
     const wp=S.pendingWpn?`<div class="craft"><label for="wname">새 병기 · ${esc(WP_LABEL[S.pendingWpn.w]||S.pendingWpn.w)} · 등급 ${S.pendingWpn.q}${S.pendingWpn.kw?' · 결 '+S.pendingWpn.kw:''} — 이름을 새긴다</label><div class="field"><input id="wname" maxlength="10" placeholder="${esc(S.pendingWpn.def)}" autocomplete="off"><button class="ghost" data-a="wname">새긴다</button></div></div>`:'';
     const dl=dead?`<p class="muted" style="margin:0">${esc(S.dead==='우화등선'?'당신의 이야기는 여기서 하늘로 이어진다.':`그리고 그것이 마지막이었다. (${S.dead})`)}</p>`:'';
@@ -17522,6 +17538,7 @@ app.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b||b
   else if(a==='aigo')aiGo();
   else if(a==='apre'&&modal&&modal.t==='nai'){readNaiForm();const x=OAI_PRE[+b.dataset.i],o=modal.c.ai.p.openai;o.base=x[1];o.model=x[2];render();}
   else if(a==='mclose')closeModal();
+  else if(a==='evcard'){if(S.tmp)S.tmp._card=S.cur;resetScroll=true;render();}
   else if(a==='story'){modal={t:'dev',tab:'list',f:'all',n:80,back:modal};render();}
   else if(a==='dev'){modal={t:'dev',tab:'mind',mm:[],root:null,depth:6,q:'',f:'all',n:80,back:modal&&modal.t!=='dev'?modal:modal&&modal.back};render();}
   else if(a==='dvtab'&&modal&&modal.t==='dev'){modal.tab=b.dataset.v;modal.msg='';render();}
