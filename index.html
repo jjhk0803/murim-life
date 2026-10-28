@@ -1414,7 +1414,7 @@ E({id:'warBattle',tag:'key',arc:1,t:'전장',
     {t:'검마에게 일기토를 청한다',h:'목숨을 건 싸움이다.',go:S=>{S.w.demon=2;S.chain='warAfter';const b=battle(S,S.tmp.foe,{ally});if(b.win){S.dead_npc.geomma=1;A(S,{enemies:2,fame:120,moral:15,mood:20});deed(S,'정마대전에서 검마를 베었다');}else A(S,{fame:20});return fightText(b,'검과 검이 천 번 부딪친 끝에 마지막에 서 있는 것은 당신이었고, 검마가 쓰러지자 마교의 대열이 무너졌다.','검마의 검은 당신이 본 어떤 검보다 빨랐다.');}},
     {t:'무림맹과 함께 싸운다',go:S=>{S.w.demon=2;S.chain='warAfter';const b=battle(S,mkFoe({n:'마교 장로',realm:clamp(S.realm,3,6),q:1.05,kw:['마'],lethal:1}),{ally});if(b.win){A(S,{fame:45,moral:12});deed(S,'정마대전에서 마교 장로를 베었다');}else A(S,{fame:10,moral:5});return fightText(b,'혈전 끝에 마교 장로의 목을 베었다. 전쟁의 물길이 돌았다.','석 달을 싸웠다. 함께 간 동료 절반이 돌아오지 못했다.');}},
     {t:'숨어 지낸다',go:S=>{S.w.demon=2;S.chain='warAfter';A(S,{fame:-5,moral:-3,exp:tb(S)*.5});return '전쟁이 끝난 뒤 아무도 당신이 어디 있었는지 묻지 않았다.';}}];}});
-E({id:'war',tag:'key',arc:1,t:'정마대전',a:[26,75],w:4,if:S=>S.w.demon===1&&S.age>=(S.w.rumorAge||0)+4,
+E({id:'war',tag:'key',arc:1,t:'정마대전',a:[18,120],w:4,if:S=>S.w.demon===1&&S.age>=(S.w.rumorAge||0)+4,
  x:S=>S.dead_npc.geomma?'마교가 검마의 빈자리에 새 장로들을 세우고 대군을 이끌어 중원으로 내려오자, 전선이 셋으로 갈렸고, 선봉의 깃발에는 죽은 검마의 이름이 그대로 적혀 있었다.':'마교가 검마 사마 율을 선봉에 세우고 대군을 이끌어 중원으로 내려오자, 전선이 셋으로 갈렸다.\n검마가 피 묻은 검을 털며 웃었다. “검은 정사를 가리지 않는다. 가리는 건 언제나 칼을 쥔 사람이지.”',
  ch:S=>sideOf(S)==='마교'?[{t:'교의 선봉으로 나선다',go:S=>{S.flags.warField='front';S.chain='warBattle';S.loc='섬서';return '십만대산을 내려가는 교도들의 행렬 맨 앞에 섰다.';}},
    {t:'뒤에 남는다',go:S=>{S.w.demon=2;A(S,{contrib:-10});return '교의 깃발이 멀어지는 것을 보았다.';}}]:[
@@ -14463,8 +14463,7 @@ const CG_EXTRA={
  cfriend_f:{n:'소꿉동무 (여인)',tags:'1girl, young woman, warm eyes, simple hanfu, braided hair, friendly smile',bg:'village stream under an old tree, stepping stones, summer afternoon',ref:'mob:cf_f'},
  plain_m:{n:'이웃 고을 사람 (사내)',tags:'1boy, young man, plain kind face, simple cotton clothes, carrying a basket, shy smile',bg:'small farmhouse yard, persimmon tree, drying peppers, autumn evening'},
  plain_f:{n:'이웃 고을 사람 (여인)',tags:'1girl, young woman, plain kind face, simple cotton clothes, hair in a low bun, shy smile',bg:'small farmhouse yard, persimmon tree, drying peppers, autumn evening'},
- sowol:{n:'단 소월',form:'sowol_a',bg:'quiet mountain hermitage, plum tree, candy jar on the veranda, spring'},
- sobaek:{n:'단 소백',form:'sobaek_a',bg:'quiet mountain hermitage, pine tree, taffy on the veranda, spring'}};
+ sowol:{n:'단 소월',form:'sowol_a',bg:'quiet mountain hermitage, plum tree, candy jar on the veranda, spring'}};
 const cgLoveIds=()=>[...new Set(Object.keys(LOVE).concat(LOVE_X.m,LOVE_X.f))].filter(id=>NPCS[id]).concat(Object.keys(CG_EXTRA));
 /* 결말에서 배우자의 CG 칸 */
 const cgLid=S=>{const sp=S&&S.spouse;if(!sp)return null;if(sp==='cfriend')return 'cfriend_'+((S.flags.cf&&S.flags.cf.sex)||(S.sex==='m'?'f':'m'));if(sp==='plain')return 'plain_'+(S.sex==='m'?'f':'m');return NPCS[sp]?sp:null;};
@@ -15821,6 +15820,194 @@ function frCount(){document.querySelectorAll('.frrow b[data-t]:not([data-go])').
 
 {const _el=eligible;eligible=function(S,e){if(CF_OLD_GUARD.has(e.id))return false;return _el(S,e);};}
 Object.assign(MOB,{cf_rj_m:{n:'소꿉동무 · 벽을 넘어 젊어진 사내',t:'1boy, solo, young man, black hair with a single white strand, calm deep eyes of an older man, simple martial robe, faint smile',face:1},cf_rj_f:{n:'소꿉동무 · 벽을 넘어 젊어진 여인',t:'1girl, solo, young woman, black braided hair with a single white strand, calm deep eyes of an older woman, simple martial robe, faint smile',face:1}});
+/* ══ 82: 천하대세 — 반드시 일어나는 큰 사건과, 그 안에서 주인공이 바꾸는 작은 물결 ══════════
+   백 년 전: 혈교의 혈겁 → 정·사·마가 처음으로 손잡고 혈교를 몰아냄 → 셋 다 크게 다쳐 화산에서 백년맹약.
+     정파는 몸을 추스르고, 사파는 세를 불리고, 마교는 무너진 혈교를 삼켜 그 주인을 천마 발아래 ‘혈마’의 자리에 앉혔다(혈마전).
+   주인공의 세대(나이는 대강):
+     14 맹약의 끝 소문 → 24 화산 회합, 맹약 결렬 → 25 마교·사파의 밀약 → 27 정마대전(마교의 공세)
+     → 28 천마의 경고와 퇴각 → 30 사파의 잠식 → 32 혈마의 반란(천마가 혈마를 벤다) → 34 혈마의 환생, 혈교의 귀환
+     → 35 연합이냐 불신이냐 → 37 마지막 혈전: 연합의 승리(새 맹약 / 남은 둘을 꺾어 천하) · 중원의 몰락 · 혈교천하.
+   큰 줄기는 바뀌지 않는다. 주인공의 선택은 피해의 크기, 연합의 성패, 혈신의 힘, 마지막 갈래를 바꾼다. */
+const WS_AGE={council:10,saPact:1,war:2,cmWarn:1,saGnaw:2,revolt:2,reborn:2,union:1,bEnd:2};
+const wsFix=S=>{const w=S.w;if(!w)return;if(!w.alliance)w.alliance=1; // 무림맹은 백 년 전 혈겁 때 세워져 지금도 있다
+  if(w.pact==='renewed'){w.pact='broken';w.pactAge=S.age;} // 예전 판에서 맹약이 이어진 삶도 이제는 깨진 뒤로 이어진다
+  if(w.pact==='broken'&&w.pactAge==null)w.pactAge=S.age;
+  if(w.demon>=2&&w.warAge==null)w.warAge=S.age;
+  if(S.flags.hkReborn&&!w.reborn){w.reborn=S.age;w.revolt=w.revolt||S.age;w.blood=9;}
+  if(S.master==='sobaek'){S.master='sowol';for(const k of ['rel','met'])if(S[k]&&S[k].sobaek!=null){S[k].sowol=S[k].sobaek;delete S[k].sobaek;}}};
+{const _ce=chooseEvent;chooseEvent=function(S){try{wsFix(S);}catch(e){}return _ce(S);};}
+const wsAt=(S,k,from)=>S.w[from]!=null&&S.age>=S.w[from]+WS_AGE[k];
+const hmVessel=S=>!S.dead_npc.hongui&&!S.flags.honguiDone&&!S.flags.hkSaved?'hongui':null;
+const wsSide=S=>S.org==='blood'?'혈':FACTION(S)||(S.moral<=-25||(typeof darkOf==='function'&&darkOf(S))?'무악':'무');
+
+/* 맹약의 끝: 백 년 전 이야기를 바로잡는다 */
+{const e=EV.find(x=>x.id==='pactRumor');if(e){e.x='백 년 전, 혈교가 일으킨 혈겁에 중원이 거의 무너질 뻔했다. 정·사·마가 처음이자 마지막으로 손을 잡고 혈교를 몰아냈는데, 그 마지막 싸움이 벌어진 화산 정상에서 천마 혁련 패와 검성 독고 무가 함께 돌아오지 않았다. 셋 다 피를 너무 많이 흘렸기에 화산에서 맹약을 맺었다. “백 년 동안 서로의 땅을 넘지 않는다.”\n그 뒤 정파는 문을 닫고 몸을 추슬렀고, 사파는 그 틈에 세를 불렸으며, 마교는 무너진 혈교를 통째로 삼켜 그 주인을 천마의 발아래 ‘혈마’의 자리에 앉혔다. 혈교의 역혈을 삼킨 마교는 그 뒤로 더 강해졌다고 한다.\n올해로 그 백 년이 끝나 간다. 저잣거리 사람들이 수군댄다.';
+  e.ch=[{t:'이야기꾼에게 혈겁 이야기를 더 조른다',h:'학문',go:S=>{S.w.y0=S.age;A(S,{lore:5,mind:2});hist(S,'백년맹약의 끝이 다가온다는 소문이 돌기 시작했다.');return '이야기꾼은 혈겁 때 하룻밤에 문파 셋이 사라졌고, 그 피가 강을 따라 사흘을 흘렀다고 했는데, 듣는 아이들보다 이야기하는 노인의 손이 더 떨렸다.';}},
+   {t:'맹약이 깨지면 내게도 기회가 온다',go:S=>{S.w.y0=S.age;A(S,{temper:4});hist(S,'백년맹약의 끝이 다가온다는 소문이 돌기 시작했다.');return '피바람이 불면 이름을 얻을 기회도 온다고, 당신은 그렇게 생각했다.';}},
+   {t:'나와는 상관없는 일이다',go:S=>{S.w.y0=S.age;hist(S,'백년맹약의 끝이 다가온다는 소문이 돌기 시작했다.');return '그날 저녁도 평소처럼 밥을 먹었다.';}}];}}
+{const e=EV.find(x=>x.id==='pactCouncil');if(e){e.force=S=>!S.w.pact&&S.seen.pactRumor&&S.age>=(S.w.y0||14)+WS_AGE.council&&!S.chain;
+  e.x=S=>`백년맹약이 끝나는 해. 정·사·마의 대표가 화산 정상에 모였다. 백도에서는 무림맹주 정천신산 제갈 휘가, 흑도에서는 사도련주 위 패천이, 마교에서는 검마 사마 율이 나왔고, 검마의 뒤에는 붉은 장포를 두른 혈마전의 사람들이 조용히 서 있었다. 당신은 ${S.fame>=120?'이름난 고수':S.org?ORGS[S.org].n+'의 일원':'구경꾼'}으로 그 자리에 있다.\n검마가 맨 먼저 일어섰다. “백 년을 참았으면 됐다. 마교는 맹약을 다시 맺지 않는다.”`;}}
+/* 핏빛 안개: 맹약은 반드시 깨진다. 누가 살고 누가 무엇을 보았는지가 나중을 바꾼다 */
+pactEnd=function(S,txt){S.w.pact='broken';S.w.pactAge=S.age;if((S.flags.pv||0)>=2)S.w.repsSaved=1;
+  hist(S,'화산 회합이 피로 끝났다. 백년맹약이 깨졌다.');
+  return txt+'\n\n새벽에 맹약서가 불타는 가운데 정·사·마의 대표들은 서로를 노려보며 산을 내려갔고, 그 안개가 어디서 왔는지 아무도 알지 못한 채 백 년의 평화가 끝났다.';};
+{const e=EV.find(x=>x.id==='pact2');if(e){
+  e.prep=S=>{S.tmp.foe=mkFoe({n:'안개 속의 자객들',realm:clamp(S.realm,3,6),q:1.05,hide:.3,hs:70,kw:['혈'],group:1});};
+  e.x='그날 밤 회합장에 핏빛 안개가 내려앉았다. 비명이 터졌고, 어둠 속에서 누군가 정·사·마의 대표를 가리지 않고 칼을 휘둘렀다. 정파는 마교를, 마교는 사파를, 사파는 정파를 의심했다.';
+  e.ch=S=>{const L=[];
+   if(S.w.bloodClue||S.flags.sawBlood)L.push({t:'핏빛 부적을 본 적이 있다. 안개의 출처를 쫓는다',h:'혈교의 흔적을 찾았기에 고를 수 있다',go:S=>{S.flags.pv=(S.flags.pv||0)+2;S.w.exposed=1;A(S,{fame:30,mind:4});deed(S,'화산 회합의 핏빛 안개가 혈마전에서 나왔다는 것을 알아냈다');return pactEnd(S,'안개를 거슬러 올라가자 붉은 장포의 사내가 향로를 들고 있었는데, 붙잡힌 사내의 소매에서 백 년 전 사라졌다는 혈교의 부적이 나왔다. 마교의 대표들조차 그것을 보고 얼굴이 굳었다.');}});
+   L.push({t:'대표들을 지킨다',go:S=>{const b=battle(S,S.tmp.foe);if(b.win){S.flags.pv=(S.flags.pv||0)+2;A(S,{fame:25,moral:5});deed(S,'화산 회합의 핏빛 안개 속에서 대표들을 지켰다');}return pactEnd(S,(b.win?'피투성이가 되어 대표들 앞을 지켰고, 당신이 지킨 사람들은 끝까지 살아서 산을 내려갔다.':'안개 속의 칼에 밀려 쓰러졌다.')+b.rev);}});
+   if(sideOf(S)==='마교'||S.moral<=-30)L.push({t:'혼란을 틈타 정파 대표를 벤다',h:'악명 · 나중에 불신이 깊어진다',go:S=>{S.w.repsKilled=1;A(S,{fame:20,moral:-25,enemies:3,salgi:5});return pactEnd(S,'안개 속에서 칼을 휘둘렀고, 누가 누구를 죽였는지 아무도 몰랐다.');}});
+   L.push({t:'몸을 피한다',h:'목숨을 아낀다',go:S=>{A(S,{mind:2});return pactEnd(S,'바위 뒤에 숨어 밤을 지새우며, 안개 속에서 들려오는 비명의 말투를 하나하나 기억해 두었다.');}});return L;};}}
+
+/* 마교와 사파의 밀약 */
+E({id:'wsSaPact',tag:'key',arc:1,t:'결이 같은 자들',a:[16,120],force:S=>S.w.pact==='broken'&&!S.w.saPact&&wsAt(S,'saPact','pactAge')&&!S.chain,
+ x:S=>{const wp=S.dead_npc.wipc?'새 련주':'련주 위 패천';return `맹약이 깨지고 한 해, 마교의 사자가 사도련 총단을 찾았다는 소문이 돌았다. 사자는 ${wp} 앞에 술 한 동이를 내려놓고 이렇게 말했다고 한다.
+마교의 사자: “우리는 결이 같소. 법 대신 힘을 믿고, 체면 대신 실리를 믿지. 정파를 칠 때 길만 비켜 주시오.”
+${wp}${S.dead_npc.wipc?'는':'은'} 술을 받지도 돌려보내지도 않았는데, 강호는 그것을 묵인이라 읽었다. 정파와 마교가 서로 깎아 먹으면 사파는 앉아서 이긴다는 셈이었다.`;},
+ ch:S=>{const s=wsSide(S),fin=(S,t)=>{S.w.saPact=S.age;S.w.demon=Math.max(S.w.demon||0,1);S.w.rumorAge=S.age;hist(S,'마교가 사파의 묵인을 얻었다. 정파를 칠 준비가 끝났다.');return t;};
+  if(s==='사파')return [{t:'련주의 묵인을 따른다',h:'공헌·세력',go:S=>{A(S,{contrib:20,savvy:2});safe(()=>pwAdd(S,'사파',3));return fin(S,'사도련의 배들이 그해 가을 정파의 나루를 비워 두었고, 그 빈 나루로 마교의 깃발이 지나갔다.');}},
+   {t:'마교를 믿지 말자고 진언한다',h:'구력 · 나중에 사파가 덜 등을 돌린다',go:S=>{S.w.saWarned=1;A(S,{tongue:2,fame:4});return fin(S,'당신의 말에 련주는 웃기만 했지만, 그날 밤 사도련의 장부 한 귀퉁이에 마교와의 거래를 따로 적는 칸이 생겼다.');}}];
+  if(s==='마교'||s==='혈')return [{t:'사자의 길을 호위한다',h:'공헌 · 정파가 더 크게 다친다',go:S=>{S.w.maPrep=1;A(S,{contrib:25,fame:5});return fin(S,'사자를 노린 정파의 첩자 둘을 강물에 던졌고, 사자는 무사히 술 한 동이를 내려놓았다.');}},
+   {t:'조용히 지켜본다',h:'심계',go:S=>{A(S,{mind:3});return fin(S,'교의 사자가 돌아오던 밤, 장로들의 얼굴에서 이미 이긴 사람의 웃음을 보았다.');}}];
+  return [{t:'무림맹에 알린다',h:'명성 · 정파가 대비한다',go:S=>{S.w.jReady=1;A(S,{fame:8});S.met.maengju=1;return fin(S,'맹주는 당신의 말을 끝까지 듣고 문파마다 서찰을 돌렸으니, 적어도 정파는 맨몸으로 맞지는 않을 것이다.');}},
+   {t:'사도련에 찾아가 묵인을 거두라고 한다',h:'구력·명성 · 성공하면 사파가 덜 등을 돌린다',go:S=>{if(S.tongue+S.fame/8+R(0,40)>=70){S.w.saWarned=1;A(S,{fame:10,tongue:2});return fin(S,'련주는 술 한 동이를 마교 사자 몫과 당신 몫으로 나눠 따랐다. “둘 다 받은 셈이니 둘 다 믿지는 않겠소.” 그것만으로도 큰 수확이었다.');}A(S,{mind:2});return fin(S,'련주는 당신의 말을 웃으며 들었고, 웃으며 돌려보냈다. 그래도 사도련의 속내가 어디 있는지는 알았다.');}},
+   {t:'내 일이 아니다',h:'수양',go:S=>{A(S,{cult:2});return fin(S,'소문은 소문일 뿐이라 여겼지만, 그해 겨울 장강의 뱃사공들이 정파 손님을 태우지 않기 시작했다.');}}];}});
+/* 정마대전은 밀약 뒤 반드시 온다 */
+{const e=EV.find(x=>x.id==='war');if(e){e.w=0;e.force=S=>S.w.demon===1&&S.w.saPact!=null&&wsAt(S,'war','saPact')&&!S.chain;}}
+/* 천마의 경고와 퇴각 */
+const wsDmg=S=>clamp(2+(S.w.maPrep?1:0)-(S.w.jReady?1:0)-(S.dead_npc.geomma?1:0)-(S.flags.warField==='raid'&&!S.flags.deserter?1:0)+(S.w.repsKilled?1:0),0,4);
+E({id:'wsCmWarn',tag:'key',arc:1,t:'천마의 경고',a:[18,120],force:S=>S.w.demon>=2&&!S.w.cmWarn&&wsAt(S,'cmWarn','warAge')&&!S.chain,
+ x:S=>{const d=wsDmg(S);S.tmp.dmg=d;const head=d>=3?'마교의 군세는 낙양을 지나 무림맹 총단의 문 앞까지 밀려왔고, 구파의 산문 셋이 불탔다.':d>=2?'마교의 군세는 무림맹 총단 앞까지 밀려왔고, 정파는 맹의 고수들이 목숨으로 막아 낸 끝에 간신히 살아남았다.':'정파는 미리 쳐 둔 진과 맹의 고수들로 마교의 군세를 낙양 밖에서 붙잡아 두었지만, 그 대가로 이름난 장로 여럿이 돌아오지 않았다.';
+  if(S.flags.cmMe)return `${head}\n무림맹 총단의 문을 앞에 두고, 당신은 천마의 깃발 아래에서 군세를 멈춰 세웠다. 오늘 문을 부술 수도 있었지만, 교의 피도 이미 많이 흘렀다.`;
+  if(S.w.cheonma!=='alive')return `${head}\n그런데 천마를 잃은 마교는 끝내 문을 부수지 못했고, 장로들은 서로의 눈치를 보다 군세를 거두었다. 퇴각하는 검은 깃발 끝에서 누군가 외쳤다. “다음에는 이 문을 부순다.”`;
+  return `${head}\n그날 해 질 녘, 하늘에서 목소리 하나가 울렸는데 천 리 밖에서도 들렸다고 한다.\n천마: “이번엔 여기까지다. 다음에 올 때는 정파를 부순다.”\n그리고 검은 깃발들이 거짓말처럼 물러갔다. 무림맹은 살아남았지만, 살아남았다는 것 말고는 아무것도 남지 않았다.`;},
+ ch:S=>{const s=wsSide(S),d=S.tmp.dmg||2,fin=(S,t,dd=0)=>{S.w.cmWarn=S.age;const D=clamp(d+dd,0,4);S.w.jDmg=D;safe(()=>{pwAdd(S,'정파',-(3+D*3));pwAdd(S,'마교',2+D*2);});hist(S,D>=2?'정마대전: 정파가 큰 피해를 입고 마교가 물러갔다.':'정마대전: 정파가 간신히 버텨 냈고 마교가 물러갔다.');return t;};
+  if(S.flags.cmMe)return [{t:'“다음에 올 때는 정파를 부순다”고 선언한다',h:'악명·세력',go:S=>{A(S,{fame:30,moral:-5});return fin(S,'당신의 목소리가 무림맹의 대전까지 울렸고, 그날 밤 맹의 장로 셋이 자리에서 물러났다.',1);}},
+   {t:'포로를 돌려보내며 물러난다',h:'도덕·구력',go:S=>{S.w.mercy=1;A(S,{moral:10,fame:15});return fin(S,'풀려난 포로들이 무림맹 문 앞에서 천마의 이름을 이상한 얼굴로 되뇌었다. 원수의 자비는 칼보다 오래 남는 법이었다.',-1);}}];
+  if(s==='정파')return [{t:'맹과 함께 마지막 방어선을 지킨다',h:'싸움 · 이기면 피해가 준다',go:S=>{const b=battle(S,mkFoe({n:'마교의 후위',realm:clamp(S.realm,4,7),q:1.05,kw:['마'],group:1}),{ally:1.2});if(b.win)A(S,{fame:30,moral:5});return fin(S,fightText(b,'문 앞의 마지막 계단에서 당신이 버틴 반나절 덕에 맹의 서고와 약방이 불타지 않았다.','계단을 내주고 물러났지만 문만은 끝까지 닫혀 있었다.'),b.win?-1:0);}},
+   {t:'부상자를 돌본다',h:'도덕·의술',go:S=>{A(S,{moral:6,med:4});return fin(S,'사흘 밤낮 피 묻은 붕대를 갈았고, 당신 손을 거쳐 간 사람들 가운데 절반이 다시 칼을 쥐었다.');}},
+   {t:'퇴각하는 마교를 쫓는다',h:'싸움 · 명성',go:S=>{const b=battle(S,mkFoe({n:'퇴각하는 마교 장로',realm:clamp(S.realm,4,7),q:1.05,kw:['마']}));if(b.win)A(S,{fame:40,enemies:1});return fin(S,fightText(b,'물러나던 장로 하나를 강가에서 따라잡아 베었으니, 정파가 그 전쟁에서 거둔 몇 안 되는 승전보였다.','쫓다가 매복에 걸려 겨우 몸만 빠져나왔다.'));}}];
+  if(s==='마교'||s==='혈')return [{t:'선봉에서 무림맹의 문을 두드린다',h:'공헌·악명',go:S=>{A(S,{contrib:40,fame:20,moral:-8});return fin(S,'당신의 칼이 문짝에 깊은 자국을 남겼고, 퇴각 명령이 내려진 뒤에도 그 자국은 무림맹 정문에 오래 남았다.',1);}},
+   {t:'퇴각 명령에 따른다',h:'심계',go:S=>{A(S,{mind:3,contrib:10});return fin(S,'명령을 따르면서도 마음 한쪽이 서늘했다. 이길 수 있는 싸움을 멈추게 한 것이 무엇인지, 교 안에서 아는 사람은 많지 않았다.');}}];
+  return [{t:'멀리서 지켜본다',h:'심계',go:S=>{A(S,{mind:3});return fin(S,'두 세력이 서로를 깎아 먹는 동안 강호의 저울이 어디로 기우는지를 오래 지켜보았다.');}},
+   {t:'비어 버린 정파의 땅을 노린다',h:'은자 · 도덕↓',go:S=>{A(S,{gold:60,moral:-5});return fin(S,'불탄 산문 아래 마을의 창고들이 주인을 잃고 있었고, 그해 당신의 주머니는 무거워졌다.');}},
+   {t:'피난민을 돕는다',h:'도덕',go:S=>{A(S,{moral:6,mood:4});return fin(S,'불탄 산문 아래에서 갈 곳 없는 사람들을 이끌고 강을 건넜다.');}}];}});
+/* 사파의 잠식 */
+E({id:'wsSaGnaw',tag:'key',arc:1,t:'사파의 잠식',a:[18,120],force:S=>S.w.cmWarn!=null&&!S.w.saGnaw&&wsAt(S,'saGnaw','cmWarn')&&!S.chain,
+ x:S=>`정마대전으로 정파의 문파들이 지쳐 있는 사이, 사파의 깃발이 하나둘 정파의 땅에 꽂혔다. 표국이 넘어가고, 나루가 넘어가고, 정파 세가의 장원이 하룻밤 사이 흑도 방회의 객잔이 되었다.
+강호 사람들은 이제 사파와 마교 둘만 남겠다고 수군댔다.${S.w.saWarned?' 다만 사도련 안에서도 마교와 너무 가까워지는 것을 꺼리는 목소리가 있었다.':''}`,
+ ch:S=>{const s=wsSide(S),fin=(S,t)=>{S.w.saGnaw=S.age;safe(()=>{pwAdd(S,'사파',S.w.saRestrain?2:6);pwAdd(S,'정파',S.w.saRestrain?-1:-4);});hist(S,'정마대전의 틈을 타 사파가 정파의 땅을 갉아먹었다.');return t;};
+  if(s==='사파')return [{t:'정파의 땅을 집어삼킨다',h:'은자·세력 · 도덕↓',go:S=>{A(S,{gold:80,contrib:20,moral:-5});return fin(S,'정파 표국의 깃발을 내리고 당신의 깃발을 올렸으니, 그 길목을 지나는 모든 짐이 당신 손을 거쳤다.');}},
+   {t:'의리 없는 짓이라 손을 뗀다',h:'도덕 · 훗날 정파가 사파를 덜 원망한다',go:S=>{S.w.saRestrain=1;A(S,{moral:6,fame:5});return fin(S,'당신 몫의 나루를 원래 주인에게 돌려주자 흑도의 형제들이 혀를 찼지만, 정파 사람들은 그 일을 오래 기억했다.');}}];
+  if(s==='정파')return [{t:'빼앗긴 나루를 되찾는다',h:'싸움',go:S=>{const b=battle(S,mkFoe({n:'흑도 방회',realm:clamp(S.realm,3,6),q:1,group:1}));if(b.win){A(S,{fame:20});S.w.saRestrain=S.w.saRestrain||0;}return fin(S,fightText(b,'나루 하나를 되찾았다. 강 하나에 비하면 작았지만, 정파가 처음 되찾은 땅이었다.','흑도 방회의 배들에 밀려 물러났다.'));}},
+   {t:'무림맹을 다시 추스른다',h:'처세·명성',go:S=>{S.w.jReady=(S.w.jReady||0)+1;A(S,{savvy:3,fame:8});return fin(S,'불탄 산문마다 찾아다니며 남은 제자들을 맹으로 모았으니, 수는 적었지만 이번에는 서로의 얼굴을 알았다.');}}];
+  if(s==='마교'||s==='혈')return [{t:'사파가 커 가는 것을 장부에 적어 둔다',h:'심계',go:S=>{A(S,{mind:3});return fin(S,'사파의 깃발이 늘 때마다 교의 장로들은 웃었지만, 당신은 그 웃음이 언제 그칠지를 셈했다.');}},
+   {t:'사파의 배에 교의 사람을 심는다',h:'공헌',go:S=>{A(S,{contrib:20});return fin(S,'장강의 배 열 척에 교의 귀를 심어 두었다.');}}];
+  return [{t:'어느 편도 들지 않는다',h:'수양',go:S=>{A(S,{cult:3});return fin(S,'주인이 바뀐 객잔에서도 국수 맛은 그대로였고, 당신은 그것으로 족했다.');}},
+   {t:'바뀐 길목에서 장사를 한다',h:'은자',go:S=>{A(S,{gold:40,savvy:2});return fin(S,'주인이 바뀌는 길목에는 늘 흥정이 있었고, 당신은 그 흥정 사이에서 쏠쏠한 몫을 챙겼다.');}}];}});
+/* 혈마의 반란 */
+E({id:'wsRevolt',tag:'key',arc:1,t:'혈마의 반란',a:[18,120],force:S=>S.w.saGnaw!=null&&!S.w.revolt&&wsAt(S,'revolt','saGnaw')&&!S.chain,
+ prep:S=>{if(!S.dead_npc.hyeolma)S.tmp.foe=npcFoe(S,'hyeolma',{lethal:1});},
+ x:S=>{const dead=S.dead_npc.hyeolma,cm=S.flags.cmMe,ca=S.w.cheonma==='alive';
+  if(dead)return '십만대산에서 불길이 올랐다. 혈마는 이미 죽었지만, 혈마전의 무리가 그 이름을 깃발에 적고 천마신교에 칼을 겨누었다. 백 년 전 마교에 삼켜진 혈교의 피가, 백 년 만에 주인을 물려고 한 것이다.\n반란은 사흘 만에 짓밟혔고, 혈마전은 문을 닫았다. 그런데 짓밟힌 자들의 입에서 이상한 말이 흘러나왔다. “혈마님은 죽지 않는다.”';
+  return `십만대산에서 불길이 올랐다. 혈마 단목 혼이 혈마전의 무리를 이끌고 ${cm?'천마인 당신':'천마'}에게 칼을 겨눈 것이다. 백 년 전 마교에 삼켜진 혈교의 피가, 백 년 만에 주인을 물려고 한 것이다.\n${cm?'불타는 회랑 끝에서 혈마가 붉은 손을 들어 당신을 가리켰다.\n혈마: “천마의 자리에 앉은 자가 누구든 상관없다. 그 자리는 원래 피의 것이다.”':ca?'반란은 하룻밤 만에 끝났다. 천마가 손바닥 하나로 혈마의 심장을 꿰뚫었고, 혈마는 쓰러지면서도 웃었다.\n혈마: “…죽는다고 끝이 아니다.”':'천마를 잃은 교는 흔들렸지만, 사마의 칼이 반란을 막아 섰고 혈마는 끝내 쓰러졌다. 쓰러지면서도 혈마는 웃었다.\n혈마: “…죽는다고 끝이 아니다.”'}`;},
+ ch:S=>{const s=wsSide(S),dead=S.dead_npc.hyeolma,hk=inHk(S)&&S.flags.hkKnow&&S.flags.hkKnow!=='struck'&&!S.flags.hkNight&&!dead;
+  const fin=(S,t,killed)=>{S.w.revolt=S.age;if(!S.dead_npc.hyeolma){if(hk&&!killed)S.w.hmWounded=1;else{S.dead_npc.hyeolma=1;S.w.hmDead=1;}}hist(S,'혈마가 천마신교에 반란을 일으켰다가 쓰러졌다.');return t;};
+  if(S.flags.cmMe&&!dead)return [{t:'혈마와 맞선다',h:'목숨을 건 싸움',go:S=>{const b=battle(S,S.tmp.foe);if(b.win)A(S,{fame:80,salgi:6});else hurt(S,30,'혈마');deed(S,'천마로서 혈마의 반란을 꺾었다');return fin(S,fightText(b,'붉은 손이 당신 가슴 앞에서 멈췄고, 당신의 손이 먼저 혈마의 심장에 닿아 있었다. 혈마는 쓰러지면서도 웃었다. “…죽는다고 끝이 아니다.”','밀리고 또 밀렸지만, 사마가 뒤에서 혈마를 덮쳐 반란은 끝났다. 쓰러지는 혈마가 웃었다. “…죽는다고 끝이 아니다.”'),true);}},
+   {t:'혈마전을 통째로 불태운다',h:'악명·살기',go:S=>{A(S,{fame:30,salgi:8,moral:-10});return fin(S,'혈마전에 불을 놓고 나오는 자를 모두 베었으니, 그 불길은 사흘을 탔고 교도들은 새 천마의 이름을 숨죽여 불렀다.',true);}}];
+  if(hk)return [{t:'혈마를 따라 반란에 선다',h:'혈교의 길 · 다칠 수 있다',go:S=>{S.flags.bloodSide=1;hurt(S,20,'반란');A(S,{contrib:40,moral:-10});return fin(S,'반란은 실패했다. 당신은 피를 쏟는 혈마를 업고 불타는 십만대산을 빠져나왔고, 혈마는 당신 등에서 청해로 가자고만 했다.',false);}},
+   {t:'혈마를 버리고 숨는다',h:'목숨을 아낀다',go:S=>{A(S,{mind:3});return fin(S,'반란의 밤을 숨어서 넘겼고, 혈마가 피투성이로 청해 쪽으로 사라졌다는 소문을 들었다.',false);}}];
+  if(s==='마교')return [{t:'천마 편에서 혈마전을 친다',h:'싸움·공헌',go:S=>{const b=battle(S,mkFoe({n:'혈마전의 무리',realm:clamp(S.realm,4,7),q:1.05,kw:['혈'],group:1}));if(b.win)A(S,{contrib:40,fame:20});return fin(S,fightText(b,'혈마전의 문을 지키던 무리를 베고 들어갔고, 교는 그 공을 오래 기억했다.','혈마전의 무리에 밀려 물러났지만, 반란은 다른 칼들이 끝냈다.'),true);}},
+   {t:'혈마 편에 선다',h:'혈교의 길 · 위험하다',if:S=>S.moral<=-30,go:S=>{S.flags.bloodSide=1;hurt(S,25,'반란');A(S,{moral:-10});return fin(S,'반란은 실패했고, 당신은 혈마전의 붉은 장포를 벗어 불길에 던지고서야 십만대산을 빠져나왔다. 혈마의 마지막 웃음이 귀에서 떠나지 않았다.',true);}},
+   {t:'불길을 피해 지켜본다',h:'심계',go:S=>{A(S,{mind:3});return fin(S,'교의 내분은 바깥에서 볼 때보다 안에서 볼 때 더 무서웠다.',true);}}];
+  return [{t:'십만대산의 불길을 멀리서 본다',h:'학문·심계',go:S=>{A(S,{lore:3,mind:2});return fin(S,'서쪽 하늘이 사흘 동안 붉었다. 사람들은 마교가 스스로 무너진다며 좋아했지만, 혈마의 마지막 말을 전해 들은 노인들은 웃지 않았다.',true);}},
+   {t:'혼란을 틈타 마교의 거점을 친다',h:'싸움·명성',go:S=>{const b=battle(S,mkFoe({n:'마교의 거점',realm:clamp(S.realm,3,6),q:1,kw:['마'],group:1}));if(b.win){A(S,{fame:25});safe(()=>pwAdd(S,'마교',-3));}return fin(S,fightText(b,'불길에 정신이 팔린 마교의 거점 하나를 쓸었다.','거점의 수비는 생각보다 단단했다.'),true);}}];}});
+/* 혈마의 환생, 혈교의 귀환 */
+E({id:'wsReborn',tag:'key',arc:1,t:'혈마는 죽지 않는다',a:[18,120],force:S=>S.w.revolt!=null&&!S.w.reborn&&wsAt(S,'reborn','revolt')&&!S.chain&&!(S.w.hmWounded&&!S.flags.hkNight&&!S.dead_npc.hyeolma&&S.age<S.w.revolt+4),
+ prep:S=>{S.tmp.v=hmVessel(S);S.tmp.foe=mkFoe({n:'혈교 잔당',realm:clamp(S.realm,4,7),q:1.05,kw:['혈'],group:1});},
+ x:S=>{const v=S.tmp.v?`성녀 ${NN('hongui')}`:'이름 없는 신녀',weak=!!S.flags.hkSaved;
+  return `혈마가 쓰러지고 두 해, 청해의 붉은 호수 위로 핏빛 구름이 다시 모였다. 혈마는 죽는다고 끝이 아니었다. 이번 대의 혈마는 백 년 전 혈겁을 일으킨 혈교주가 환생대법으로 기억과 혼을 이어 온 몸이었고, 마교 안에 숨어 있던 혈교의 잔당들이 그 혼을 ${v}의 몸에 불러들였다.
+소녀의 입에서 늙은 목소리가 흘러나왔다.
+혈신: “백 년을 기다렸다. 이번에는 정도 사도 마도 없다. 피만 남는다.”
+혈신이 일어서자 붉은 호수 둘레의 마을 열이 하룻밤에 사라졌다. 혈교가 돌아왔다.${weak?'\n다만 몸이 맞지 않는 그릇이라, 혈신의 몸 군데군데가 촛농처럼 흘러내리고 있었다는 말이 돌았다.':''}`;},
+ ch:S=>{const s=wsSide(S),fin=(S,t)=>{S.w.reborn=S.age;S.w.blood=9;S.w.hmDead=1;S.dead_npc.hyeolma=1;if(S.tmp.v){S.dead_npc.hongui=1;S.flags.honguiDone=1;}if(S.flags.hkSaved)S.w.bsWeak=1;hist(S,'혈마가 신녀의 몸으로 다시 깨어나 혈신이 되었다. 혈교가 돌아왔다.');return t;};
+  const L=[];
+  if(s==='혈'||S.flags.bloodSide||S.flags.hkReborn)L.push({t:'혈신 앞에 무릎 꿇는다',h:'혈교의 길 · 힘을 얻는다',go:S=>{S.flags.bloodSide=1;A(S,{ng:20,salgi:10,moral:-15,contrib:40});return fin(S,'혈신이 소녀의 손으로 당신 정수리를 짚었고, 백 년 묵은 피의 기운이 당신 경맥을 한 바퀴 돌았다. “충직한 피로구나.”');}});
+  L.push({t:'청해로 달려가 제단을 친다',h:'싸움 · 이기면 혈신이 덜 깨어난다',go:S=>{const b=battle(S,S.tmp.foe);if(b.win){S.w.bsWeak=1;A(S,{fame:40,moral:5});deed(S,'혈신이 깨어나는 제단을 쳐서 그 힘을 반쯤 끊었다');}else hurt(S,20,'혈교 잔당');return fin(S,fightText(b,'제단의 핏줄 일곱 가운데 셋을 끊었다. 혈신은 깨어났지만 반쯤 깬 잠이었다.','제단까지 닿지 못하고 밀려났고, 붉은 구름이 등 뒤에서 더 짙어졌다.'));}});
+  if(s!=='혈')L.push({t:'세력마다 서찰을 돌려 혈교의 귀환을 알린다',h:'구력 · 훗날 연합이 쉬워진다',go:S=>{S.w.warned=1;A(S,{fame:10,tongue:2});return fin(S,'정파에는 무림맹으로, 사파에는 사도련으로, 마교에는 십만대산으로 같은 글을 보냈다. “백 년 전의 그 피가 돌아왔다.” 셋 다 답장은 없었지만, 셋 다 읽었다.');}});
+  L.push({t:'피할 곳을 찾는다',h:'목숨을 아낀다',go:S=>{A(S,{mind:2});return fin(S,'청해 쪽으로 난 길을 모두 피해 동쪽으로 갔다. 피비린내는 바람을 타고 동쪽까지 따라왔다.');}});return L;}});
+/* 연합이냐, 불신이냐 */
+const wsTrust=S=>(S.w.repsSaved?1:0)+(S.w.exposed?1:0)+(S.w.mercy?1:0)+(S.w.saWarned?1:0)+(S.w.saRestrain?1:0)+(S.w.warned?1:0)-(S.w.repsKilled?2:0);
+E({id:'wsUnion',tag:'key',arc:1,t:'세 깃발',a:[18,120],force:S=>S.w.reborn!=null&&!S.w.union&&wsAt(S,'union','reborn')&&!S.chain,
+ x:S=>`혈교가 청해에서 동쪽으로 내려오고 있었다. 무림맹 대전에 백 년 만에 세 깃발이 나란히 걸렸는데, 정파의 장로는 마교 사자의 칼을, 마교 사자는 사도련 사람의 소매를, 사도련 사람은 정파 장로의 웃음을 믿지 않았다.
+${wsTrust(S)>=3?'그래도 지난 몇 해 동안 쌓인 몇 가지 일들 덕분에, 서로를 믿을 핑계 하나쯤은 저마다 쥐고 있었다.':wsTrust(S)<=0?'지난 몇 해 동안 쌓인 원한이 너무 깊어, 회의는 시작하기도 전에 끝날 것 같았다.':'백 년 전에도 그랬다고, 누군가 말했다. 그때도 서로를 믿지 않았지만 결국 손을 잡았다고.'}`,
+ ch:S=>{const s=wsSide(S),t0=wsTrust(S),fin=(S,ok,t)=>{S.w.union=ok?'yes':'no';S.w.unionAge=S.age;hist(S,ok?'정·사·마가 백 년 만에 다시 손을 잡았다.':'정·사·마는 끝내 손을 잡지 못했다.');return t;};
+  const L=[];
+  if(s!=='혈'&&!S.flags.bloodSide)L.push({t:'세 세력을 설득해 연합을 이끈다',h:'구력·명성 · 지난 일들이 힘이 된다',go:S=>{const sc=S.tongue+S.fame/8+t0*12+(S.org&&S.rank>=4?15:0)+(S.flags.cmMe?20:0)+(S.flags.ally&&S.flags.ally!=='-'?8:0)+R(0,40);const ok=sc>=75;if(ok){S.flags.unionMaker=1;A(S,{fame:60,moral:8});deed(S,'혈교에 맞서 정·사·마의 연합을 이끌었다');}else A(S,{fame:10});
+    return fin(S,ok,ok?'당신은 셋의 대표를 한 탁자에 앉히고 백 년 전 맹약서의 첫 줄을 다시 읽게 했다. 그 줄에는 맹약을 맺게 된 까닭이 적혀 있었다. “다시는 피의 하늘을 보지 않기 위하여.”':'당신의 말에 고개를 끄덕인 쪽도 있었지만, 마지막에 누군가 탁자를 걷어찼다. 세 깃발은 그날 밤 각자의 산으로 돌아갔다.');}});
+  if(s!=='혈'&&!S.flags.bloodSide)L.push({t:'내 사람들만 이끌고 싸울 준비를 한다',h:'연합은 하늘에 맡긴다',go:S=>{const ok=chance(clamp(.45+t0*.1,.15,.9));A(S,{exp:tb(S)*.5});return fin(S,ok,ok?'당신이 칼을 가는 동안 세 깃발은 결국 서로를 붙잡았다. 백 년 전처럼, 마지막 순간에야.':'당신이 칼을 가는 동안 회의는 깨졌고, 세 깃발은 각자 혈교를 맞기로 했다.');}});
+  if(s==='혈'||S.flags.bloodSide||S.moral<=-40)L.push({t:'연합의 탁자에 불신의 씨를 뿌린다',h:'혈교의 길 · 연합이 깨진다',go:S=>{S.flags.bloodSide=1;A(S,{mind:4,moral:-10,contrib:30});return fin(S,false,'정파 장로의 찻잔 밑에 마교의 독침을, 마교 사자의 칼집에 사파의 표식을 넣어 두었다. 이튿날 아침 세 깃발은 서로의 목을 노리며 대전을 나갔다.');}});
+  L.push({t:'한발 물러서서 지켜본다',h:'수양',go:S=>{const ok=chance(clamp(.4+t0*.1,.1,.85));A(S,{cult:2});return fin(S,ok,ok?'세 깃발은 오래 다투다 결국 손을 잡았다.':'세 깃발은 오래 다투다 끝내 손을 놓았다.');}});
+  return L;}});
+/* 마지막 혈전 */
+E({id:'wsBloodEnd',tag:'key',arc:1,t:'피의 하늘 아래',a:[18,120],force:S=>!!S.w.union&&!S.w.bEnd&&wsAt(S,'bEnd','unionAge')&&!S.chain,
+ prep:S=>{S.tmp.foe=mkFoe({n:'혈신',realm:clamp(S.realm+1,6,8),q:S.w.bsWeak?1.0:1.18,kw:['혈','마'],lethal:1});},
+ x:S=>S.w.union==='yes'?`정·사·마의 연합군이 화산 아래에 모였다. 백 년 전 혈교를 몰아낸 바로 그 산이었다. 산 너머에서 핏빛 구름이 내려왔고, 구름 아래 소녀의 몸을 한 혈신이 맨발로 걸어오고 있었다.${S.w.bsWeak?' 그 몸은 군데군데 무너져 있었다.':''}\n혈신: “백 년 전에도 너희는 여기 모였지. 이번에는 몇이나 돌아갈까.”`
+  :`연합은 끝내 서지 않았다. 혈교의 깃발이 장강을 건넜고, 정파의 산문과 사파의 산채와 마교의 거점이 차례로 하나씩 무너졌다. 저마다 자기 산만 지키다 저마다 쓰러지는 것을, 백 년 전 사람들은 이미 보았다고 했다.\n혈신은 이제 낙양의 성문 앞에 서 있었다.`,
+ ch:S=>{const s=wsSide(S),side=FACTION(S),fin=(S,k,t)=>{S.w.bEnd=k;if(k==='union'||k==='hero'||k==='dom'){S.w.blood=0;S.w.bloodDone=1;}hist(S,{union:'정·사·마의 연합이 혈교를 몰아냈다. 새 맹약이 맺어졌다.',hero:'한 사람이 혈신을 쓰러뜨려 혈겁을 끝냈다.',fallen:'혈겁으로 중원이 무너졌다.',blood:'혈교천하. 중원이 피의 하늘 아래 들어갔다.',dom:'혈교를 몰아낸 뒤 한 세력이 천하를 쥐었다.'}[k]);return t;};
+  if(S.w.union==='yes'){const L=[];
+   if(S.flags.bloodSide)L.push({t:'연합군 안에서 칼을 돌린다',h:'혈교의 길 · 이기면 혈교천하',go:S=>{const b=battle(S,mkFoe({n:'연합군의 고수들',realm:clamp(S.realm,5,8),q:1.1,group:1}));if(b.win){A(S,{fame:100,moral:-40,salgi:15});return fin(S,'blood',fightText(b,'연합군의 한가운데서 칼을 돌리자 대열이 무너졌고, 그 틈으로 핏빛 구름이 쏟아져 들어왔다. 그날 화산 아래에서 백 년 전의 일이 거꾸로 되풀이되었다.',''));}hurt(S,40,'연합군');A(S,{enemies:3});return fin(S,'union','칼을 돌리는 순간 사방에서 칼이 날아왔고, 당신이 쓰러진 사이 연합군은 혈신을 몰아냈다.');}});
+   L.push({t:'연합군의 선봉에서 혈신을 친다',h:'목숨을 건 싸움',go:S=>{const b=battle(S,S.tmp.foe,{ally:1.5});if(b.win){A(S,{fame:200,moral:15,mood:20});sTitle(S,'혈겁을 끝낸 자');deed(S,'연합군의 선봉에서 혈신을 쓰러뜨렸다');if(side&&S.realm>=6&&!S.flags.bloodSide)S.chain='wsUnify';}else{hurt(S,35,'혈신');A(S,{fame:40});}
+    return fin(S,'union',fightText(b,'소녀의 얼굴을 한 것이 무너지며 늙은 목소리로 마지막 숨을 쉬었다. “…백 년 뒤에.” 당신은 그 말이 끝나기 전에 칼을 거두지 않았다.','혈신의 손에 튕겨 나가 산비탈을 굴렀지만, 당신이 버틴 반나절 동안 연합군의 고수들이 혈신을 에워쌌고, 해가 질 무렵 핏빛 구름이 걷혔다.'));}});
+   L.push({t:'뒤에서 백성들을 지킨다',h:'도덕·명성',go:S=>{A(S,{moral:10,fame:30});return fin(S,'union','싸움이 벌어지는 동안 산 아래 마을 사람들을 이끌고 강을 건넜다. 저녁에 핏빛 구름이 걷혔다는 소식을 강 건너에서 들었다.');}});
+   return L;}
+  const L=[];
+  if(s==='혈'||S.flags.bloodSide)L.push({t:'혈신과 함께 중원을 피로 덮는다',h:'혈교천하',go:S=>{A(S,{fame:120,moral:-40,salgi:15,enemies:5});deed(S,'혈신의 곁에서 중원을 피로 덮었다');return fin(S,'blood','낙양의 성문이 열린 날, 당신은 혈신의 왼편에 서 있었다. 그날 이후 중원의 하늘은 오래 붉었다.');}});
+  if(!S.flags.bloodSide)L.push({t:'홀로 혈신에게 간다',h:'목숨을 건 싸움 · 연합 없이',go:S=>{const b=battle(S,S.tmp.foe);if(b.win){A(S,{fame:300,moral:20,mood:30});sTitle(S,'혈겁을 끝낸 자');deed(S,'연합 없이 홀로 혈신을 쓰러뜨렸다');return fin(S,'hero',fightText(b,'낙양 성문 앞에서 혈신과 홀로 마주 섰다. 사흘 뒤 성문이 열렸을 때 걸어 나온 것은 당신 하나였고, 사람들은 그날을 백 년 동안 이야기했다.',''));}
+    hurt(S,45,'혈신');return fin(S,'fallen','혈신의 손이 당신 가슴을 스쳤고, 당신이 쓰러진 뒤 낙양의 성문이 열렸다. 겨우 목숨을 건져 남쪽으로 내려가는 길에 당신은 불타는 하늘을 여러 번 돌아보았다.');}});
+  if(!S.flags.bloodSide)L.push({t:'살아남은 사람들을 이끌고 남쪽으로 간다',h:'도덕 · 중원은 무너진다',go:S=>{A(S,{moral:12,fame:20});return fin(S,'fallen','무너진 성문을 등지고 사람들을 이끌어 남쪽 바다까지 내려갔다. 그 길에 따라온 사람들이 훗날 다시 강호를 세웠다.');}});
+  return L;}});
+/* 혈교를 몰아낸 뒤: 새 맹약이냐, 남은 둘을 꺾고 천하를 쥐느냐 */
+const DOM_T={정파:'정도천하를 연 협객',사파:'사도천하의 련주',마교:'마도천하의 주인'};
+E({id:'wsUnify',tag:'key',arc:1,t:'핏빛 구름이 걷힌 뒤',a:[18,120],w:0,
+ x:S=>`핏빛 구름이 걷힌 화산 아래에서 세 깃발이 다시 서로를 보았다. 혈교와 싸우느라 셋 다 지쳐 있었는데, 그중 ${FACTION(S)}의 깃발 아래에는 혈신을 쓰러뜨린 당신이 서 있었다.
+누군가 당신 귀에 속삭였다. “지금이라면 남은 둘을 한꺼번에 꺾을 수 있습니다. 백 년에 한 번 오는 때입니다.”`,
+ ch:S=>{const f=FACTION(S);return [{t:'새 맹약을 맺자고 한다',h:'도덕·명성',go:S=>{A(S,{moral:10,fame:40});deed(S,'혈겁 뒤 정·사·마의 새 맹약을 이끌었다');S.flags.unionMaker=1;hist(S,'화산에서 정·사·마의 새 맹약이 맺어졌다.');return '화산 정상의 바위에 새 맹약을 새겼다. 백 년 전의 맹약 바로 아래에, 같은 말로. 다만 이번에는 까닭을 먼저 적었다.';}},
+  {t:'남은 두 세력을 꺾고 천하를 연다',h:'목숨을 건 싸움 · 이기면 천하',go:S=>{const b=battle(S,mkFoe({n:'지친 두 세력의 고수들',realm:clamp(S.realm,6,8),q:1.08,group:1}),{ally:1.3});if(b.win){S.w.bEnd='dom';sTitle(S,DOM_T[f]);safe(()=>pwAdd(S,f,30));A(S,{fame:250,moral:f==='정파'?-5:-20});deed(S,`혈겁 뒤 남은 두 세력을 꺾고 ${PW_HAN[f]}를 열었다`);hist(S,`${PW_HAN[f]}. ${f}가 천하를 쥐었다.`);}else{hurt(S,40,'천하의 칼');A(S,{fame:20});}
+   return fightText(b,`지친 두 깃발이 차례로 내려갔다. 화산 정상에는 깃발 하나만 남았고, 그 깃발 아래에서 사람들이 당신 이름을 외쳤다. ${PW_HAN[f]}.`,'남은 둘이 한꺼번에 당신에게 칼을 돌렸고, 당신은 겨우 몸만 빠져나왔다. 천하는 셋으로 나뉜 채 남았다.');}}];}});
+
+/* 예전의 큰 흐름 가운데 이 줄기와 어긋나는 사건은 쉰다 */
+const WS_OFF=new Set(['rumor','alliance','bloodRite','bloodCalamity']);
+['pactRumor','lostVillage','pactCouncil','pact2','wsSaPact','war','warBattle','warAfter','wsCmWarn','wsSaGnaw','wsRevolt','wsReborn','wsUnion','wsBloodEnd','wsUnify'].forEach(id=>JOB_OK.add(id)); // 생업을 하는 삶에도 천하대세는 온다
+for(const id of WS_OFF){const e=EV.find(x=>x.id===id);if(e)e.draft=1;}
+{const _el=eligible;eligible=function(S,e){if(WS_OFF.has(e.id))return false;
+  if(e.id==='cheonma'&&!S.w.cmWarn)return false; // 천마의 강림은 경고 뒤에, 혈마의 반란 전에
+  if(e.id==='cheonma'&&S.w.revolt)return false;
+  if(e.id==='hkNight'&&!S.w.revolt)return false; // 부활의 밤은 반란이 실패한 뒤의 일
+  return _el(S,e);};}
+/* 혈교: 백 년 전 마교에 흡수되어 혈마전으로 남은 무리. 혈마 단목 혼이 그 주인이다 */
+ORGS.blood.d='백 년 전 정·사·마에게 무너진 뒤 마교에 삼켜진 혈교의 남은 무리. 천마신교 아래 혈마전으로 남아 혈마를 받든다. 사람들은 여전히 혈교라 부른다.';
+NPCS.hyeolma.d='천마신교의 혈마. 마교에 삼켜진 혈교의 주인 자리를 잇는다. 백 년 전 혈겁을 일으킨 혈교주의 환생이라는 소문이 있다.';
+{const e=EV.find(x=>x.id==='bloodLure');if(e)e.x="핏빛 장포의 사내가 무릎을 꿇었다. '혈마께서 당신을 원하십니다. 천마신교 혈마전, 사람들이 아직 혈교라 부르는 곳입니다. 피의 길은 짧고 강합니다.'";}
+/* 끝맺음: 천하대세의 갈래 */
+ENDINGS.splice(2,0,['bloodWorld','혈교천하','血',S=>S.w&&S.w.bEnd==='blood',S=>'피의 하늘은 오래 걷히지 않았다. 혈신의 곁에 섰던 당신의 이름은 붉은 비석에 새겨졌고, 그 비석 앞에서 고개를 드는 사람은 없었다.','crimson sky over burning ancient city, blood red banners, small figure beside a girl in red robes, back view']);
+ENDINGS.splice(ENDINGS.findIndex(e=>e[0]==='harem'),0,['bloodHero','혈겁을 끝낸 자','劫',S=>S.w&&S.w.bEnd==='hero',S=>'홀로 낙양 성문 앞에 섰던 사흘은 강호의 노래가 되었다. 노래 속의 당신은 늘 키가 컸고, 늘 웃고 있었다. 실제로는 그렇지 않았다는 것을 아는 사람은 이제 없다.','lone warrior standing before huge city gate at dawn, blood clouds parting, sunlight breaking through'],
+ ['newPact','새 맹약','盟',S=>S.w&&S.w.bEnd==='union'&&S.flags.unionMaker,S=>'화산 정상의 바위에는 두 개의 맹약이 위아래로 새겨져 있다. 아래 것에는 까닭이 먼저 적혀 있고, 그 까닭 옆에 당신 이름이 작게 있다.','three banners of different colors planted together on mountain summit, carved stone tablet, sea of clouds, sunrise'],
+ ['fallen','무너진 중원','亡',S=>S.w&&S.w.bEnd==='fallen',S=>'남쪽 바닷가에서 다시 시작된 강호에는 칼보다 괭이가 많았다. 당신은 가끔 북쪽 하늘을 보았지만, 다시 붉어지지는 않았다.','refugees on southern seashore at dusk, ruined northern sky faintly red, small fishing village']);
+
+/* ══ 인물과의 대화는 장소에 맞는 배경에서 ══
+   이야기 사건(천하대세·사건)은 사건 그림을 쓰고, 인물과 마주 앉는 사건(대화·인연·만남)은 장소별 대화 배경을 쓴다. */
+const CV={inn:['객잔',/객잔|주루|점소이|취월루/,'ancient chinese inn interior, wooden tables, hanging lanterns, warm evening light'],jumak:['주막',/주막|술집|술독/,'rustic roadside tavern hut, wine jars, straw roof, dusk'],tea:['찻집',/찻집|다관|찻방|다회|찻잔/,'elegant teahouse room, tea set on low table, paper screens, soft light'],
+ yard:['연무장',/연무장|수련장|비무대/,'martial arts training courtyard, stone floor, weapon racks, morning mist'],mount:['산길',/산길|고갯길|산정|산문|봉우리|절벽|돌계단/,'mountain path with stone steps, pine trees, clouds below'],river:['강가',/강가|강변|나루|개울|호숫가|호수|연못|물가/,'riverside with willows and a small dock, calm water, evening'],
+ ship:['배 위',/배 위|누선|뱃전|갑판/,'deck of an old river ship, lanterns, wide river at night'],garden:['정원',/정원|후원|매화|꽃밭|화원/,'classical chinese garden, plum blossoms, rockery, small bridge'],bamboo:['대숲',/대나무|죽림|대숲/,'dense bamboo grove, dappled light, narrow path'],
+ temple:['절',/장경각|암자|도관|불당|사찰|산사/,'quiet temple courtyard, incense burner, old pine, stone lanterns'],market:['장터',/장터|저잣거리|시장|노점/,'busy ancient market street, stalls and banners, daytime, blurred crowd'],snow:['설원',/눈밭|설원|빙궁|설산|북해|얼음/,'snowfield and ice palace in distance, pale sky, snowfall'],
+ hall:['대전',/총단|대전|회랑|교주전|본청|정전/,'grand dark hall with tall pillars, red lanterns, polished floor'],pavilion:['누각',/누각|정자|난간|지붕 위|달밤/,'pavilion on a hill at night, full moon, railing, distant city lights'],library:['서고',/서고|서재|서원|관아/,'old library with tall shelves of scrolls, candle light'],
+ bridge:['다리 밑',/다리 밑|다리 위/,'stone bridge over a stream, underside shelter, campfire, dusk'],room:['방 안',/방 안|침상|툇마루|안채|마당/,'warm room of a traditional house, paper window, low table, quiet afternoon'],camp:['막사',/막사|산채|진영|망루/,'mountain fortress camp, wooden palisade, torches, night']};
+const CV_EV=new Set(['talk','talk2','visit','meet','rescue','sage','intro','feud','date','confess','loveSpark','propose','suitor','matchmaker','haremWed','harem','haremLife','concub','concubFirst','wedLife','nongeom','revenge','eldOldFoe','romeo','farewell']);
+const isCharEv=e=>!!e&&(e.tag==='talk'||e.tag==='love'||CV_EV.has(e.id)||/^(lv_|cf|ng|dsc|rv|mk(Ha|Sama)|hkGuard)/.test(e.id));
+function cvPlace(S,e){let t='';try{t=evTitle(S,e)+' '+evText(S,e);}catch(_){}for(const k in CV)if(CV[k][1].test(t))return k;return S.job==='inn'?'inn':'tea';}
+function cvBg(S,e,nid){if(!isCharEv(e))return null;return imgURL('cv:'+cvPlace(S,e))||null;}
 const EVM=Object.fromEntries(EV.map(e=>[e.id,e]));
 try{devAddAll();}catch(e){}
 EVM.ai=AI_EV;
@@ -16152,7 +16339,7 @@ function saveHall(h){try{localStorage.setItem(HKEY,JSON.stringify(h));}catch(e){
 const NAI_URL='https://image.novelai.net/ai/generate-image';
 const NAI_MODELS=[['nai-diffusion-4-5-full','V4.5 Full'],['nai-diffusion-4-5-curated','V4.5 Curated'],['nai-diffusion-5-full','V5 Full'],['nai-diffusion-5-curated','V5 Curated'],['nai-diffusion-4-full','V4 Full']];
 const NAI_Q={'nai-diffusion-5-full':'very aesthetic, masterpiece, best quality','nai-diffusion-5-curated':'very aesthetic, masterpiece, best quality','nai-diffusion-4-5-full':'very aesthetic, masterpiece, no text','nai-diffusion-4-5-curated':'location, masterpiece, no text','nai-diffusion-4-full':'no text, best quality, very aesthetic, absurdres'};
-const GAME_VER='2026.10.26-81';
+const GAME_VER='2026.10.26-82';
 const NAI_NEG='nsfw, nude, lowres, bad anatomy, bad hands, missing fingers, extra digits, text, watermark, signature, logo, worst quality, low quality, blurry, modern clothes, glasses, eyewear, jpeg artifacts';
 const NKEY='murim-nai';
 function ncfg(){let c={};try{c=JSON.parse(localStorage.getItem(NKEY)||'{}');}catch(e){}return Object.assign({key:'',relay:'',model:'nai-diffusion-4-5-full',style:'wuxia, ancient china, hanfu, detailed illustration, cinematic lighting',autoEv:false,autoPc:false,vn:true,neg:NAI_NEG,tnpc:'',tev:'',tmap:'',q:true,steps:28,scale:5,rescale:0},c,{pr:Object.assign({},c.pr)});}
@@ -16408,10 +16595,9 @@ const isPort=k=>/^(pc|npc|st|mob):/.test(k);
 const ST_FORM={
  ha_m:{of:'ha',n:'혁련 하 · 사내의 모습',t:'1boy, young man, solo, handsome, black and red hanfu, red eyes, long black hair tied, playful smile, dark aura',when:S=>S&&S.sex==='f'},
  sowol_a:{of:'sowol',n:'단 소월 · 어른이 된 뒤',t:'1girl, solo, young woman, long white hair, ancient calm eyes, oversized faded blue robe, hair ribbon, faint smile, wise',when:S=>S&&S.flags&&S.flags.ngAdult,fb:1},
- sobaek_a:{of:'sobaek',n:'단 소백 · 어른이 된 뒤',t:'1boy, solo, young man, long white hair tied, ancient calm eyes, oversized faded grey robe, faint smile, wise',when:S=>S&&S.flags&&S.flags.ngAdult,fb:1}};
+};
 const ST_BASE={ha:['혁련 하 · 여인의 모습','1girl, young woman, solo, beautiful, black and red hanfu, red eyes, playful smile, dark aura'],
- sowol:['단 소월 · 아이 모습','1girl, solo, child, small girl, long white hair dragging, oversized faded blue robe, sleeves too long, candy stick in mouth, arrogant smirk, ancient eyes'],
- sobaek:['단 소백 · 아이 모습','1boy, solo, child, small boy, white hair topknot, oversized faded grey robe, sleeves too long, taffy in hand, arrogant smirk, ancient eyes']};
+ sowol:['단 소월 · 아이 모습','1girl, solo, child, small girl, long white hair dragging, oversized faded blue robe, sleeves too long, candy stick in mouth, arrogant smirk, ancient eyes'],};
 const stKeyOf=(id,S)=>{for(const f in ST_FORM){const o=ST_FORM[f];if(o.of===id&&o.when(S))return 'st:'+f;}return 'st:'+id;};
 /* 지금 모습의 칸. 어른 모습을 아직 안 그렸으면 아이 모습으로 대신한다 */
 const stK=(id,S)=>{const k=stKeyOf(id,S),f=ST_FORM[k.slice(3)];return f&&f.fb&&!imgSrc(k)?'st:'+id:k;};
@@ -16426,10 +16612,10 @@ const MAP_TAG='ancient map of china, ink wash painting, mountains, rivers, parch
 const safe=f=>{try{return f()||'';}catch(e){return '';}};
 function fileName(k){return (k==='map'?'map':k.replace(':','_'))+'.png';}
 function keyFromName(n){n=n.replace(/\.[^.]+$/,'').trim();const lo=n.toLowerCase();if(lo==='map'||n==='지도')return 'map';
-  const m=/^(npc|st|ev|reg|cg|wp|bg|fr)[_\-:](.+)$/i.exec(n);if(m){const t=m[1].toLowerCase(),id=m[2];if(t==='fr')return FR_TAGS[id.toLowerCase()]?'fr:'+id.toLowerCase():null;if(t==='bg')return LOVE_BG[id]?'bg:'+id:null;if(t==='wp')return WP_KO[id.toLowerCase()]?'wp:'+id.toLowerCase():null;if(t==='cg')return cgSlots().includes('cg:'+id)?'cg:'+id:null;if((t==='npc'||t==='st')&&(NPCS[id]||ST_FORM[id]))return 'st:'+id;if(t==='ev'&&EVM[id])return 'ev:'+id;if(t==='reg'&&(REG_KO[id.toLowerCase()]||REG_EN[id]))return 'reg:'+(REG_EN[id]||id.toLowerCase());return null;}
+  const m=/^(npc|st|ev|reg|cg|wp|bg|fr|cv)[_\-:](.+)$/i.exec(n);if(m){const t=m[1].toLowerCase(),id=m[2];if(t==='cv')return CV[id.toLowerCase()]?'cv:'+id.toLowerCase():null;if(t==='fr')return FR_TAGS[id.toLowerCase()]?'fr:'+id.toLowerCase():null;if(t==='bg')return LOVE_BG[id]?'bg:'+id:null;if(t==='wp')return WP_KO[id.toLowerCase()]?'wp:'+id.toLowerCase():null;if(t==='cg')return cgSlots().includes('cg:'+id)?'cg:'+id:null;if((t==='npc'||t==='st')&&(NPCS[id]||ST_FORM[id]))return 'st:'+id;if(t==='ev'&&EVM[id])return 'ev:'+id;if(t==='reg'&&(REG_KO[id.toLowerCase()]||REG_EN[id]))return 'reg:'+(REG_EN[id]||id.toLowerCase());return null;}
   if(NPCS[n])return 'st:'+n;if(EVM[n])return 'ev:'+n;if(REG_EN[n])return 'reg:'+REG_EN[n];if(REG_KO[lo])return 'reg:'+lo;return null;}
-function galKeys(t){if(t==='fr')return Object.keys(FR_TAGS).map(x=>'fr:'+x);if(t==='bg')return Object.keys(LOVE_BG).filter(id=>NPCS[id]).map(id=>'bg:'+id);if(t==='cg')return cgSlots();if(t==='wp')return Object.values(WP_EN).map(x=>'wp:'+x);if(t==='map')return ['map',...Object.keys(REG).map(r=>'reg:'+REG_EN[r])];if(t==='mob')return Object.keys(MOB).map(x=>'mob:'+x);if(t==='npc'||t==='st'){const L=[];Object.keys(NPC_TAGS).filter(id=>NPCS[id]).forEach(id=>{L.push(t+':'+id);if(t==='st')for(const f in ST_FORM)if(ST_FORM[f].of===id)L.push('st:'+f);});return L;}return EV.filter(e=>e.id!=='focus'&&e.id!=='bt'&&!/^lv_/.test(e.id)&&!e.draft).map(e=>'ev:'+e.id);}
-function slotName(k){const [t,id]=k.split(/:(.+)/);if(t==='fr')return `나날 · ${FR_NAME[id]||id}`;if(t==='mob')return MOB[id]?MOB[id].n:id;if(t==='st')return ST_FORM[id]?ST_FORM[id].n:ST_BASE[id]?ST_BASE[id][0]:NPCS[id].n;if(t==='bg')return `${NPCS[id]?NPCS[id].n:id}의 배경`;if(t==='cg')return cgName(id);if(t==='wp')return WP_LABEL[WP_KO[id]]||id;return t==='map'?'중원 지도':t==='reg'?REG_KO[id]||id:t==='npc'?NPCS[id].n:(EVM[id]&&EVM[id].t||safe(()=>evTitle(S,EVM[id]))||id);}
+function galKeys(t){if(t==='cv')return Object.keys(CV).map(x=>'cv:'+x);if(t==='evc')return EV.filter(e=>!/^lv_/.test(e.id)&&!e.draft&&isCharEv(e)).map(e=>'ev:'+e.id);if(t==='ev')return EV.filter(e=>e.id!=='focus'&&e.id!=='bt'&&!/^lv_/.test(e.id)&&!e.draft&&!isCharEv(e)).map(e=>'ev:'+e.id);if(t==='fr')return Object.keys(FR_TAGS).map(x=>'fr:'+x);if(t==='bg')return Object.keys(LOVE_BG).filter(id=>NPCS[id]).map(id=>'bg:'+id);if(t==='cg')return cgSlots();if(t==='wp')return Object.values(WP_EN).map(x=>'wp:'+x);if(t==='map')return ['map',...Object.keys(REG).map(r=>'reg:'+REG_EN[r])];if(t==='mob')return Object.keys(MOB).map(x=>'mob:'+x);if(t==='npc'||t==='st'){const L=[];Object.keys(NPC_TAGS).filter(id=>NPCS[id]).forEach(id=>{L.push(t+':'+id);if(t==='st')for(const f in ST_FORM)if(ST_FORM[f].of===id)L.push('st:'+f);});return L;}return EV.filter(e=>e.id!=='focus'&&e.id!=='bt'&&!/^lv_/.test(e.id)&&!e.draft).map(e=>'ev:'+e.id);}
+function slotName(k){const [t,id]=k.split(/:(.+)/);if(t==='cv')return `대화 배경 · ${CV[id]?CV[id][0]:id}`;if(t==='fr')return `나날 · ${FR_NAME[id]||id}`;if(t==='mob')return MOB[id]?MOB[id].n:id;if(t==='st')return ST_FORM[id]?ST_FORM[id].n:ST_BASE[id]?ST_BASE[id][0]:NPCS[id].n;if(t==='bg')return `${NPCS[id]?NPCS[id].n:id}의 배경`;if(t==='cg')return cgName(id);if(t==='wp')return WP_LABEL[WP_KO[id]]||id;return t==='map'?'중원 지도':t==='reg'?REG_KO[id]||id:t==='npc'?NPCS[id].n:(EVM[id]&&EVM[id].t||safe(()=>evTitle(S,EVM[id]))||id);}
 function savePr(k,p){const c=ncfg();if(!p.trim()||p.trim()===basePrompt(k).trim())delete c.pr[k];else c.pr[k]=p;nsave(c);}
 function copyText(t){const fb=()=>{const a=document.createElement('textarea');a.value=t;a.setAttribute('readonly','');a.style.position='fixed';a.style.opacity='0';document.body.appendChild(a);a.select();let ok=false;try{ok=document.execCommand('copy');}catch(e){}a.remove();toast(ok?'복사했어요.':'복사하지 못했어요. 글자를 길게 눌러 복사해 주세요.');};
   if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(t).then(()=>toast('복사했어요.'),fb);else fb();}
@@ -16591,7 +16777,7 @@ Object.assign(NPC_TAGS,{hongok:'1girl, solo, mature beautiful woman, bandit lieu
  maehyang:'1girl, solo, beautiful courtesan, elegant layered red hanfu, hair ornaments, hairpin dagger, folding fan, seductive smile, lantern light'});
 Object.assign(NPC_TAGS,{
  sowol:S=>S&&S.flags&&S.flags.ngAdult?'1girl, solo, young woman, long white hair, ancient calm eyes, oversized faded blue robe, hair ribbon, faint smile, wise':'1girl, solo, child, small girl, long white hair dragging, oversized faded blue robe, sleeves too long, candy stick in mouth, arrogant smirk, ancient eyes',
- sobaek:S=>S&&S.flags&&S.flags.ngAdult?'1boy, solo, young man, long white hair tied, ancient calm eyes, oversized faded grey robe, faint smile, wise':'1boy, solo, child, small boy, white hair topknot, oversized faded grey robe, sleeves too long, taffy in hand, arrogant smirk, ancient eyes'});
+});
 Object.assign(NPC_TAGS,{eunha:'1girl, solo, beautiful young woman, long silver hair, ice blue eyes, white fur-trimmed hanfu, snowflakes, gentle shy smile',yeonhwa:'1girl, solo, beautiful young woman, black hair, red eyes, black and crimson priestess robes, veil, cold expression',soryeong:'1girl, solo, cute young woman, waitress outfit, apron, short ponytail, mischievous smile, blush',seola:'1girl, solo, beautiful young woman, long black hair, white and pale blue hanfu, snow mountain, crane',uihyang:'1girl, solo, gentle young woman, herbalist, light green hanfu, herb basket, soft smile',sohwa:'1girl, solo, lively young woman, noodle shop apron, rolled sleeves, rolling pin, grin',seolhan:'1boy, solo, handsome young man, silver hair, ice blue eyes, white fur-trimmed robes, sword, stoic',mukya:'1boy, solo, handsome young man, black hair, black assassin robes, mask lowered, red eyes, shadows',nangcheong:'1boy, solo, pretty young man, waiter outfit, cloth on shoulder, sly smile, fan',hongchil:'1boy, solo, handsome young man, clean patched clothes, green bamboo staff, grin',unhae:'1boy, solo, slim handsome young man, white and pale blue taoist robes, crane, snow, flustered',seokdol:'1boy, solo, muscular young man, blacksmith apron, hammer, forge sparks, shy'});
 Object.assign(NPC_TAGS,{gongmyeong:'1boy, solo, young shaolin monk, bald, muscular, orange robes, holding steamed bun, grin',hyeonmu:'1boy, solo, old taoist elder, stern face, grey robes, white beard, stone tablet',joyeon:'1girl, solo, young swordswoman, pink and white hanfu, plum blossoms, determined eyes, sword',namgungho:'1boy, solo, middle-aged swordsman, blue and white robes, three wine cups, melancholy',tangmo:'1girl, solo, old noblewoman, white hair, dark purple robes, teacup, sharp smile',paengsa:'1boy, solo, burly young scholar, calligraphy brush like blade, ink, scroll',jaun:'1girl, solo, middle-aged buddhist nun, stern face, grey robes, broom, stone stairs',hwangpo:'1boy, solo, bandit lieutenant, yellow robe, ledger, cunning smile',gilsu:'1boy, solo, child, 12 years old, small boy, scruffy street urchin, patched ragged clothes, messy hair, coins in palm, mischievous grin',chilyeong:'1boy, solo, assassin in black, rain, weary eyes, short blade',sudong:'1boy, solo, old ferryman, straw hat, thick arms, oar, river',baekryeon:'1girl, solo, dancer, flowing white sleeves, stage, lanterns, graceful',ganghon:'1boy, solo, large demonic cult captain, scars, armor, laughing, wine jar',hongui:'1girl, solo, young priestess in red robes, red lake, looking at sky, hidden dagger',hanbing:'1girl, solo, old nanny, white fur clothes, steaming pot of soup, warm smile',yeonsaeng:'1boy, solo, wandering painter, brush, portrait scroll, gentle',yeomcs:'1boy, solo, stern constable, official uniform, iron face, sword at waist',jumo:'1girl, solo, middle-aged tavern keeper woman, wine jars, ladle, knowing smile'});
 const npcPrompt=(id,S)=>{const t=NPC_TAGS[id];return (typeof t==='function'?t(S):t)+', upper body, looking at viewer';};
@@ -16615,6 +16801,7 @@ const EV_TAGS={sectTest:'village square, many children lined up, martial sect en
  salBird:'child holding dead sparrow, red star in sky, night',salSeen:'monk dropping prayer beads, old man in black, dusk',salFate:'funeral, white mourning cloth, red star',salFrenzy:'blood-soaked inn, red moon, lone figure',salHunt:'five swordsmen blocking mountain path',salGod:'red sky, blood clouds, god of slaughter',
  kidnap:'dark cave, many children, assassin trainers',smTrial:'dark room, two young assassins facing each other',smLeave:'burning assassin token, night wall',hitman:'assassin in bedroom at night, dagger glint',haoInfo:'inn waiter whispering secrets',dokin:'poison pool, purple mist, ritual',oreFind:'glowing ore in cave, crystals',
  grand:'grand martial tournament, luoyang, huge crowd, imperial banners',headMission:'treasure vault, empty pedestal, elders',focus:'ancient chinese landscape, mountains, mist, seasons',bt:'meditation, breakthrough, qi explosion, light'};
+Object.assign(EV_TAGS,{wsSaPact:'night hall of an outlaw alliance, wine jar on table, envoy in black, river outside',wsCmWarn:'great gate of a martial alliance headquarters, retreating black banners at dusk, smoke',wsSaGnaw:'river ferry dock changing hands, outlaw banners raised over a manor, evening',wsRevolt:'mountain fortress burning at night, red robed rebels, black towers',wsReborn:'blood red lake under crimson clouds, stone altar, girl silhouette in red robes',wsUnion:'grand hall with three different banners side by side, tense delegates, candles',wsBloodEnd:'army of three banners below mount hua, blood red clouds descending, epic battlefield',wsUnify:'mountain summit after battle, clearing clouds, banners on the ground, sunrise'});
 Object.assign(EV_TAGS,{shopVisit:'curio shop at the end of a market street, glass cabinet with swords and old manuals, lantern light',ngTeach:'frozen creek at dusk, small white-haired child master teaching on the ice, plum branches',ngForm:'quiet veranda after snow, futon, candy jar, pale morning sun, plum blossoms',ngGrowLate:'courtyard pillar with height marks cut into the wood, spring afternoon',cfWall:'mountain cave entrance with a stone door, closed-door meditation, pine forest, dusk',cfWall2:'night forest with torches approaching a cave, lone guardian with blade at the cave mouth'});
 Object.assign(EV_TAGS,{dkCounsel:'mountain gate at dusk, black banners below, envoy prostrate on stone steps, ominous clouds',dkJudge:'dim hall, two gang bosses kneeling before a tea table, river ferry dock outside',dkPupil:'gate at dawn, young swordsman kneeling, burned village smoke on horizon',dkVillage:'mountain path, villagers carrying A-frame loads of rice and wine, frightened child, autumn',dkFear:'market street, crowd parting in silence, mother hiding child in alley',dkBounty:'inn wall with wanted poster, night, stairs, lantern light',dkHypocrite:'night courtyard, hooded elder with silver chest, moonlight, shadows',dkTribute:'mountain fortress yard, bandits kneeling with swords laid on ground, banners'});
 Object.assign(EV_TAGS,{pactRumor:'storyteller in teahouse, mount hua, legend',lostVillage:'empty village at night, bloody talisman in well',pactCouncil:'summit of mount hua, three factions meeting, banners',pact2:'red mist at night, assassins attacking meeting',bloodRite:'red lake, blood altar, crimson sky, cult ritual',bloodCalamity:'blood rain, burning villages',chuldo:'young martial artist on road, crossroads, city gate',chuldo2:'inn, two strangers sharing a table',chuldo3:'wanted posters on wall, inn',warBattle:'battlefield, clash of armies',warAfter:'prisoners kneeling, riverbank',cwFall:'one-armed swordsman in dark room',cwReturn:'one-armed swordsman, plum blossoms',dmKidnap:'purple poison mist, night road',dmOrder:'poison bottle, teacup',eyWudang:'taoist priest, wudang mountain, yin yang',eyTaiji:'sword drawing circle, yin yang, moon reflection',eyHunt:'demonic cult elder blocking road',hvContest:'three envoys visiting a child',hvEnvy:'masked man drawing sword at night',hvPeak:'master surrounded by many weapons, golden light',grKunlun:'snowy kunlun mountain, wind',grNature:'meditating on mountain peak, clouds flowing',tyVolcano:'volcano crater, lava, stone chamber',tyRage:'fire aura, rage',teBinggung:'ice palace envoy, white fur',ggArhat:'eighteen arhats formation, shaolin',srContest:'lifting huge bronze cauldron, crowd',caZhuge:'go board, strategist, feather fan',sgTomb:'sword tomb, thousands of swords in ground',sgCrane:'old immortal riding crane, clouds',mdTang:'sichuan mansion, marriage proposal',first:'mount hua summit, masters gathering',hwasan2:'two masters dueling above clouds, ancient carving',yb2:'tournament stage',yb3:'tournament final, dragon and phoenix banners',sectTest2:'child lifting boulder, examiner',sectTest3:'injured child on mountain path, sunset'});
@@ -16885,7 +17072,7 @@ function traitsHTML(s,full){const t=s.traits.map(k=>`<span class="chip t" title=
   return t.length?`<div class="chips">${t.join('')}</div>${full?`<div class="muted small">${s.traits.map(k=>`<b>${TRAITS[k].n}</b> ${esc(TRAITS[k].d)} <span style="color:var(--seal)">제약: ${esc(TCON[k]||'없음')}</span>`).join('<br>')}</div>`:''}`:'';}
 function portrait(k,label,cls){const f=ST_FORM[k.slice(3)];const u=imgURL(k)||(k.startsWith('st:')?(imgURL('npc:'+k.slice(3))||(f&&f.fb?imgURL('st:'+f.of):null)):null);return `<button class="portrait ${u?'has':''} ${cls||''}" data-a="draw" data-k="${esc(k)}" aria-label="${esc(label)} 그림">${u?`<img src="${u}" alt="">`:BUSY.has(k)?'그리는 중':'그림'}</button>`;}
 Object.assign(NPC_TAGS,{rival:'1boy, solo, young man, sharp eyes, messy black hair tied with a red cloth, scarred knuckles, dark blue worn martial outfit, bandaged forearms, cocky grin'});
-function basePrompt(k){const [t,id]=k.split(/:(.+)/);if(t==='mob'){const m=MOB[id];return (m?m.t:'1boy, solo')+(m&&m.face?'':', faceless, no facial features, blank face')+', cowboy shot, standing, white background';}if(t==='st'){const g=ST_FORM[id]?ST_FORM[id].t:ST_BASE[id]?ST_BASE[id][1]:NPC_TAGS[id];return (typeof g==='function'?g(S):g)+', cowboy shot, standing, white background';}return t==='fr'?(FR_TAGS[id]||'ancient chinese town')+', cinematic composition, wide shot':t==='bg'?loveBgPrompt(id):t==='wp'?(WPN_IMG_TAGS[id]||'one chinese weapon'):t==='cg'?cgPrompt(id):t==='pc'?pcPrompt(S):t==='npc'?npcPrompt(id,S):t==='map'?MAP_TAG:t==='reg'?(REG_TAGS[id]||'ancient chinese landscape')+', scenery, wide shot, cinematic composition, no humans':evPrompt(id);}
+function basePrompt(k){const [t,id]=k.split(/:(.+)/);if(t==='mob'){const m=MOB[id];return (m?m.t:'1boy, solo')+(m&&m.face?'':', faceless, no facial features, blank face')+', cowboy shot, standing, white background';}if(t==='st'){const g=ST_FORM[id]?ST_FORM[id].t:ST_BASE[id]?ST_BASE[id][1]:NPC_TAGS[id];return (typeof g==='function'?g(S):g)+', cowboy shot, standing, white background';}return t==='cv'?(CV[id]?CV[id][2]:'ancient chinese room')+', scenery, wide shot, cinematic composition, no humans':t==='fr'?(FR_TAGS[id]||'ancient chinese town')+', cinematic composition, wide shot':t==='bg'?loveBgPrompt(id):t==='wp'?(WPN_IMG_TAGS[id]||'one chinese weapon'):t==='cg'?cgPrompt(id):t==='pc'?pcPrompt(S):t==='npc'?npcPrompt(id,S):t==='map'?MAP_TAG:t==='reg'?(REG_TAGS[id]||'ancient chinese landscape')+', scenery, wide shot, cinematic composition, no humans':evPrompt(id);}
 function slotPrompt(k){const p=ncfg().pr[k];return p&&p.trim()?p:basePrompt(k);}
 function modalHTML(){if(!modal)return '';if(modal.t==='sv')return svHTML();if(modal.t==='snd')return sndHTML();if(modal.t==='dev')return devHTML();if(modal.t==='story')return storyListHTML();if(modal.t==='storyEv')return storyEvHTML();
   if(modal.t==='nai'){const c=modal.c;return `<div class="modal" data-a="mbg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mt"><h3 id="mt">설정 <span class="muted small" style="font-weight:400">· 판 ${GAME_VER}</span></h3>${S.phase!=='birth'&&S.phase!=='end'?`<div class="row" style="justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:10px"><span class="small muted">이번 생을 접고 처음으로 돌아간다.</span><button class="ghost" data-a="quit">${modal.sure?'정말 포기한다':'처음으로'}</button></div>`:''}<p class="grp-t" style="margin:0">그림</p>
@@ -16930,7 +17117,7 @@ function modalHTML(){if(!modal)return '';if(modal.t==='sv')return svHTML();if(mo
    ${(()=>{if(!(k in PREVK)){PREVK[k]=0;imgGet('prev:'+k).then(b=>{if(b){PREVK[k]=1;soon();}});}return PREVK[k]&&!busy?'<button class="ghost" data-a="nprev">이전 그림으로</button>':'';})()}<button class="go" data-a="ngen" ${busy?'disabled':''}>${u?'NovelAI로 다시 그리기':'NovelAI로 그리기'}</button></div>
    ${faceSectionHTML(k)}
    <p class="muted small">${port?'세로 832×1216':'가로 1216×832'} · 다른 곳에서 그렸다면 프롬프트를 복사해 쓰고, 받은 그림을 '파일에서 넣기'로 넣는다.${k.startsWith('pc:')?'':` 여러 장 넣기용 파일 이름: <b>${fileName(k)}</b>`}${local?' · 내 그림을 지우면 저장소 그림이 있을 때 그것으로 돌아간다.':''}</p></div></div>`;}
-function galHTML(){const g=modal,c=ncfg(),T=[['style','그림체'],['map','지도'],['st','인물'],['mob','모브'],['ev','사건'],['bg','인연 배경'],['wp','병기'],['fr','나날'],['cg','CG']];
+function galHTML(){const g=modal,c=ncfg(),T=[['style','그림체'],['map','지도'],['st','인물'],['mob','모브'],['ev','사건'],['evc','인물 사건'],['cv','대화 배경'],['bg','인연 배경'],['wp','병기'],['fr','나날'],['cg','CG']];
   const head=`<div class="row" style="justify-content:space-between"><h3 id="mt" style="margin:0">그림 관리</h3><button class="ghost" data-a="mclose">닫기</button></div>
    <div class="chips" role="tablist">${T.map(([v,l])=>`<button class="chip ${g.tab===v?'on':''}" data-a="gtab" data-v="${v}" role="tab" aria-selected="${g.tab===v}">${l}</button>`).join('')}</div>`;
   let body;
@@ -17104,7 +17291,7 @@ function scrollCard(){const e=EVM[S.cur];
      <div><label for="fname">이름 (비우면 '${esc(f.def)}')</label><input id="fname" maxlength="10" value="${esc(f.name)}" placeholder="${esc(f.def)}" autocomplete="off"></div>
      <p class="muted small">단조 ${Math.round(S.forge)} · 예상 등급 ${lo===hi?lo:lo+'~'+hi}${S.flags.smith?' · 구야자의 제자 +1':''}</p>
      <div class="rowbtn"><button class="ghost" data-a="fback">그만둔다</button><button class="go" data-a="forge">벼린다</button></div></section>`;}
-  if(S.phase==='event'){const ch=evChoices(S,e);const nid=sceneNpc(S,e),lvId=nid&&LOVE_BG[nid]&&(e.tag==='love'||/^lv_/.test(S.cur))?nid:null,ek=lvId?'bg:'+lvId:'ev:'+S.cur,eu=imgURL(ek)||(lvId&&!/^lv_/.test(S.cur)?imgURL('ev:'+S.cur):null),su=nid&&imgURL('st:'+nid),bgU=eu||(REG[S.loc]?imgURL('reg:'+REG_EN[S.loc]):null);
+  if(S.phase==='event'){const ch=evChoices(S,e);const nid=sceneNpc(S,e),lvId=nid&&LOVE_BG[nid]&&(e.tag==='love'||/^lv_/.test(S.cur))?nid:null,ek=lvId?'bg:'+lvId:'ev:'+S.cur,eu=imgURL(ek)||(lvId&&!/^lv_/.test(S.cur)?imgURL('ev:'+S.cur):null),su=nid&&imgURL('st:'+nid),bgU=(lvId&&imgURL('bg:'+lvId))||cvBg(S,e,nid)||eu||(REG[S.loc]?imgURL('reg:'+REG_EN[S.loc]):null);
     const imgTop=su?`<div class="scene">${bgU?`<img class="sbg" src="${bgU}" alt="">`:''}<img class="sst" src="${su}" alt="${esc(NPCS[nid].n)}"><span class="snm">${esc(safe(()=>npcNick(nid,S)))} ${esc(NPCS[nid].n)}</span></div>`:eu?`<img class="evimg" src="${eu}" alt="">`:'';
     const tx=evText(S,e);
     const tail=`${e.inp?`<input id="evinp" class="evinp" maxlength="12" placeholder="${esc(typeof e.inp==='function'?e.inp(S):e.inp)}" value="${esc(S.tmp.inp||'')}" aria-label="이름">`:''}${foeBox()}
@@ -17114,7 +17301,7 @@ function scrollCard(){const e=EVM[S.cur];
       return vnScreen(S,{key:`${S.lifeId}|${S.age}|e|${S.cur}|${tx.length}`,text:tx,scene:nid,bg:bgU,title:evTitle(S,e),tags:tagChips(e),draw:`<button class="vntool" data-a="draw" data-k="${ek}">${BUSY.has(ek)?'그리는 중':eu?'장면':'장면 그리기'}</button>`,panel:inp+fb,acts:ch.map((c,i)=>`<button class="choice" data-a="ch" data-i="${i}"><span>${esc(c.t)}</span>${c.h?`<span class="h">${esc(c.h)}</span>`:''}</button>`).join('')});}
     return `<section class="scroll fade" aria-live="polite">${imgTop}${head}<h2>${esc(evTitle(S,e))}</h2><p>${esc(tx)}</p>${tail}</section>`;}
   const r=S.res;const dead=!!S.dead;
-  if(S.phase==='result'&&e&&vnOn()){warmSoon(S);const nid=sceneNpc(S,e),lvId=nid&&LOVE_BG[nid]&&(e.tag==='love'||/^lv_/.test(S.cur))?nid:null,ek=lvId?'bg:'+lvId:'ev:'+S.cur,eu=imgURL(ek)||(lvId&&!/^lv_/.test(S.cur)?imgURL('ev:'+S.cur):null),bgU=eu||(REG[S.loc]?imgURL('reg:'+REG_EN[S.loc]):null);
+  if(S.phase==='result'&&e&&vnOn()){warmSoon(S);const nid=sceneNpc(S,e),lvId=nid&&LOVE_BG[nid]&&(e.tag==='love'||/^lv_/.test(S.cur))?nid:null,ek=lvId?'bg:'+lvId:'ev:'+S.cur,eu=imgURL(ek)||(lvId&&!/^lv_/.test(S.cur)?imgURL('ev:'+S.cur):null),bgU=(lvId&&imgURL('bg:'+lvId))||cvBg(S,e,nid)||eu||(REG[S.loc]?imgURL('reg:'+REG_EN[S.loc]):null);
     const chips=r.chips.length?`<div class="delta">${r.chips.map(c=>`<span class="chip ${c.up?'up':'dn'}">${esc(c.t)}</span>`).join('')}</div>`:'';
     const wp=S.pendingWpn?`<div class="craft"><label for="wname">새 병기 · ${esc(WP_LABEL[S.pendingWpn.w]||S.pendingWpn.w)} · 등급 ${S.pendingWpn.q}${S.pendingWpn.kw?' · 결 '+S.pendingWpn.kw:''} — 이름을 새긴다</label><div class="field"><input id="wname" maxlength="10" placeholder="${esc(S.pendingWpn.def)}" autocomplete="off"><button class="ghost" data-a="wname">새긴다</button></div></div>`:'';
     const dl=dead?`<p class="muted" style="margin:0">${esc(S.dead==='우화등선'?'당신의 이야기는 여기서 하늘로 이어진다.':`그리고 그것이 마지막이었다. (${S.dead})`)}</p>`:'';
